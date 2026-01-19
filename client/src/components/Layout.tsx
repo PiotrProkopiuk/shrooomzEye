@@ -12,7 +12,8 @@ import {
   ChevronDown,
   LayoutGrid,
   ShieldCheck,
-  ShieldAlert
+  ShieldAlert,
+  BarChart3
 } from "lucide-react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ import bgTexture from "@assets/generated_images/dark_stone_rpg_texture_backgroun
 const NAV_ITEMS = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/" },
   { label: "Verification", icon: ShieldCheck, href: "/verification" },
+  { label: "Guild Stats", icon: BarChart3, href: "/stats" },
   { label: "Guilds", icon: Shield, href: "/guilds" },
   { label: "Players", icon: Users, href: "/players" },
   { label: "Leaderboards", icon: Trophy, href: "/leaderboards" },

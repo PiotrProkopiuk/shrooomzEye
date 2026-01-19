@@ -14,6 +14,7 @@ import Leaderboards from "@/pages/Leaderboards";
 import ActivityHistory from "@/pages/ActivityHistory";
 import Templates from "@/pages/Templates";
 import Verification from "@/pages/Verification";
+import GuildStats from "@/pages/GuildStats";
 
 function Router() {
   return (
@@ -21,6 +22,7 @@ function Router() {
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/verification" component={Verification} />
+        <Route path="/stats" component={GuildStats} />
         <Route path="/guilds" component={Guilds} />
         <Route path="/players" component={Players} />
         <Route path="/leaderboards" component={Leaderboards} />
