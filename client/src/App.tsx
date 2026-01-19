@@ -13,12 +13,14 @@ import Settings from "@/pages/Settings";
 import Leaderboards from "@/pages/Leaderboards";
 import ActivityHistory from "@/pages/ActivityHistory";
 import Templates from "@/pages/Templates";
+import Verification from "@/pages/Verification";
 
 function Router() {
   return (
     <Layout>
       <Switch>
         <Route path="/" component={Dashboard} />
+        <Route path="/verification" component={Verification} />
         <Route path="/guilds" component={Guilds} />
         <Route path="/players" component={Players} />
         <Route path="/leaderboards" component={Leaderboards} />

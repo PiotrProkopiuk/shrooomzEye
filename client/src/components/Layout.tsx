@@ -3,7 +3,6 @@ import {
   LayoutDashboard, 
   Users, 
   Swords, 
-  Calendar, 
   Settings, 
   Menu,
   Shield,
@@ -11,9 +10,11 @@ import {
   Trophy,
   History,
   ChevronDown,
-  LayoutGrid
+  LayoutGrid,
+  ShieldCheck,
+  ShieldAlert
 } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -29,6 +30,7 @@ import bgTexture from "@assets/generated_images/dark_stone_rpg_texture_backgroun
 
 const NAV_ITEMS = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/" },
+  { label: "Verification", icon: ShieldCheck, href: "/verification" },
   { label: "Guilds", icon: Shield, href: "/guilds" },
   { label: "Players", icon: Users, href: "/players" },
   { label: "Leaderboards", icon: Trophy, href: "/leaderboards" },
@@ -39,9 +41,9 @@ const NAV_ITEMS = [
 ];
 
 const SERVERS = [
-  { id: "1", name: "Dark Alliance (Antica)" },
-  { id: "2", name: "Red Rose (Antica)" },
-  { id: "3", name: "Hill (Vunira)" },
+  { id: "1", name: "Dark Alliance (Antica)", verified: true },
+  { id: "2", name: "Red Rose (Antica)", verified: false },
+  { id: "3", name: "Hill (Vunira)", verified: false },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -139,6 +141,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                         <Button variant="outline" className="h-10 px-4 py-2 border-white/10 hover:bg-white/5 gap-2 text-foreground font-display font-semibold">
                             <Shield className="h-4 w-4 text-primary" />
                             {activeServer.name}
+                            {!activeServer.verified && <Badge variant="destructive" className="h-4 text-[8px] px-1 uppercase ml-1 animate-pulse">Unverified</Badge>}
                             <ChevronDown className="h-4 w-4 text-muted-foreground" />
                         </Button>
                     </DropdownMenuTrigger>
@@ -149,9 +152,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
                             <DropdownMenuItem 
                                 key={server.id} 
                                 onClick={() => setActiveServer(server)}
-                                className="hover:bg-sidebar-accent cursor-pointer"
+                                className="hover:bg-sidebar-accent cursor-pointer flex justify-between items-center"
                             >
-                                {server.name}
+                                <span>{server.name}</span>
+                                {server.verified ? <ShieldCheck className="h-3 w-3 text-emerald-500" /> : <ShieldAlert className="h-3 w-3 text-destructive" />}
                             </DropdownMenuItem>
                         ))}
                     </DropdownMenuContent>
