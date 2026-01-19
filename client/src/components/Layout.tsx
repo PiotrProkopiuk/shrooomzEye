@@ -10,7 +10,8 @@ import {
   Ghost,
   Trophy,
   History,
-  ChevronDown
+  ChevronDown,
+  LayoutGrid
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import bgTexture from "@assets/generated_images/dark_stone_rpg_texture_background.png";
 
@@ -31,6 +33,7 @@ const NAV_ITEMS = [
   { label: "Players", icon: Users, href: "/players" },
   { label: "Leaderboards", icon: Trophy, href: "/leaderboards" },
   { label: "Events & Quests", icon: Swords, href: "/events" },
+  { label: "Event Templates", icon: LayoutGrid, href: "/templates" },
   { label: "Audit Log", icon: History, href: "/history" },
   { label: "Bot Settings", icon: Settings, href: "/settings" },
 ];
@@ -86,6 +89,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </nav>
 
       <div className="p-4 border-t border-sidebar-border z-10">
+         <div className="flex items-center gap-3 mb-4 px-2">
+            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs">A</div>
+            <div>
+                <div className="text-sm font-medium">Administrator</div>
+                <Badge variant="outline" className="text-[10px] h-4 border-primary/30 text-primary">Leader Role</Badge>
+            </div>
+         </div>
         <div className="bg-card/50 p-3 rounded border border-border">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">System Status</span>
