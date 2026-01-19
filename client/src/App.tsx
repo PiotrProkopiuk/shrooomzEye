@@ -15,24 +15,30 @@ import ActivityHistory from "@/pages/ActivityHistory";
 import Templates from "@/pages/Templates";
 import Verification from "@/pages/Verification";
 import GuildStats from "@/pages/GuildStats";
+import Login from "@/pages/Login";
 
 function Router() {
   return (
-    <Layout>
-      <Switch>
-        <Route path="/" component={Dashboard} />
-        <Route path="/verification" component={Verification} />
-        <Route path="/stats" component={GuildStats} />
-        <Route path="/guilds" component={Guilds} />
-        <Route path="/players" component={Players} />
-        <Route path="/leaderboards" component={Leaderboards} />
-        <Route path="/events" component={Events} />
-        <Route path="/templates" component={Templates} />
-        <Route path="/history" component={ActivityHistory} />
-        <Route path="/settings" component={Settings} />
-        <Route component={NotFound} />
-      </Switch>
-    </Layout>
+    <Switch>
+      <Route path="/login" component={Login} />
+      <Route path="/:rest*">
+        <Layout>
+          <Switch>
+            <Route path="/" component={Dashboard} />
+            <Route path="/verification" component={Verification} />
+            <Route path="/stats" component={GuildStats} />
+            <Route path="/guilds" component={Guilds} />
+            <Route path="/players" component={Players} />
+            <Route path="/leaderboards" component={Leaderboards} />
+            <Route path="/events" component={Events} />
+            <Route path="/templates" component={Templates} />
+            <Route path="/history" component={ActivityHistory} />
+            <Route path="/settings" component={Settings} />
+            <Route component={NotFound} />
+          </Switch>
+        </Layout>
+      </Route>
+    </Switch>
   );
 }
 
