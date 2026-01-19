@@ -10,6 +10,8 @@ import Guilds from "@/pages/Guilds";
 import Players from "@/pages/Players";
 import Events from "@/pages/Events";
 import Settings from "@/pages/Settings";
+import Leaderboards from "@/pages/Leaderboards";
+import ActivityHistory from "@/pages/ActivityHistory";
 
 function Router() {
   return (
@@ -18,7 +20,9 @@ function Router() {
         <Route path="/" component={Dashboard} />
         <Route path="/guilds" component={Guilds} />
         <Route path="/players" component={Players} />
+        <Route path="/leaderboards" component={Leaderboards} />
         <Route path="/events" component={Events} />
+        <Route path="/history" component={ActivityHistory} />
         <Route path="/settings" component={Settings} />
         <Route component={NotFound} />
       </Switch>

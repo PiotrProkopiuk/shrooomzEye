@@ -1,0 +1,44 @@
+1. **Automated Reports**
+   - Generate daily and weekly reports summarizing new deaths, top active players, and guild statistics.
+   - Reports should be sent automatically to a designated Discord channel.
+
+2. **PvP and Boss Alerts**
+   - Notify users about upcoming PvP events or boss spawns.
+   - Allow configuration of which channels and roles receive alerts.
+
+3. **Player and Guild Leaderboards**
+   - Maintain rankings based on online time, deaths, quests completed, etc.
+   - Display leaderboards on the web dashboard using charts (e.g., Chart.js).
+
+4. **Discord Role Automation**
+   - Automatically assign temporary roles to users joining quests or boss events (e.g., "Quest Participant").
+   - Remove roles when events end.
+
+5. **Activity History**
+   - Log player actions, event signups, ally/enemy additions, and deaths.
+   - Provide a web dashboard view for auditing purposes.
+
+6. **External Notifications**
+   - Optionally send webhooks or notifications to external services when important events occur.
+
+7. **Event Participant Limits**
+   - Allow setting a maximum number of participants per quest or boss event.
+   - Automatically prevent users from joining once the limit is reached.
+
+8. **User-Friendly Discord Commands**
+   - `/guild info` – Show guild statistics.
+   - `/player status` – Check if a player is online and recent deaths.
+   - `/events upcoming` – List upcoming quests and boss events.
+
+9. **Caching for Performance**
+   - Cache results from TibiaData API or website scraping to reduce API calls and speed up bot responses.
+
+10. **Multi-Guild Support**
+    - Support multiple Discord servers with separate guild configurations, quests, and boss events.
+    - The bot automatically uses the correct configuration based on the server ID.
+
+Output:
+- Symfony service/classes implementing these features.
+- Discord bot commands and reaction handling for the new features.
+- Web dashboard pages for leaderboards, activity history, and event management.
+- README updates explaining how to use the new features.

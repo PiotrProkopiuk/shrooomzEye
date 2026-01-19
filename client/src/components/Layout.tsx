@@ -7,10 +7,21 @@ import {
   Settings, 
   Menu,
   Shield,
-  Ghost
+  Ghost,
+  Trophy,
+  History,
+  ChevronDown
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useState } from "react";
 import bgTexture from "@assets/generated_images/dark_stone_rpg_texture_background.png";
 
@@ -18,17 +29,25 @@ const NAV_ITEMS = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/" },
   { label: "Guilds", icon: Shield, href: "/guilds" },
   { label: "Players", icon: Users, href: "/players" },
+  { label: "Leaderboards", icon: Trophy, href: "/leaderboards" },
   { label: "Events & Quests", icon: Swords, href: "/events" },
+  { label: "Audit Log", icon: History, href: "/history" },
   { label: "Bot Settings", icon: Settings, href: "/settings" },
+];
+
+const SERVERS = [
+  { id: "1", name: "Dark Alliance (Antica)" },
+  { id: "2", name: "Red Rose (Antica)" },
+  { id: "3", name: "Hill (Vunira)" },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const [activeServer, setActiveServer] = useState(SERVERS[0]);
 
   const Sidebar = () => (
     <div className="h-full flex flex-col bg-sidebar border-r border-border relative overflow-hidden">
-        {/* Texture Overlay */}
         <div 
             className="absolute inset-0 opacity-10 pointer-events-none mix-blend-overlay"
             style={{ backgroundImage: `url(${bgTexture})`, backgroundSize: 'cover' }}
@@ -46,7 +65,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </div>
 
-      <nav className="flex-1 p-4 space-y-1 z-10">
+      <nav className="flex-1 p-4 space-y-1 z-10 overflow-y-auto">
         {NAV_ITEMS.map((item) => {
           const isActive = location === item.href;
           return (
@@ -83,21 +102,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background flex text-foreground font-sans">
-      {/* Desktop Sidebar */}
       <aside className="hidden md:block w-64 fixed inset-y-0 z-50">
         <Sidebar />
       </aside>
 
-      {/* Mobile Sidebar */}
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetContent side="left" className="p-0 w-64 bg-sidebar border-r border-sidebar-border">
           <Sidebar />
         </SheetContent>
       </Sheet>
 
-      {/* Main Content */}
       <main className="flex-1 md:ml-64 flex flex-col min-h-screen relative">
-         {/* Texture Overlay for Main BG */}
          <div 
             className="fixed inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay z-0"
             style={{ backgroundImage: `url(${bgTexture})`, backgroundSize: 'cover' }}
@@ -108,9 +123,29 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsOpen(true)}>
                     <Menu className="h-5 w-5" />
                 </Button>
-                <h2 className="font-display text-lg text-foreground/80">
-                    {NAV_ITEMS.find(i => i.href === location)?.label || "Dashboard"}
-                </h2>
+                
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className="h-10 px-4 py-2 border-white/10 hover:bg-white/5 gap-2 text-foreground font-display font-semibold">
+                            <Shield className="h-4 w-4 text-primary" />
+                            {activeServer.name}
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-64 bg-sidebar border-sidebar-border text-foreground">
+                        <DropdownMenuLabel>Switch Guild Context</DropdownMenuLabel>
+                        <DropdownMenuSeparator className="bg-white/5" />
+                        {SERVERS.map(server => (
+                            <DropdownMenuItem 
+                                key={server.id} 
+                                onClick={() => setActiveServer(server)}
+                                className="hover:bg-sidebar-accent cursor-pointer"
+                            >
+                                {server.name}
+                            </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
             
             <div className="flex items-center gap-4">
