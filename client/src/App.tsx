@@ -21,6 +21,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
+      {/* Default to dashboard for mockup mode simplicity */}
       <Route path="/:rest*">
         <Layout>
           <Switch>
