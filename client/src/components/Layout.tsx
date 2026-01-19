@@ -1,0 +1,135 @@
+import { Link, useLocation } from "wouter";
+import { 
+  LayoutDashboard, 
+  Users, 
+  Swords, 
+  Calendar, 
+  Settings, 
+  Menu,
+  Shield,
+  Ghost
+} from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import bgTexture from "@assets/generated_images/dark_stone_rpg_texture_background.png";
+
+const NAV_ITEMS = [
+  { label: "Dashboard", icon: LayoutDashboard, href: "/" },
+  { label: "Guilds", icon: Shield, href: "/guilds" },
+  { label: "Players", icon: Users, href: "/players" },
+  { label: "Events & Quests", icon: Swords, href: "/events" },
+  { label: "Bot Settings", icon: Settings, href: "/settings" },
+];
+
+export function Layout({ children }: { children: React.ReactNode }) {
+  const [location] = useLocation();
+  const [isOpen, setIsOpen] = useState(false);
+
+  const Sidebar = () => (
+    <div className="h-full flex flex-col bg-sidebar border-r border-border relative overflow-hidden">
+        {/* Texture Overlay */}
+        <div 
+            className="absolute inset-0 opacity-10 pointer-events-none mix-blend-overlay"
+            style={{ backgroundImage: `url(${bgTexture})`, backgroundSize: 'cover' }}
+        />
+        
+      <div className="p-6 border-b border-sidebar-border z-10">
+        <div className="flex items-center gap-3">
+            <div className="h-10 w-10 bg-primary/20 rounded-lg flex items-center justify-center border border-primary/30">
+                <Ghost className="h-6 w-6 text-primary" />
+            </div>
+          <div>
+            <h1 className="font-display font-bold text-xl leading-none text-foreground">TibiaBot</h1>
+            <span className="text-xs text-muted-foreground">Admin Panel</span>
+          </div>
+        </div>
+      </div>
+
+      <nav className="flex-1 p-4 space-y-1 z-10">
+        {NAV_ITEMS.map((item) => {
+          const isActive = location === item.href;
+          return (
+            <Link key={item.href} href={item.href}>
+              <div
+                className={`flex items-center gap-3 px-4 py-3 rounded-md transition-all duration-200 cursor-pointer group ${
+                  isActive
+                    ? "bg-sidebar-primary/10 text-primary border border-sidebar-primary/20 shadow-[0_0_15px_-3px_rgba(234,179,8,0.15)]"
+                    : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent"
+                }`}
+              >
+                <item.icon className={`h-5 w-5 ${isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"}`} />
+                <span className="font-medium">{item.label}</span>
+              </div>
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className="p-4 border-t border-sidebar-border z-10">
+        <div className="bg-card/50 p-3 rounded border border-border">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">System Status</span>
+            <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Bot Online<br/>
+            Last checked: 2m ago
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-background flex text-foreground font-sans">
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:block w-64 fixed inset-y-0 z-50">
+        <Sidebar />
+      </aside>
+
+      {/* Mobile Sidebar */}
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <SheetContent side="left" className="p-0 w-64 bg-sidebar border-r border-sidebar-border">
+          <Sidebar />
+        </SheetContent>
+      </Sheet>
+
+      {/* Main Content */}
+      <main className="flex-1 md:ml-64 flex flex-col min-h-screen relative">
+         {/* Texture Overlay for Main BG */}
+         <div 
+            className="fixed inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay z-0"
+            style={{ backgroundImage: `url(${bgTexture})`, backgroundSize: 'cover' }}
+        />
+
+        <header className="h-16 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-40 px-6 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+                <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsOpen(true)}>
+                    <Menu className="h-5 w-5" />
+                </Button>
+                <h2 className="font-display text-lg text-foreground/80">
+                    {NAV_ITEMS.find(i => i.href === location)?.label || "Dashboard"}
+                </h2>
+            </div>
+            
+            <div className="flex items-center gap-4">
+                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/50 border border-white/5">
+                    <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <span className="text-xs font-medium text-muted-foreground">TibiaData API: Connected</span>
+                </div>
+                <div className="h-8 w-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary font-bold font-display">
+                    A
+                </div>
+            </div>
+        </header>
+
+        <div className="flex-1 p-6 relative z-10 overflow-y-auto">
+          <div className="max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {children}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
