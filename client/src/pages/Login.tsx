@@ -5,7 +5,8 @@ import bgTexture from "@assets/generated_images/dark_stone_rpg_texture_backgroun
 
 export default function Login() {
   const handleDiscordLogin = () => {
-    // In a real app, this would redirect to Discord OAuth
+    // Mocking the login by setting a flag in localStorage
+    localStorage.setItem("mock_auth", "true");
     window.location.href = "/";
   };
 
