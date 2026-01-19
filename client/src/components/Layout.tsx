@@ -49,12 +49,8 @@ const SERVERS = [
   { id: "3", name: "Hill (Vunira)", verified: false },
 ];
 
-export function Layout({ children }: { children: React.ReactNode }) {
-  const [location] = useLocation();
-  const [isOpen, setIsOpen] = useState(false);
-  const [activeServer, setActiveServer] = useState(SERVERS[0]);
-
-  const Sidebar = () => (
+function Sidebar({ location }: { location: string }) {
+  return (
     <div className="h-full flex flex-col bg-sidebar border-r border-border relative overflow-hidden">
         <div 
             className="absolute inset-0 opacity-10 pointer-events-none mix-blend-overlay"
@@ -127,16 +123,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </div>
     </div>
   );
+}
+
+export function Layout({ children }: { children: React.ReactNode }) {
+  const [location] = useLocation();
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeServer, setActiveServer] = useState(SERVERS[0]);
 
   return (
     <div className="min-h-screen bg-background flex text-foreground font-sans">
       <aside className="hidden md:block w-64 fixed inset-y-0 z-50">
-        <Sidebar />
+        <Sidebar location={location} />
       </aside>
 
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetContent side="left" className="p-0 w-64 bg-sidebar border-r border-sidebar-border">
-          <Sidebar />
+          <Sidebar location={location} />
         </SheetContent>
       </Sheet>
 
