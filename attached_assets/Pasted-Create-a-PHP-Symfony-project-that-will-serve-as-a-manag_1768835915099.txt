@@ -1,0 +1,51 @@
+Create a PHP Symfony project that will serve as a management panel for a Discord bot. The bot will be used for Discord servers managing guilds in the game Tibia. The entire application and bot interface should be in English.
+
+Requirements:
+
+1. **Symfony Setup**
+   - Use Symfony 6.x (latest stable).
+   - Include Doctrine ORM for database management.
+   - Include API Platform bundle for building API endpoints.
+   - Set up a simple web dashboard accessible from browser.
+
+2. **Database Entities**
+   - Guild
+     - name, server, description
+   - Player
+     - name, guild, server
+   - AllyGuild / EnemyGuild
+     - linked to Guild
+   - Quest
+     - name, description, date, participants
+   - BossEvent
+     - name, date, participants
+
+3. **Bot Functions**
+   - Guild setup per Discord server.
+   - Add allies/enemies and individual players.
+   - Retrieve player data from TibiaData API (if available) and online status by scraping tibia.com server pages.
+   - Monitor all online players: periodically check TibiaData API for new deaths, report them to a designated Discord channel.
+   - Allow Discord users to create quest signups and join via reactions.
+   - Same functionality for boss events.
+
+4. **Discord Integration**
+   - Set up Discord bot using `discord-php` or `team-reflex/discord-php`.
+   - Bot should handle slash commands and reactions for joining events.
+   - Bot should communicate with Symfony API to fetch/update guild, player, and event data.
+
+5. **Additional Requirements**
+   - Use English for all bot messages and web panel labels.
+   - Modular design: backend Symfony API, separate Discord bot service.
+   - Provide basic frontend in Twig for the web dashboard to manage guilds, players, quests, and boss events.
+
+6. **Development Environment**
+   - Make it compatible with Replit free tier.
+   - Include instructions for running the Symfony server and bot locally in Replit.
+   - Provide sample `.env` config with placeholders for Discord bot token and TibiaData API key.
+
+Output: 
+- Symfony project skeleton
+- Doctrine entities and migrations
+- Basic REST API endpoints for bot and dashboard
+- Discord bot skeleton with commands and reaction handling
+- README with instructions on how to run and connect everything
