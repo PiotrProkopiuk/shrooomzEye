@@ -16,11 +16,27 @@ import Templates from "@/pages/Templates";
 import Verification from "@/pages/Verification";
 import GuildStats from "@/pages/GuildStats";
 import Login from "@/pages/Login";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 function Router() {
   const [location, setLocation] = useLocation();
-  const isAuthenticated = localStorage.getItem("mock_auth") === "true";
+  const [isAuthenticated, setIsAuthenticated] = useState(localStorage.getItem("mock_auth") === "true");
+
+  useEffect(() => {
+    // Listen for storage changes to update auth state
+    const checkAuth = () => {
+      setIsAuthenticated(localStorage.getItem("mock_auth") === "true");
+    };
+    
+    window.addEventListener('storage', checkAuth);
+    // Poll for changes since storage event only fires on other windows
+    const interval = setInterval(checkAuth, 500);
+    
+    return () => {
+      window.removeEventListener('storage', checkAuth);
+      clearInterval(interval);
+    };
+  }, []);
 
   useEffect(() => {
     if (!isAuthenticated && location !== "/login") {
@@ -32,21 +48,25 @@ function Router() {
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/:rest*">
-        <Layout>
-          <Switch>
-            <Route path="/" component={Dashboard} />
-            <Route path="/verification" component={Verification} />
-            <Route path="/stats" component={GuildStats} />
-            <Route path="/guilds" component={Guilds} />
-            <Route path="/players" component={Players} />
-            <Route path="/leaderboards" component={Leaderboards} />
-            <Route path="/events" component={Events} />
-            <Route path="/templates" component={Templates} />
-            <Route path="/history" component={ActivityHistory} />
-            <Route path="/settings" component={Settings} />
-            <Route component={NotFound} />
-          </Switch>
-        </Layout>
+        {isAuthenticated ? (
+          <Layout>
+            <Switch>
+              <Route path="/" component={Dashboard} />
+              <Route path="/verification" component={Verification} />
+              <Route path="/stats" component={GuildStats} />
+              <Route path="/guilds" component={Guilds} />
+              <Route path="/players" component={Players} />
+              <Route path="/leaderboards" component={Leaderboards} />
+              <Route path="/events" component={Events} />
+              <Route path="/templates" component={Templates} />
+              <Route path="/history" component={ActivityHistory} />
+              <Route path="/settings" component={Settings} />
+              <Route component={NotFound} />
+            </Switch>
+          </Layout>
+        ) : (
+          <Route component={Login} />
+        )}
       </Route>
     </Switch>
   );
