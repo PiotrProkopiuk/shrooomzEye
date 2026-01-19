@@ -2,14 +2,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit2, Trash2, Swords, Shield } from "lucide-react";
+import { Plus, Edit2, Trash2, Swords, Shield, Globe } from "lucide-react";
+import { useLocation } from "wouter";
 
 const TEMPLATES = [
-  { id: 1, name: "Soul War Service", type: "Quest", description: "Full Soul War quest service for all bosses.", max: 15 },
-  { id: 2, name: "Ferumbras' Ascendant", type: "Quest", description: "Quest completion and final boss kill.", max: 15 },
-  { id: 3, name: "Gaz'haragoth Run", type: "Boss", description: "Organized raid for Gaz'haragoth.", max: 20 },
-  { id: 4, name: "Heart of Destruction", type: "Quest", description: "Full HOD run for gold tokens.", max: 15 },
-  { id: 5, name: "Library Hunt Team", type: "Boss", description: "High-level hunt team for Secret Library.", max: 5 },
+  { id: 1, name: "Soul War Service", type: "Quest", description: "Full Soul War quest service for all bosses.", max: 15, server: "Antica" },
+  { id: 2, name: "Ferumbras' Ascendant", type: "Quest", description: "Quest completion and final boss kill.", max: 15, server: "Antica" },
+  { id: 3, name: "Gaz'haragoth Run", type: "Boss", description: "Organized raid for Gaz'haragoth.", max: 20, server: "Vunira" },
+  { id: 4, name: "Heart of Destruction", type: "Quest", description: "Full HOD run for gold tokens.", max: 15, server: "Antica" },
+  { id: 5, name: "Library Hunt Team", type: "Boss", description: "High-level hunt team for Secret Library.", max: 5, server: "Vunira" },
 ];
 
 export default function Templates() {
@@ -17,8 +18,8 @@ export default function Templates() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-display font-bold text-foreground">Event Templates</h1>
-          <p className="text-muted-foreground">Manage pre-defined quest and boss event templates.</p>
+          <h1 className="text-3xl font-display font-bold text-foreground">Server Templates</h1>
+          <p className="text-muted-foreground">Manage quest and boss templates specific to this server's guild.</p>
         </div>
         <Button className="gap-2">
           <Plus className="h-4 w-4" />
@@ -28,8 +29,16 @@ export default function Templates() {
 
       <Card className="bg-card/50 border-border/50">
         <CardHeader>
-          <CardTitle>Global Templates</CardTitle>
-          <CardDescription>Templates allow leaders to quickly spawn events with pre-filled details.</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Guild Templates</CardTitle>
+              <CardDescription>Templates are isolated per Discord server configuration.</CardDescription>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
+              <Globe className="h-3 w-3 text-primary" />
+              <span className="text-xs font-medium text-primary uppercase">Current Server Scope</span>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
