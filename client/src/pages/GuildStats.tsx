@@ -15,7 +15,7 @@ import {
   AreaChart,
   Area
 } from "recharts";
-import { TrendingUp, TrendingDown, Swords, UserMinus, Activity, Zap } from "lucide-react";
+import { TrendingUp, TrendingDown, Swords, UserMinus, Activity, Zap, Eye } from "lucide-react";
 
 const GAIN_DATA = [
   { name: "Eternal Oblivion", exp: 45000000, levels: 4 },
@@ -42,11 +42,17 @@ export default function GuildStats() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-display font-bold text-foreground">Advanced Guild Statistics</h1>
-          <p className="text-muted-foreground">Experience tracking, level gains, and PvP impact analysis.</p>
+          <p className="text-muted-foreground">Experience tracking, level gains, and PvP impact analysis powered by TibSpy.</p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-secondary/30 rounded-lg border border-white/5">
-            <Activity className="h-4 w-4 text-emerald-500" />
-            <span className="text-xs font-medium text-muted-foreground">Next sync: in 5h 22m</span>
+        <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 px-4 py-2 bg-primary/5 rounded-lg border border-primary/20">
+                <Eye className="h-4 w-4 text-primary" />
+                <span className="text-xs font-medium text-muted-foreground">TibSpy API: Active</span>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 bg-secondary/30 rounded-lg border border-white/5">
+                <Activity className="h-4 w-4 text-emerald-500" />
+                <span className="text-xs font-medium text-muted-foreground">Next cyclic scan: 03:00 CET</span>
+            </div>
         </div>
       </div>
 
@@ -65,7 +71,7 @@ export default function GuildStats() {
                   <TrendingUp className="h-5 w-5 text-emerald-500" />
                   Top Experience Gains (Last 24h)
                 </CardTitle>
-                <CardDescription>Approximated experience based on Tibia.com level table.</CardDescription>
+                <CardDescription>Approximated experience based on TibSpy character snapshots.</CardDescription>
               </CardHeader>
               <CardContent className="h-[350px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -118,8 +124,11 @@ export default function GuildStats() {
         <TabsContent value="enemies" className="space-y-6">
           <Card className="bg-card/50 border-border/50">
             <CardHeader>
-              <CardTitle>Enemy Guild Overview</CardTitle>
-              <CardDescription>Aggregate statistics for tracked hostile organizations.</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <ShieldAlert className="h-5 w-5 text-destructive" />
+                Enemy Guild Intelligence
+              </CardTitle>
+              <CardDescription>Aggregate statistics updated nightly via TibSpy cyclic scans.</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -162,7 +171,7 @@ export default function GuildStats() {
                 <Swords className="h-5 w-5 text-destructive" />
                 Daily PvP Impact Summary
               </CardTitle>
-              <CardDescription>Confirmed kills and deaths involving guild members.</CardDescription>
+              <CardDescription>Confirmed kills and deaths verified via TibSpy activity logs.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">

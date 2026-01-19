@@ -1,25 +1,46 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, Swords, Skull } from "lucide-react";
+import { Search, Filter, Swords, Skull, RefreshCw, Eye, ShieldAlert } from "lucide-react";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Players() {
+  const { toast } = useToast();
+  const [isScanning, setIsScanning] = useState(false);
+
+  const handleManualScan = (name: string) => {
+    setIsScanning(true);
+    toast({
+        title: "TibSpy Scan Initiated",
+        description: `Fetching latest data for ${name}...`,
+    });
+    setTimeout(() => {
+        setIsScanning(false);
+        toast({
+            title: "Scan Complete",
+            description: `${name}'s level and online status updated via TibSpy.`,
+        });
+    }, 2000);
+  };
+
   return (
     <div className="space-y-6">
        <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-display font-bold text-foreground">Player Roster</h1>
-          <p className="text-muted-foreground">Monitor guild members, levels, and vocations.</p>
+          <p className="text-muted-foreground">Monitor guild members, levels, and vocations via TibSpy API.</p>
         </div>
         <div className="flex gap-2">
             <Button variant="outline" className="gap-2 border-primary/20 hover:bg-primary/10 hover:text-primary">
                 <Filter className="h-4 w-4" />
                 Filter
             </Button>
-            <Button className="gap-2">
-                Scan Guild
+            <Button className="gap-2" onClick={() => handleManualScan("Full Guild")}>
+                <RefreshCw className={`h-4 w-4 ${isScanning ? 'animate-spin' : ''}`} />
+                Scan All Members
             </Button>
         </div>
       </div>
@@ -49,6 +70,23 @@ export default function Players() {
                     ))}
                 </CardContent>
             </Card>
+
+            <Card className="bg-primary/5 border-primary/20 border">
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-xs uppercase tracking-widest flex items-center gap-2">
+                        <Eye className="h-3 w-3 text-primary" />
+                        TibSpy Integration
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                    <div className="text-[10px] text-muted-foreground leading-relaxed">
+                        Automatic scans occur every time a player is added. Nightly cyclic scans are performed at 03:00 CET.
+                    </div>
+                    <Badge variant="outline" className="text-[9px] bg-emerald-500/5 text-emerald-500 border-emerald-500/20">
+                        API Stable
+                    </Badge>
+                </CardContent>
+            </Card>
         </div>
 
         <div className="md:col-span-3">
@@ -66,37 +104,46 @@ export default function Players() {
                             <TableHead>Name</TableHead>
                             <TableHead>Vocation</TableHead>
                             <TableHead>Level</TableHead>
-                            <TableHead>Guild</TableHead>
                             <TableHead>Status</TableHead>
-                            <TableHead className="text-right">PVP Stats</TableHead>
+                            <TableHead className="text-right">TibSpy Info</TableHead>
                         </TableRow>
                         </TableHeader>
                         <TableBody>
                         {[
-                            { name: "Eternal Oblivion", voc: "Elite Knight", lvl: 350, guild: "Dark Alliance", status: "Online", kills: 120, deaths: 4 },
-                            { name: "Mateusz Dragon Wielki", voc: "Elder Druid", lvl: 340, guild: "Dark Alliance", status: "Offline", kills: 98, deaths: 12 },
-                            { name: "Bubble", voc: "Elite Knight", lvl: 250, guild: "Red Rose", status: "Online", kills: 450, deaths: 89 },
-                            { name: "Kharsek", voc: "Elite Knight", lvl: 1200, guild: "Neutral", status: "Online", kills: 12, deaths: 0 },
-                            { name: "Cachero", voc: "Master Sorcerer", lvl: 310, guild: "Enemy", status: "Online", kills: 342, deaths: 45 },
+                            { name: "Eternal Oblivion", voc: "Elite Knight", lvl: 350, guild: "Dark Alliance", status: "Online", lastScan: "2h ago", source: "TibSpy" },
+                            { name: "Mateusz Dragon Wielki", voc: "Elder Druid", lvl: 340, guild: "Dark Alliance", status: "Offline", lastScan: "5h ago", source: "TibSpy" },
+                            { name: "Bubble", voc: "Elite Knight", lvl: 250, guild: "Red Rose", status: "Online", lastScan: "15m ago", source: "TibSpy" },
+                            { name: "Kharsek", voc: "Elite Knight", lvl: 1200, guild: "Neutral", status: "Online", lastScan: "1h ago", source: "TibSpy" },
+                            { name: "Cachero", voc: "Master Sorcerer", lvl: 310, guild: "Enemy", status: "Online", lastScan: "3h ago", source: "TibSpy" },
                         ].map((p, i) => (
                             <TableRow key={i} className="border-white/5 hover:bg-white/5 group cursor-pointer">
-                                <TableCell className="font-medium text-primary group-hover:text-accent transition-colors">{p.name}</TableCell>
+                                <TableCell className="font-medium text-primary group-hover:text-accent transition-colors">
+                                    <div className="flex flex-col">
+                                        <span>{p.name}</span>
+                                        <span className="text-[10px] text-muted-foreground">{p.guild}</span>
+                                    </div>
+                                </TableCell>
                                 <TableCell className="text-muted-foreground">{p.voc}</TableCell>
                                 <TableCell className="font-mono">{p.lvl}</TableCell>
-                                <TableCell>{p.guild}</TableCell>
                                 <TableCell>
                                     <Badge variant="outline" className={`border-0 ${p.status === 'Online' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-secondary text-muted-foreground'}`}>
                                         {p.status}
                                     </Badge>
                                 </TableCell>
                                 <TableCell className="text-right">
-                                    <div className="flex items-center justify-end gap-3 text-xs">
-                                        <span className="flex items-center gap-1 text-emerald-400" title="Frags">
-                                            <Swords className="h-3 w-3" /> {p.kills}
-                                        </span>
-                                        <span className="flex items-center gap-1 text-destructive" title="Deaths">
-                                            <Skull className="h-3 w-3" /> {p.deaths}
-                                        </span>
+                                    <div className="flex flex-col items-end gap-1">
+                                        <span className="text-[10px] text-muted-foreground">Last: {p.lastScan}</span>
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="h-6 w-6 hover:bg-primary/10 hover:text-primary"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleManualScan(p.name);
+                                            }}
+                                        >
+                                            <RefreshCw className="h-3 w-3" />
+                                        </Button>
                                     </div>
                                 </TableCell>
                             </TableRow>

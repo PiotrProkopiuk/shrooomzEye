@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Save, Bot, MessageSquare, ShieldAlert, Zap, Bell, Server, Volume2, Users, Sliders } from "lucide-react";
+import { Save, Bot, MessageSquare, ShieldAlert, Zap, Bell, Server, Volume2, Users, Sliders, Eye, Clock } from "lucide-react";
 
 export default function Settings() {
   return (
@@ -43,20 +43,59 @@ export default function Settings() {
                           <Input id="server-id" defaultValue="1234567890" disabled className="bg-background/10 border-white/5 opacity-50 font-mono" />
                       </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+              </CardContent>
+          </Card>
+
+          {/* New TibSpy Configuration Section */}
+          <Card className="bg-card/50 border-emerald-500/20 border">
+              <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2 text-emerald-500">
+                        <Eye className="h-5 w-5" />
+                        TibSpy API Integration
+                    </CardTitle>
+                    <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20">Advanced Scans</Badge>
+                  </div>
+                  <CardDescription>Configure cyclic scans and character tracking behavior.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                  <div className="space-y-4">
                       <div className="space-y-2">
-                          <Label htmlFor="prefix">Command Prefix</Label>
-                          <Input id="prefix" defaultValue="!" className="bg-background/50 border-white/10" />
+                          <Label htmlFor="tibspy-key">TibSpy API Key</Label>
+                          <Input id="tibspy-key" type="password" placeholder="Enter your API key..." className="bg-background/50 border-white/10" />
                       </div>
-                      <div className="space-y-2">
-                          <Label htmlFor="world">Game World</Label>
-                          <Input id="world" defaultValue="Antica" className="bg-background/50 border-white/10" />
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex items-center justify-between p-3 rounded bg-background/30 border border-white/5">
+                            <div className="space-y-0.5">
+                                <Label className="text-xs">Scan on Add</Label>
+                                <p className="text-[10px] text-muted-foreground">Auto-scan new players.</p>
+                            </div>
+                            <Switch defaultChecked />
+                        </div>
+                        <div className="flex items-center justify-between p-3 rounded bg-background/30 border border-white/5">
+                            <div className="space-y-0.5">
+                                <Label className="text-xs">Cyclic Enemy Scans</Label>
+                                <p className="text-[10px] text-muted-foreground">Daily nightly scan.</p>
+                            </div>
+                            <Switch defaultChecked />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4 bg-background/20 p-4 rounded-lg border border-white/5">
+                        <Clock className="h-5 w-5 text-muted-foreground" />
+                        <div className="flex-1">
+                            <Label className="text-sm">Scan Schedule (Nightly)</Label>
+                            <div className="flex gap-2 mt-1">
+                                <Input type="time" defaultValue="03:00" className="w-24 bg-background/50 border-white/10 h-8" />
+                                <p className="text-[10px] text-muted-foreground self-center italic">Time in Server Time (CET)</p>
+                            </div>
+                        </div>
                       </div>
                   </div>
               </CardContent>
           </Card>
 
-          {/* New PVP Action Config Section */}
           <Card className="bg-card/50 border-primary/20 border">
               <CardHeader>
                   <div className="flex items-center justify-between">
@@ -86,66 +125,6 @@ export default function Settings() {
                             </SelectContent>
                           </Select>
                       </div>
-                  </div>
-
-                  <Separator className="bg-white/5" />
-
-                  <div className="space-y-4">
-                      <h3 className="text-sm font-medium flex items-center gap-2">
-                        <Sliders className="h-4 w-4 text-muted-foreground" />
-                        Movement Exclusions
-                      </h3>
-                      <div className="flex items-center justify-between">
-                          <div className="space-y-0.5">
-                              <Label>Ignore AFK Channels</Label>
-                              <p className="text-xs text-muted-foreground">Do not pull users from designated AFK rooms.</p>
-                          </div>
-                          <Switch defaultChecked />
-                      </div>
-                      <div className="flex items-center justify-between">
-                          <div className="space-y-0.5">
-                              <Label>Respect "Do Not Disturb"</Label>
-                              <p className="text-xs text-muted-foreground">Skip users with DND status set.</p>
-                          </div>
-                          <Switch />
-                      </div>
-                      <div className="space-y-2 pt-2">
-                        <Label className="text-xs">Excluded Channels (ID List)</Label>
-                        <Input defaultValue="98765, 43210" className="bg-background/50 border-white/10 font-mono text-xs" />
-                        <p className="text-[10px] text-muted-foreground italic">Comma-separated IDs of channels to ignore entirely.</p>
-                      </div>
-                  </div>
-              </CardContent>
-          </Card>
-
-          <Card className="bg-card/50 border-border/50">
-              <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                      <Zap className="h-5 w-5 text-orange-500" />
-                      Role Automation
-                  </CardTitle>
-                  <CardDescription>Automatically manage roles for event participants in this server.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                  <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                          <Label>Event Participant Role</Label>
-                          <p className="text-xs text-muted-foreground">Assign temporary role on signup.</p>
-                      </div>
-                      <Switch defaultChecked />
-                  </div>
-                  <div className="space-y-2">
-                      <Label>Server Role to Assign</Label>
-                      <Select defaultValue="participant">
-                          <SelectTrigger className="bg-background/50 border-white/10">
-                              <SelectValue placeholder="Select role" />
-                          </SelectTrigger>
-                          <SelectContent>
-                              <SelectItem value="participant">@Quest Participant</SelectItem>
-                              <SelectItem value="warrior">@War Member</SelectItem>
-                              <SelectItem value="ally">@Guild Ally</SelectItem>
-                          </SelectContent>
-                      </Select>
                   </div>
               </CardContent>
           </Card>

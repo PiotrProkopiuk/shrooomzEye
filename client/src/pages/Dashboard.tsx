@@ -30,6 +30,9 @@ export default function Dashboard() {
         response = { text: "✅ Joined Quest! You've been assigned the @Quest Participant role.", type: "success" };
     } else if (cmd === "/pvp_action") {
         response = { text: "⚔️ PVP ACTION: Moving 14 players from [General] and [Hunt-1] to [WAR ROOM]. 3 users in AFK were excluded.", type: "success" };
+    } else if (cmd.startsWith("/scan")) {
+        const name = cmd.split(" ")[1] || "Player";
+        response = { text: `🔍 TibSpy SCAN: Fetched level 350, Vocation Elite Knight, and online status for ${name}. Character data synced.`, type: "success" };
     } else if (cmd.startsWith("/boss list")) {
         response = { text: "Boss Events: [1] Gaz'haragoth (Today 20:00)", type: "success" };
     }
