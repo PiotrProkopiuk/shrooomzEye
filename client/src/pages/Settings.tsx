@@ -5,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save, Bot, MessageSquare, ShieldAlert, Zap, Bell, Server } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Save, Bot, MessageSquare, ShieldAlert, Zap, Bell, Server, Volume2, Users, Sliders } from "lucide-react";
 
 export default function Settings() {
   return (
@@ -50,6 +51,68 @@ export default function Settings() {
                       <div className="space-y-2">
                           <Label htmlFor="world">Game World</Label>
                           <Input id="world" defaultValue="Antica" className="bg-background/50 border-white/10" />
+                      </div>
+                  </div>
+              </CardContent>
+          </Card>
+
+          {/* New PVP Action Config Section */}
+          <Card className="bg-card/50 border-primary/20 border">
+              <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                        <Volume2 className="h-5 w-5 text-primary" />
+                        War Command: /pvp_action
+                    </CardTitle>
+                    <Badge className="bg-primary/20 text-primary border-primary/30">Leader Only</Badge>
+                  </div>
+                  <CardDescription>Configure the voice channel mass-move command for war situations.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                          <Label htmlFor="cmd-alias">Command Name / Alias</Label>
+                          <Input id="cmd-alias" defaultValue="/pvp_action" className="bg-background/50 border-white/10 font-mono" />
+                      </div>
+                      <div className="space-y-2">
+                          <Label htmlFor="target-role">Admin Role Required</Label>
+                          <Select defaultValue="leader">
+                            <SelectTrigger className="bg-background/50 border-white/10">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="leader">Leader & Vice</SelectItem>
+                                <SelectItem value="council">Council Members</SelectItem>
+                            </SelectContent>
+                          </Select>
+                      </div>
+                  </div>
+
+                  <Separator className="bg-white/5" />
+
+                  <div className="space-y-4">
+                      <h3 className="text-sm font-medium flex items-center gap-2">
+                        <Sliders className="h-4 w-4 text-muted-foreground" />
+                        Movement Exclusions
+                      </h3>
+                      <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                              <Label>Ignore AFK Channels</Label>
+                              <p className="text-xs text-muted-foreground">Do not pull users from designated AFK rooms.</p>
+                          </div>
+                          <Switch defaultChecked />
+                      </div>
+                      <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                              <Label>Respect "Do Not Disturb"</Label>
+                              <p className="text-xs text-muted-foreground">Skip users with DND status set.</p>
+                          </div>
+                          <Switch />
+                      </div>
+                      <div className="space-y-2 pt-2">
+                        <Label className="text-xs">Excluded Channels (ID List)</Label>
+                        <Input defaultValue="98765, 43210" className="bg-background/50 border-white/10 font-mono text-xs" />
+                        <p className="text-[10px] text-muted-foreground italic">Comma-separated IDs of channels to ignore entirely.</p>
                       </div>
                   </div>
               </CardContent>
