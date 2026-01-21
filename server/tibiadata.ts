@@ -63,17 +63,16 @@ export async function fetchGuildMembers(guildName: string): Promise<TibiaGuildMe
     const data = await cachedFetch(`${TIBIADATA_BASE}/guild/${encodeURIComponent(guildName)}`);
     if (!data.guild?.members) return [];
     
-    return data.guild.members.flatMap((rank: any) => 
-      rank.characters.map((char: any) => ({
-        name: char.name,
-        title: char.title || "",
-        rank: rank.rank_title,
-        vocation: char.vocation,
-        level: char.level,
-        joined: char.joined,
-        status: char.status,
-      }))
-    );
+    // TibiaData v4 returns members as a flat array
+    return data.guild.members.map((member: any) => ({
+      name: member.name,
+      title: member.title || "",
+      rank: member.rank || "Member",
+      vocation: member.vocation,
+      level: member.level,
+      joined: member.joined,
+      status: member.status,
+    }));
   } catch (error) {
     console.error(`Failed to fetch guild ${guildName}:`, error);
     return [];
