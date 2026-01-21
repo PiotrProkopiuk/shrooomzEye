@@ -3,13 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, Swords, Skull, RefreshCw, Eye, ShieldAlert } from "lucide-react";
+import { Search, Filter, RefreshCw, Eye } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { ANTICA_DATA } from "@/lib/mockData";
 
 export default function Players() {
   const { toast } = useToast();
   const [isScanning, setIsScanning] = useState(false);
+  const guildData = ANTICA_DATA.mainGuild;
 
   const handleManualScan = (name: string) => {
     setIsScanning(true);
@@ -31,7 +33,7 @@ export default function Players() {
        <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-display font-bold text-foreground">Player Roster</h1>
-          <p className="text-muted-foreground">Monitor guild members, levels, and vocations via TibSpy API.</p>
+          <p className="text-muted-foreground">Monitor {guildData.name} members on Antica via TibSpy API.</p>
         </div>
         <div className="flex gap-2">
             <Button variant="outline" className="gap-2 border-primary/20 hover:bg-primary/10 hover:text-primary">
@@ -49,25 +51,21 @@ export default function Players() {
         <div className="md:col-span-1 space-y-4">
             <Card className="bg-card/50 border-border/50 sticky top-24">
                 <CardHeader>
-                    <CardTitle className="text-sm uppercase tracking-wide text-muted-foreground">Vocation Stats</CardTitle>
+                    <CardTitle className="text-sm uppercase tracking-wide text-muted-foreground">Guild Stats</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    {[
-                        { label: "Elite Knights", count: 45, color: "bg-yellow-500" },
-                        { label: "Elder Druids", count: 38, color: "bg-blue-400" },
-                        { label: "Master Sorcerers", count: 32, color: "bg-red-400" },
-                        { label: "Royal Paladins", count: 27, color: "bg-emerald-400" },
-                    ].map((v, i) => (
-                        <div key={i} className="space-y-1">
-                            <div className="flex justify-between text-sm">
-                                <span>{v.label}</span>
-                                <span className="text-muted-foreground">{v.count}</span>
-                            </div>
-                            <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
-                                <div className={`h-full ${v.color} opacity-80`} style={{ width: `${(v.count / 45) * 100}%` }}></div>
-                            </div>
-                        </div>
-                    ))}
+                    <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Total Members</span>
+                        <span className="font-mono">{guildData.stats.totalMembers}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Avg. Level</span>
+                        <span className="font-mono">{guildData.stats.avgLevel}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Common Voc.</span>
+                        <span className="text-primary">{guildData.stats.commonVocation}</span>
+                    </div>
                 </CardContent>
             </Card>
 
@@ -103,48 +101,32 @@ export default function Players() {
                         <TableRow className="border-white/5 hover:bg-transparent">
                             <TableHead>Name</TableHead>
                             <TableHead>Vocation</TableHead>
-                            <TableHead>Level</TableHead>
+                            <TableHead>Level (Gained)</TableHead>
                             <TableHead>Status</TableHead>
-                            <TableHead className="text-right">TibSpy Info</TableHead>
+                            <TableHead className="text-right">EXP Gained</TableHead>
                         </TableRow>
                         </TableHeader>
                         <TableBody>
-                        {[
-                            { name: "Eternal Oblivion", voc: "Elite Knight", lvl: 350, guild: "Dark Alliance", status: "Online", lastScan: "2h ago", source: "TibSpy" },
-                            { name: "Mateusz Dragon Wielki", voc: "Elder Druid", lvl: 340, guild: "Dark Alliance", status: "Offline", lastScan: "5h ago", source: "TibSpy" },
-                            { name: "Bubble", voc: "Elite Knight", lvl: 250, guild: "Red Rose", status: "Online", lastScan: "15m ago", source: "TibSpy" },
-                            { name: "Kharsek", voc: "Elite Knight", lvl: 1200, guild: "Neutral", status: "Online", lastScan: "1h ago", source: "TibSpy" },
-                            { name: "Cachero", voc: "Master Sorcerer", lvl: 310, guild: "Enemy", status: "Online", lastScan: "3h ago", source: "TibSpy" },
-                        ].map((p, i) => (
+                        {guildData.members.map((p, i) => (
                             <TableRow key={i} className="border-white/5 hover:bg-white/5 group cursor-pointer">
                                 <TableCell className="font-medium text-primary group-hover:text-accent transition-colors">
                                     <div className="flex flex-col">
                                         <span>{p.name}</span>
-                                        <span className="text-[10px] text-muted-foreground">{p.guild}</span>
+                                        <span className="text-[10px] text-muted-foreground">{guildData.name}</span>
                                     </div>
                                 </TableCell>
-                                <TableCell className="text-muted-foreground">{p.voc}</TableCell>
-                                <TableCell className="font-mono">{p.lvl}</TableCell>
+                                <TableCell className="text-muted-foreground">{p.vocation}</TableCell>
+                                <TableCell className="font-mono">
+                                    {p.level} 
+                                    {p.levelsGained > 0 && <span className="text-emerald-500 text-xs ml-1">+{p.levelsGained}</span>}
+                                </TableCell>
                                 <TableCell>
-                                    <Badge variant="outline" className={`border-0 ${p.status === 'Online' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-secondary text-muted-foreground'}`}>
-                                        {p.status}
+                                    <Badge variant="outline" className={`border-0 ${p.online ? 'bg-emerald-500/10 text-emerald-500' : 'bg-secondary text-muted-foreground'}`}>
+                                        {p.online ? 'Online' : 'Offline'}
                                     </Badge>
                                 </TableCell>
-                                <TableCell className="text-right">
-                                    <div className="flex flex-col items-end gap-1">
-                                        <span className="text-[10px] text-muted-foreground">Last: {p.lastScan}</span>
-                                        <Button 
-                                            variant="ghost" 
-                                            size="icon" 
-                                            className="h-6 w-6 hover:bg-primary/10 hover:text-primary"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleManualScan(p.name);
-                                            }}
-                                        >
-                                            <RefreshCw className="h-3 w-3" />
-                                        </Button>
-                                    </div>
+                                <TableCell className="text-right font-mono text-muted-foreground">
+                                    {p.expGained}
                                 </TableCell>
                             </TableRow>
                         ))}

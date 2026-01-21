@@ -6,7 +6,10 @@ import {
   ShieldAlert,
   CalendarCheck,
   MessageSquare,
-  Send
+  Send,
+  Shield,
+  Zap,
+  TrendingUp
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -14,10 +17,20 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { ANTICA_DATA } from "@/lib/mockData";
 
 export default function Dashboard() {
   const [cmd, setCmd] = useState("");
   const [botOutput, setBotOutput] = useState<any[]>([]);
+  
+  const guildData = ANTICA_DATA.mainGuild;
+
+  const stats = [
+    { title: "Tracked Guilds", value: "3", icon: ShieldAlert, trend: "+1 this week", color: "text-primary" },
+    { title: "Members Online", value: guildData.stats.membersOnline, icon: Users, trend: "Stable (Active)", color: "text-emerald-500" },
+    { title: "Avg. Guild Level", value: guildData.stats.avgLevel, icon: Zap, trend: "+2.4 levels this week", color: "text-yellow-500" },
+    { title: "EXP Today", value: guildData.stats.expToday, icon: TrendingUp, trend: "Top 5% of server", color: "text-blue-400" },
+  ];
 
   const handleSimulate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,34 +58,16 @@ export default function Dashboard() {
     <div className="space-y-6">
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard 
-          title="Tracked Guilds" 
-          value="3" 
-          icon={ShieldAlert}
-          trend="+1 this week"
-          color="text-primary"
-        />
-        <StatsCard 
-          title="Online Players" 
-          value="142" 
-          icon={Users}
-          trend="85% activity"
-          color="text-emerald-500"
-        />
-        <StatsCard 
-          title="Recent Deaths" 
-          value="12" 
-          icon={Skull}
-          trend="-2 vs yesterday"
-          color="text-destructive"
-        />
-        <StatsCard 
-          title="Active Events" 
-          value="2" 
-          icon={CalendarCheck}
-          trend="Next: Soul War"
-          color="text-blue-400"
-        />
+        {stats.map((s, i) => (
+          <StatsCard 
+            key={i}
+            title={s.title} 
+            value={s.value.toString()} 
+            icon={s.icon}
+            trend={s.trend}
+            color={s.color}
+          />
+        ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
