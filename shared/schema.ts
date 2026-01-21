@@ -37,6 +37,7 @@ export const players = pgTable("players", {
   exp: text("exp"),
   guildId: integer("guild_id").references(() => guilds.id),
   guildType: text("guild_type").default("main"), // 'main', 'ally', 'enemy'
+  rank: text("rank"),
   online: boolean("online").default(false),
   lastScan: timestamp("last_scan").defaultNow(),
   startLevel: integer("start_level"),

@@ -90,6 +90,43 @@ export async function registerRoutes(
     res.json(updated);
   });
 
+  // Scan all members from TibiaData
+  app.post("/api/guilds/:id/scan-members", requireAuth, async (req, res) => {
+    const guildId = parseInt(req.params.id as string);
+    const guild = await storage.getGuild(guildId);
+    if (!guild) return res.status(404).json({ error: "Guild not found" });
+
+    const members = await fetchGuildMembers(guild.name);
+    if (!members.length) return res.status(404).json({ error: "No members found or guild not found on TibiaData" });
+
+    const results = { created: 0, updated: 0, total: members.length };
+
+    for (const member of members) {
+      const existing = await storage.getPlayerByName(member.name);
+      if (existing) {
+        await storage.updatePlayer(existing.id, {
+          level: member.level,
+          vocation: member.vocation,
+          rank: member.rank,
+          lastScan: new Date(),
+        });
+        results.updated++;
+      } else {
+        await storage.createPlayer({
+          name: member.name,
+          guildId,
+          level: member.level,
+          vocation: member.vocation,
+          rank: member.rank,
+          online: member.status === "online",
+        });
+        results.created++;
+      }
+    }
+
+    res.json(results);
+  });
+
   // Update player
   app.patch("/api/players/:id", requireAuth, async (req, res) => {
     const id = parseInt(req.params.id as string);
