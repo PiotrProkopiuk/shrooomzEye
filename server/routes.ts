@@ -1,63 +1,181 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertGuildSchema, insertPlayerSchema, insertTemplateSchema } from "@shared/schema";
+import { setupAuth, requireAuth, requireRole } from "./auth";
+import { fetchCharacter, fetchGuildMembers, fetchGuildInfo, verifyGuildDescription, scanCharacter } from "./tibiadata";
+import { insertGuildSchema, insertPlayerSchema, insertEventSchema, insertTemplateSchema } from "@shared/schema";
+import crypto from "crypto";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
   
-  // Guilds
+  // Setup authentication
+  setupAuth(app);
+
+  // ============ GUILDS ============
   app.get("/api/guilds", async (req, res) => {
     const guilds = await storage.getGuilds();
     res.json(guilds);
   });
 
-  app.post("/api/guilds", async (req, res) => {
-    const parsed = insertGuildSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json(parsed.error);
-    const guild = await storage.createGuild(parsed.data);
+  app.get("/api/guilds/:id", async (req, res) => {
+    const guild = await storage.getGuild(parseInt(req.params.id));
+    if (!guild) return res.status(404).json({ error: "Guild not found" });
     res.json(guild);
   });
 
-  // Players
+  app.post("/api/guilds", requireAuth, requireRole("ADMIN", "MODERATOR"), async (req, res) => {
+    const parsed = insertGuildSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json(parsed.error);
+    
+    // Generate verification code
+    const verificationCode = `TIBIABOT-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
+    const guild = await storage.createGuild({ ...parsed.data, verificationCode });
+    res.json(guild);
+  });
+
+  app.post("/api/guilds/:id/verify", requireAuth, requireRole("ADMIN"), async (req, res) => {
+    const guildId = parseInt(req.params.id as string);
+    const guild = await storage.getGuild(guildId);
+    if (!guild) return res.status(404).json({ error: "Guild not found" });
+
+    // Verify by checking Tibia.com guild description
+    const isVerified = await verifyGuildDescription(guild.name, guild.verificationCode || "");
+    if (!isVerified) {
+      return res.status(400).json({ 
+        error: "Verification failed", 
+        message: `Please add "${guild.verificationCode}" to your guild description on Tibia.com` 
+      });
+    }
+
+    const verified = await storage.verifyGuild(guildId, guild.verificationCode || "");
+    res.json(verified);
+  });
+
+  // ============ PLAYERS/CHARACTERS ============
   app.get("/api/players", async (req, res) => {
     const guildId = req.query.guildId ? parseInt(req.query.guildId as string) : undefined;
     const players = await storage.getPlayers(guildId);
     res.json(players);
   });
 
-  app.post("/api/players", async (req, res) => {
+  app.post("/api/players", requireAuth, async (req, res) => {
     const parsed = insertPlayerSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json(parsed.error);
-    const player = await storage.createPlayer(parsed.data);
+    
+    // Scan character on add
+    const characterData = await scanCharacter(parsed.data.name);
+    const playerData = characterData 
+      ? { ...parsed.data, level: characterData.level, vocation: characterData.vocation }
+      : parsed.data;
+    
+    const player = await storage.createPlayer(playerData);
     res.json(player);
   });
 
-  // PvP Logs
+  app.post("/api/players/:id/scan", requireAuth, async (req, res) => {
+    const player = await storage.getPlayer(parseInt(req.params.id as string));
+    if (!player) return res.status(404).json({ error: "Player not found" });
+
+    const data = await scanCharacter(player.name);
+    if (!data) return res.status(404).json({ error: "Character not found on Tibia" });
+
+    const updated = await storage.updatePlayer(player.id, {
+      level: data.level,
+      vocation: data.vocation,
+      lastScan: new Date(),
+    });
+    res.json(updated);
+  });
+
+  // TibiaData direct scan
+  app.get("/api/scan/:name", async (req, res) => {
+    const data = await fetchCharacter(req.params.name);
+    if (!data) return res.status(404).json({ error: "Character not found" });
+    res.json(data);
+  });
+
+  // ============ DEATHS / PVP ============
+  app.get("/api/deaths/:guildId", async (req, res) => {
+    const deaths = await storage.getDeaths(parseInt(req.params.guildId));
+    res.json(deaths);
+  });
+
   app.get("/api/pvp-logs/:guildId", async (req, res) => {
     const logs = await storage.getPvpLogs(parseInt(req.params.guildId));
     res.json(logs);
   });
 
-  // Templates
+  // ============ EVENTS ============
+  app.get("/api/events/:guildId", async (req, res) => {
+    const events = await storage.getEvents(parseInt(req.params.guildId));
+    res.json(events);
+  });
+
+  app.post("/api/events", requireAuth, async (req, res) => {
+    const parsed = insertEventSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json(parsed.error);
+    const event = await storage.createEvent(parsed.data);
+    res.json(event);
+  });
+
+  app.post("/api/events/:id/join", requireAuth, async (req, res) => {
+    const eventId = parseInt(req.params.id as string);
+    const event = await storage.getEvent(eventId);
+    if (!event) return res.status(404).json({ error: "Event not found" });
+    if (event.maxParticipants && event.currentParticipants! >= event.maxParticipants) {
+      return res.status(400).json({ error: "Event is full" });
+    }
+
+    const participant = await storage.joinEvent(eventId, {
+      eventId,
+      discordUserId: req.session.user!.discordId,
+      characterName: req.body.characterName,
+    });
+    res.json(participant);
+  });
+
+  app.get("/api/events/:id/participants", async (req, res) => {
+    const participants = await storage.getEventParticipants(parseInt(req.params.id));
+    res.json(participants);
+  });
+
+  // ============ TEMPLATES ============
   app.get("/api/templates", async (req, res) => {
     const templates = await storage.getTemplates();
     res.json(templates);
   });
 
-  // TibSpy Mock Scan Endpoint
-  app.post("/api/scan/:name", async (req, res) => {
-    const { name } = req.params;
-    // Mock TibSpy logic
-    res.json({
-      name,
-      level: 420,
-      vocation: "Elite Knight",
-      online: true,
-      lastScan: new Date().toISOString()
-    });
+  app.post("/api/templates", requireAuth, requireRole("ADMIN", "MODERATOR"), async (req, res) => {
+    const parsed = insertTemplateSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json(parsed.error);
+    const template = await storage.createTemplate(parsed.data);
+    res.json(template);
+  });
+
+  // ============ STATISTICS ============
+  app.get("/api/stats/:guildId", async (req, res) => {
+    const stats = await storage.getGuildStats(parseInt(req.params.guildId));
+    res.json(stats);
+  });
+
+  app.get("/api/leaderboard/:guildId", async (req, res) => {
+    const leaderboard = await storage.getLeaderboard(parseInt(req.params.guildId));
+    res.json(leaderboard);
+  });
+
+  // ============ GUILD INFO FROM TIBIADATA ============
+  app.get("/api/tibia/guild/:name", async (req, res) => {
+    const info = await fetchGuildInfo(req.params.name);
+    if (!info) return res.status(404).json({ error: "Guild not found" });
+    res.json(info);
+  });
+
+  app.get("/api/tibia/guild/:name/members", async (req, res) => {
+    const members = await fetchGuildMembers(req.params.name);
+    res.json(members);
   });
 
   return httpServer;

@@ -5,7 +5,12 @@ import bgTexture from "@assets/generated_images/dark_stone_rpg_texture_backgroun
 
 export default function Login() {
   const handleDiscordLogin = () => {
-    // Mocking the login by setting a flag in localStorage
+    // Redirect to Discord OAuth
+    window.location.href = "/api/auth/discord";
+  };
+
+  const handleMockLogin = () => {
+    // For development/testing without Discord
     localStorage.setItem("mock_auth", "true");
     window.location.href = "/";
   };
@@ -43,7 +48,25 @@ export default function Login() {
               Login with Discord
             </Button>
             
-            <div className="p-3 rounded-lg bg-secondary/30 border border-white/5 flex gap-3 items-start">
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-white/10" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">Or for testing</span>
+              </div>
+            </div>
+
+            <Button 
+              variant="outline" 
+              onClick={handleMockLogin}
+              className="w-full border-white/10"
+              data-testid="button-mock-login"
+            >
+              Continue as Demo User
+            </Button>
+
+            <div className="p-3 rounded-lg bg-secondary/30 border border-white/5 flex gap-3 items-start mt-4">
                 <Shield className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                 <p className="text-[11px] text-muted-foreground leading-relaxed">
                     This panel uses Discord OAuth2 to securely verify your permissions. 

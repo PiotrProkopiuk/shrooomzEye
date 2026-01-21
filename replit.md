@@ -2,7 +2,15 @@
 
 ## Overview
 
-This is a Discord bot management panel for Tibia game guilds. The application provides a web-based dashboard for managing guild members, tracking PvP statistics, organizing quests and boss events, and monitoring player activity. It integrates with external APIs like TibiaData for player information and supports multi-guild configurations across different Discord servers.
+This is a Discord bot management panel for Tibia game guilds.
+
+## Discord OAuth2 Configuration
+
+The application uses Discord OAuth2 for authentication. Required secrets:
+- `DISCORD_CLIENT_ID` - From Discord Developer Portal
+- `DISCORD_CLIENT_SECRET` - From Discord Developer Portal
+
+**Note:** Discord integration was set up manually (not via Replit integration). If reconfiguring, obtain credentials from https://discord.com/developers/applications The application provides a web-based dashboard for managing guild members, tracking PvP statistics, organizing quests and boss events, and monitoring player activity. It integrates with external APIs like TibiaData for player information and supports multi-guild configurations across different Discord servers.
 
 ## User Preferences
 
