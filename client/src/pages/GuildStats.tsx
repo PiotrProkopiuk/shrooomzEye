@@ -15,7 +15,7 @@ import {
   AreaChart,
   Area
 } from "recharts";
-import { TrendingUp, TrendingDown, Swords, UserMinus, Activity, Zap, Eye } from "lucide-react";
+import { TrendingUp, TrendingDown, Swords, UserMinus, Activity, Zap, Eye, ShieldAlert } from "lucide-react";
 
 const GAIN_DATA = [
   { name: "Eternal Oblivion", exp: 45000000, levels: 4 },
