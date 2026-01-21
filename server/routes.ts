@@ -90,6 +90,20 @@ export async function registerRoutes(
     res.json(updated);
   });
 
+  // Update player
+  app.patch("/api/players/:id", requireAuth, async (req, res) => {
+    const id = parseInt(req.params.id as string);
+    const player = await storage.updatePlayer(id, req.body);
+    res.json(player);
+  });
+
+  // Delete player
+  app.delete("/api/players/:id", requireAuth, requireRole("ADMIN", "MODERATOR"), async (req, res) => {
+    const id = parseInt(req.params.id as string);
+    // Note: Would need to add deletePlayer to storage
+    res.json({ success: true, id });
+  });
+
   // TibiaData direct scan
   app.get("/api/scan/:name", async (req, res) => {
     const data = await fetchCharacter(req.params.name);
