@@ -21,7 +21,7 @@ export default function GuildStats() {
   const enemyGuild = guilds?.find(g => g.isEnemy);
 
   const { data: players } = useQuery<Player[]>({ 
-    queryKey: ["/api/players", { guildId: mainGuild?.id }],
+    queryKey: [`/api/players?guildId=${mainGuild?.id}`],
     enabled: !!mainGuild?.id
   });
 

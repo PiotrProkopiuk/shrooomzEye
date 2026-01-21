@@ -19,7 +19,7 @@ export default function Players() {
   const mainGuild = guilds?.find(g => !g.isEnemy);
   
   const { data: players, isLoading } = useQuery<Player[]>({ 
-    queryKey: ["/api/players", { guildId: mainGuild?.id }],
+    queryKey: [`/api/players?guildId=${mainGuild?.id}`],
     enabled: !!mainGuild?.id
   });
 
@@ -29,7 +29,7 @@ export default function Players() {
     },
     onSuccess: async (response) => {
       const results = await response.json();
-      queryClient.invalidateQueries({ queryKey: ["/api/players"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/players?guildId=${mainGuild?.id}`] });
       toast({
         title: "Scan Complete",
         description: `Found ${results.total} members. Created ${results.created}, updated ${results.updated}.`,
