@@ -6,12 +6,20 @@ import { Badge } from "@/components/ui/badge";
 import { Search, Filter, RefreshCw, Eye } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { ANTICA_DATA } from "@/lib/mockData";
+import { useQuery } from "@tanstack/react-query";
+import { type Player, type Guild } from "@shared/schema";
 
 export default function Players() {
   const { toast } = useToast();
   const [isScanning, setIsScanning] = useState(false);
-  const guildData = ANTICA_DATA.mainGuild;
+  
+  const { data: guilds } = useQuery<Guild[]>({ queryKey: ["/api/guilds"] });
+  const mainGuild = guilds?.find(g => !g.isEnemy);
+  
+  const { data: players } = useQuery<Player[]>({ 
+    queryKey: ["/api/players", { guildId: mainGuild?.id }],
+    enabled: !!mainGuild?.id
+  });
 
   const handleManualScan = (name: string) => {
     setIsScanning(true);
@@ -56,15 +64,7 @@ export default function Players() {
                 <CardContent className="space-y-4">
                     <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Total Members</span>
-                        <span className="font-mono">{guildData.stats.totalMembers}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Avg. Level</span>
-                        <span className="font-mono">{guildData.stats.avgLevel}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Common Voc.</span>
-                        <span className="text-primary">{guildData.stats.commonVocation}</span>
+                        <span className="font-mono">{players?.length || 0}</span>
                     </div>
                 </CardContent>
             </Card>
@@ -107,18 +107,18 @@ export default function Players() {
                         </TableRow>
                         </TableHeader>
                         <TableBody>
-                        {guildData.members.map((p, i) => (
+                        {players?.map((p, i) => (
                             <TableRow key={i} className="border-white/5 hover:bg-white/5 group cursor-pointer">
                                 <TableCell className="font-medium text-primary group-hover:text-accent transition-colors">
                                     <div className="flex flex-col">
                                         <span>{p.name}</span>
-                                        <span className="text-[10px] text-muted-foreground">{guildData.name}</span>
+                                        <span className="text-[10px] text-muted-foreground">{mainGuild?.name}</span>
                                     </div>
                                 </TableCell>
                                 <TableCell className="text-muted-foreground">{p.vocation}</TableCell>
                                 <TableCell className="font-mono">
                                     {p.level} 
-                                    {p.levelsGained > 0 && <span className="text-emerald-500 text-xs ml-1">+{p.levelsGained}</span>}
+                                    {p.levelsGained && p.levelsGained > 0 && <span className="text-emerald-500 text-xs ml-1">+{p.levelsGained}</span>}
                                 </TableCell>
                                 <TableCell>
                                     <Badge variant="outline" className={`border-0 ${p.online ? 'bg-emerald-500/10 text-emerald-500' : 'bg-secondary text-muted-foreground'}`}>
