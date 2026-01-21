@@ -41,7 +41,7 @@ export default function Players() {
        <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-display font-bold text-foreground">Player Roster</h1>
-          <p className="text-muted-foreground">Monitor {guildData.name} members on Antica via TibSpy API.</p>
+          <p className="text-muted-foreground">Monitor {mainGuild?.name || 'guild'} members on Antica via TibSpy API.</p>
         </div>
         <div className="flex gap-2">
             <Button variant="outline" className="gap-2 border-primary/20 hover:bg-primary/10 hover:text-primary">
