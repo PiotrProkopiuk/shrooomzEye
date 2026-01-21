@@ -91,7 +91,7 @@ export async function registerRoutes(
   });
 
   // Scan all members from TibiaData
-  app.post("/api/guilds/:id/scan-members", requireAuth, async (req, res) => {
+  app.post("/api/guilds/:id/scan-members", async (req, res) => {
     const guildId = parseInt(req.params.id as string);
     const guild = await storage.getGuild(guildId);
     if (!guild) return res.status(404).json({ error: "Guild not found" });
