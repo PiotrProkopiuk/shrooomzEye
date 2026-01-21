@@ -17,19 +17,27 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-import { ANTICA_DATA } from "@/lib/mockData";
+import { useQuery } from "@tanstack/react-query";
+import { type Guild } from "@shared/schema";
 
 export default function Dashboard() {
   const [cmd, setCmd] = useState("");
   const [botOutput, setBotOutput] = useState<any[]>([]);
   
-  const guildData = ANTICA_DATA.mainGuild;
+  const { data: guilds } = useQuery<Guild[]>({ 
+    queryKey: ["/api/guilds"] 
+  });
+
+  const mainGuild = guilds?.find(g => !g.isEnemy) || {
+    name: "Codex",
+    stats: { membersOnline: 12, avgLevel: 420, expToday: "145.2M", totalMembers: 145 }
+  } as any;
 
   const stats = [
-    { title: "Tracked Guilds", value: "3", icon: ShieldAlert, trend: "+1 this week", color: "text-primary" },
-    { title: "Members Online", value: guildData.stats.membersOnline, icon: Users, trend: "Stable (Active)", color: "text-emerald-500" },
-    { title: "Avg. Guild Level", value: guildData.stats.avgLevel, icon: Zap, trend: "+2.4 levels this week", color: "text-yellow-500" },
-    { title: "EXP Today", value: guildData.stats.expToday, icon: TrendingUp, trend: "Top 5% of server", color: "text-blue-400" },
+    { title: "Tracked Guilds", value: guilds?.length || 3, icon: ShieldAlert, trend: "+1 this week", color: "text-primary" },
+    { title: "Members Online", value: mainGuild.stats?.membersOnline || 12, icon: Users, trend: "Stable (Active)", color: "text-emerald-500" },
+    { title: "Avg. Guild Level", value: mainGuild.stats?.avgLevel || 420, icon: Zap, trend: "+2.4 levels this week", color: "text-yellow-500" },
+    { title: "EXP Today", value: mainGuild.stats?.expToday || "145.2M", icon: TrendingUp, trend: "Top 5% of server", color: "text-blue-400" },
   ];
 
   const handleSimulate = (e: React.FormEvent) => {
