@@ -3,8 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Filter, RefreshCw, Eye, Users } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { type Player, type Guild } from "@shared/schema";
@@ -14,13 +15,22 @@ export default function Players() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedGuildId, setSelectedGuildId] = useState<number | null>(null);
   
   const { data: guilds } = useQuery<Guild[]>({ queryKey: ["/api/guilds"] });
-  const mainGuild = guilds?.find(g => !g.isEnemy);
+  
+  useEffect(() => {
+    if (guilds?.length && !selectedGuildId) {
+      const mainGuild = guilds.find(g => !g.isEnemy);
+      if (mainGuild) setSelectedGuildId(mainGuild.id);
+    }
+  }, [guilds, selectedGuildId]);
+
+  const selectedGuild = guilds?.find(g => g.id === selectedGuildId);
   
   const { data: players, isLoading } = useQuery<Player[]>({ 
-    queryKey: [`/api/players?guildId=${mainGuild?.id}`],
-    enabled: !!mainGuild?.id
+    queryKey: [`/api/players?guildId=${selectedGuildId}`],
+    enabled: !!selectedGuildId
   });
 
   const scanAllMutation = useMutation({
@@ -29,7 +39,7 @@ export default function Players() {
     },
     onSuccess: async (response) => {
       const results = await response.json();
-      queryClient.invalidateQueries({ queryKey: [`/api/players?guildId=${mainGuild?.id}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/players?guildId=${selectedGuildId}`] });
       toast({
         title: "Scan Complete",
         description: `Found ${results.total} members. Created ${results.created}, updated ${results.updated}.`,
@@ -45,12 +55,12 @@ export default function Players() {
   });
 
   const handleScanAll = () => {
-    if (!mainGuild?.id) {
-      toast({ title: "No Guild", description: "Please add a guild first.", variant: "destructive" });
+    if (!selectedGuildId || !selectedGuild) {
+      toast({ title: "No Guild", description: "Please select a guild first.", variant: "destructive" });
       return;
     }
-    toast({ title: "Scanning...", description: `Fetching all members for ${mainGuild.name} from TibiaData...` });
-    scanAllMutation.mutate(mainGuild.id);
+    toast({ title: "Scanning...", description: `Fetching all members for ${selectedGuild.name} from TibiaData...` });
+    scanAllMutation.mutate(selectedGuildId);
   };
 
   const filteredPlayers = players?.filter(p => 
@@ -65,17 +75,25 @@ export default function Players() {
        <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-display font-bold text-foreground">Player Roster</h1>
-          <p className="text-muted-foreground">Monitor {mainGuild?.name || 'guild'} members via TibiaData API.</p>
+          <p className="text-muted-foreground">Monitor guild members via TibiaData API.</p>
         </div>
         <div className="flex gap-2">
-            <Button variant="outline" className="gap-2 border-primary/20 hover:bg-primary/10 hover:text-primary">
-                <Filter className="h-4 w-4" />
-                Filter
-            </Button>
+            <Select value={selectedGuildId?.toString() || ""} onValueChange={v => setSelectedGuildId(parseInt(v))}>
+              <SelectTrigger className="w-[180px] bg-background/50 border-white/10">
+                <SelectValue placeholder="Select guild..." />
+              </SelectTrigger>
+              <SelectContent>
+                {guilds?.map(g => (
+                  <SelectItem key={g.id} value={g.id.toString()}>
+                    {g.name} {g.isEnemy ? "(Enemy)" : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Button 
               className="gap-2" 
               onClick={handleScanAll}
-              disabled={scanAllMutation.isPending || !mainGuild}
+              disabled={scanAllMutation.isPending || !selectedGuildId}
               data-testid="button-scan-all"
             >
                 <RefreshCw className={`h-4 w-4 ${scanAllMutation.isPending ? 'animate-spin' : ''}`} />
@@ -159,7 +177,7 @@ export default function Players() {
                                   <TableCell className="font-medium text-primary group-hover:text-accent transition-colors">
                                       <div className="flex flex-col">
                                           <span>{p.name}</span>
-                                          <span className="text-[10px] text-muted-foreground">{mainGuild?.name}</span>
+                                          <span className="text-[10px] text-muted-foreground">{selectedGuild?.name}</span>
                                       </div>
                                   </TableCell>
                                   <TableCell className="text-muted-foreground text-sm">{p.rank || "Member"}</TableCell>
