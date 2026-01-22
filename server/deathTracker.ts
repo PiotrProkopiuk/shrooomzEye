@@ -76,7 +76,7 @@ function parseDeathEntry(characterName: string, level: number, vocation: string,
   };
 }
 
-export async function checkDeathsForGuild(guildId: number): Promise<number> {
+export async function checkDeathsForGuild(guildId: number, maxAgeDays: number = 1): Promise<number> {
   const guild = await storage.getGuild(guildId);
   if (!guild) return 0;
 
@@ -85,14 +85,22 @@ export async function checkDeathsForGuild(guildId: number): Promise<number> {
 
   let newDeathsCount = 0;
   const victimGuildType = guild.isEnemy ? "enemy" : "main";
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - maxAgeDays);
+
+  console.log(`[DeathTracker] Checking ${guildPlayers.length} players from guild ${guild.name} (${victimGuildType})`);
 
   for (const player of guildPlayers) {
     try {
       const characterDeaths = await fetchCharacterDeaths(player.name);
       if (!characterDeaths || !characterDeaths.deaths.length) continue;
 
-      // Check last 5 deaths (TibiaData returns recent deaths)
-      for (const death of characterDeaths.deaths.slice(0, 5)) {
+      for (const death of characterDeaths.deaths) {
+        const deathDate = new Date(death.time);
+        
+        // Only process deaths within the time window
+        if (deathDate < cutoffDate) continue;
+
         const deathHash = generateDeathHash(player.name, death.time, death.level);
         
         // Check if this death already exists
@@ -114,14 +122,34 @@ export async function checkDeathsForGuild(guildId: number): Promise<number> {
         console.log(`[DeathTracker] New death detected: ${player.name} killed by ${deathData.killerName}`);
       }
 
-      // Rate limit - wait 500ms between characters
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Rate limit - wait 300ms between characters to speed things up
+      await new Promise(resolve => setTimeout(resolve, 300));
     } catch (error) {
       console.error(`[DeathTracker] Error checking deaths for ${player.name}:`, error);
     }
   }
 
   return newDeathsCount;
+}
+
+// Scan all guilds (both main and enemy)
+export async function scanAllGuildsForDeaths(maxAgeDays: number = 1): Promise<{ guild: string; type: string; newDeaths: number }[]> {
+  const allGuilds = await storage.getGuilds();
+  const results: { guild: string; type: string; newDeaths: number }[] = [];
+
+  console.log(`[DeathTracker] Starting full scan for ${allGuilds.length} guilds (last ${maxAgeDays} day(s))`);
+
+  for (const guild of allGuilds) {
+    const newDeaths = await checkDeathsForGuild(guild.id, maxAgeDays);
+    results.push({
+      guild: guild.name,
+      type: guild.isEnemy ? "enemy" : "main",
+      newDeaths,
+    });
+    console.log(`[DeathTracker] Guild ${guild.name} (${guild.isEnemy ? "enemy" : "main"}): ${newDeaths} new deaths`);
+  }
+
+  return results;
 }
 
 export async function getUnnotifiedDeaths(): Promise<any[]> {

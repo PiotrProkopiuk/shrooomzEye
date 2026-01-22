@@ -161,14 +161,38 @@ export async function registerRoutes(
   });
 
   // ============ DEATH TRACKER ============
+  // Static routes MUST come before parameterized routes
+
+  // Get recent deaths (all guilds)
+  app.get("/api/death-tracker/recent", async (req, res) => {
+    const limit = parseInt(req.query.limit as string) || 20;
+    const recentDeaths = await storage.getRecentDeaths(limit);
+    res.json(recentDeaths);
+  });
+
+  // Get unnotified deaths
+  app.get("/api/death-tracker/unnotified", async (req, res) => {
+    const unnotified = await deathTracker.getUnnotifiedDeaths();
+    res.json(unnotified);
+  });
+
+  // Full scan - check all guilds for deaths
+  app.post("/api/death-tracker/scan-all", async (req, res) => {
+    const days = parseInt(req.body.days as string) || 1;
+    console.log(`[API] Starting death scan for last ${days} day(s)...`);
+    const results = await deathTracker.scanAllGuildsForDeaths(days);
+    res.json({ results, totalNewDeaths: results.reduce((sum, r) => sum + r.newDeaths, 0) });
+  });
+
+  // Parameterized routes come after static routes
   // Get death tracker config for a guild
-  app.get("/api/death-tracker/:guildId", async (req, res) => {
+  app.get("/api/death-tracker/config/:guildId", async (req, res) => {
     const config = await deathTracker.getDeathTrackerConfig(parseInt(req.params.guildId));
     res.json(config || null);
   });
 
   // Save/update death tracker config
-  app.post("/api/death-tracker/:guildId", requireAuth, requireRole("ADMIN", "MODERATOR"), async (req, res) => {
+  app.post("/api/death-tracker/config/:guildId", requireAuth, requireRole("ADMIN", "MODERATOR"), async (req, res) => {
     const guildId = parseInt(req.params.guildId);
     const config = await deathTracker.saveDeathTrackerConfig({
       guildId,
@@ -182,23 +206,10 @@ export async function registerRoutes(
   });
 
   // Manually trigger death check for a guild
-  app.post("/api/death-tracker/:guildId/check", requireAuth, async (req, res) => {
+  app.post("/api/death-tracker/check/:guildId", requireAuth, async (req, res) => {
     const guildId = parseInt(req.params.guildId);
     const newDeaths = await deathTracker.checkDeathsForGuild(guildId);
     res.json({ newDeaths });
-  });
-
-  // Get recent deaths (all guilds)
-  app.get("/api/death-tracker/recent", async (req, res) => {
-    const limit = parseInt(req.query.limit as string) || 20;
-    const recentDeaths = await storage.getRecentDeaths(limit);
-    res.json(recentDeaths);
-  });
-
-  // Get unnotified deaths
-  app.get("/api/death-tracker/unnotified", async (req, res) => {
-    const unnotified = await deathTracker.getUnnotifiedDeaths();
-    res.json(unnotified);
   });
 
   // ============ EVENTS ============
