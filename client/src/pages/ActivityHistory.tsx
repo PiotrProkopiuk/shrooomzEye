@@ -3,7 +3,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Search, 
   History, 
@@ -65,13 +66,40 @@ export default function ActivityHistory() {
   const [activeTab, setActiveTab] = useState("deaths");
   const [filterType, setFilterType] = useState<"all" | "friend" | "enemy">("all");
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: deaths = [], isLoading: deathsLoading } = useQuery<Death[]>({
     queryKey: ["/api/death-tracker/recent"],
+    refetchInterval: 30000,
   });
 
   const { data: guilds = [] } = useQuery<Guild[]>({
     queryKey: ["/api/guilds"],
+  });
+
+  const scanMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/death-tracker/scan-all", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ days: 1 }),
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/death-tracker/recent"] });
+      toast({
+        title: "Scan Complete",
+        description: `Found ${data.totalNewDeaths || 0} new deaths`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Scan Failed",
+        description: "Could not scan for deaths",
+        variant: "destructive",
+      });
+    },
   });
 
   const guildMap = guilds.reduce((acc, g) => {
@@ -209,11 +237,12 @@ export default function ActivityHistory() {
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => queryClient.invalidateQueries({ queryKey: ["/api/death-tracker/recent"] })}
+                  onClick={() => scanMutation.mutate()}
+                  disabled={scanMutation.isPending}
                   data-testid="button-refresh-deaths"
                 >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Refresh
+                  <RefreshCw className={`h-4 w-4 mr-2 ${scanMutation.isPending ? 'animate-spin' : ''}`} />
+                  {scanMutation.isPending ? 'Scanning...' : 'Scan Now'}
                 </Button>
               </div>
             </CardHeader>

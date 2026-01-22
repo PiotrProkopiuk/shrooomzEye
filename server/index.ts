@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import { startDeathTrackerJob } from "./deathTracker";
 
 const app = express();
 const httpServer = createServer(app);
@@ -98,6 +99,10 @@ app.use((req, res, next) => {
     },
     () => {
       log(`serving on port ${port}`);
+      
+      // Start the death tracker background job (every 5 minutes)
+      startDeathTrackerJob(5);
+      log(`Death tracker cron started (every 5 minutes)`);
     },
   );
 })();
