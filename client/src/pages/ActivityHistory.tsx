@@ -143,9 +143,50 @@ export default function ActivityHistory() {
     refetchInterval: 30000,
   });
 
-  // Global stats (all deaths, no filters)
+  // Stats filtered by same criteria as deaths list
   const { data: stats } = useQuery<DeathStats>({
-    queryKey: ["/api/death-tracker/stats"],
+    queryKey: ["/api/death-tracker/stats", filterType, deathType, dateRange],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      
+      // Date range filter
+      if (dateRange !== "all") {
+        const now = new Date();
+        let dateFrom: Date;
+        switch (dateRange) {
+          case "today":
+            dateFrom = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+            break;
+          case "week":
+            dateFrom = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            break;
+          case "month":
+            dateFrom = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            break;
+          default:
+            dateFrom = new Date(0);
+        }
+        params.set("dateFrom", dateFrom.toISOString());
+      }
+      
+      // Death type filter (PvP/PvE)
+      if (deathType === "pvp") {
+        params.set("isPvp", "true");
+      } else if (deathType === "pve") {
+        params.set("isPvp", "false");
+      }
+      
+      // Guild type filter
+      if (filterType === "friend") {
+        params.set("victimGuildType", "main");
+      } else if (filterType === "enemy") {
+        params.set("victimGuildType", "enemy");
+      }
+      
+      const url = `/api/death-tracker/stats${params.toString() ? `?${params.toString()}` : ""}`;
+      const res = await fetch(url);
+      return res.json();
+    },
     refetchInterval: 30000,
   });
 

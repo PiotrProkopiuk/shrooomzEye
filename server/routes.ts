@@ -163,9 +163,25 @@ export async function registerRoutes(
   // ============ DEATH TRACKER ============
   // Static routes MUST come before parameterized routes
 
-  // Get death statistics (totals for all deaths)
+  // Get death statistics (totals, optionally filtered)
   app.get("/api/death-tracker/stats", async (req, res) => {
-    const stats = await storage.getDeathStats();
+    // Build filters from query params
+    const filters: any = {};
+    
+    if (req.query.dateFrom) {
+      filters.dateFrom = new Date(req.query.dateFrom as string);
+    }
+    if (req.query.dateTo) {
+      filters.dateTo = new Date(req.query.dateTo as string);
+    }
+    if (req.query.isPvp !== undefined) {
+      filters.isPvp = req.query.isPvp === 'true';
+    }
+    if (req.query.victimGuildType) {
+      filters.victimGuildType = req.query.victimGuildType as 'main' | 'enemy';
+    }
+    
+    const stats = await storage.getDeathStats(Object.keys(filters).length > 0 ? filters : undefined);
     res.json(stats);
   });
 

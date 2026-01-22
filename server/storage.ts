@@ -56,7 +56,7 @@ export interface IStorage {
   createDeath(death: InsertDeath): Promise<Death>;
   getRecentDeaths(page?: number, pageSize?: number, filters?: DeathFilters): Promise<{ deaths: Death[]; total: number; page: number; pageSize: number; totalPages: number }>;
   getTotalDeathsCount(): Promise<number>;
-  getDeathStats(): Promise<DeathStats>;
+  getDeathStats(filters?: DeathFilters): Promise<DeathStats>;
 
   // PvP Logs
   getPvpLogs(guildId: number): Promise<PvpLog[]>;
@@ -225,12 +225,43 @@ export class DatabaseStorage implements IStorage {
     return Number(result.count);
   }
 
-  async getDeathStats(): Promise<DeathStats> {
-    const [totalResult] = await db.select({ count: sql<number>`count(*)` }).from(deaths);
-    const [mainResult] = await db.select({ count: sql<number>`count(*)` }).from(deaths).where(eq(deaths.victimGuildType, 'main'));
-    const [enemyResult] = await db.select({ count: sql<number>`count(*)` }).from(deaths).where(eq(deaths.victimGuildType, 'enemy'));
-    const [pvpResult] = await db.select({ count: sql<number>`count(*)` }).from(deaths).where(eq(deaths.isPvp, true));
-    const [pveResult] = await db.select({ count: sql<number>`count(*)` }).from(deaths).where(eq(deaths.isPvp, false));
+  async getDeathStats(filters?: DeathFilters): Promise<DeathStats> {
+    // Build base conditions from filters
+    const baseConditions: any[] = [];
+    if (filters?.dateFrom) {
+      baseConditions.push(gte(deaths.occurredAt, filters.dateFrom));
+    }
+    if (filters?.dateTo) {
+      baseConditions.push(lte(deaths.occurredAt, filters.dateTo));
+    }
+    if (filters?.isPvp !== undefined) {
+      baseConditions.push(eq(deaths.isPvp, filters.isPvp));
+    }
+    if (filters?.victimGuildType) {
+      baseConditions.push(eq(deaths.victimGuildType, filters.victimGuildType));
+    }
+
+    // Total with filters
+    const baseQuery = baseConditions.length > 0 
+      ? db.select({ count: sql<number>`count(*)` }).from(deaths).where(and(...baseConditions))
+      : db.select({ count: sql<number>`count(*)` }).from(deaths);
+    const [totalResult] = await baseQuery;
+    
+    // Main guild deaths with filters
+    const mainConditions = [...baseConditions, eq(deaths.victimGuildType, 'main')];
+    const [mainResult] = await db.select({ count: sql<number>`count(*)` }).from(deaths).where(and(...mainConditions));
+    
+    // Enemy guild deaths with filters
+    const enemyConditions = [...baseConditions, eq(deaths.victimGuildType, 'enemy')];
+    const [enemyResult] = await db.select({ count: sql<number>`count(*)` }).from(deaths).where(and(...enemyConditions));
+    
+    // PvP deaths with filters
+    const pvpConditions = [...baseConditions, eq(deaths.isPvp, true)];
+    const [pvpResult] = await db.select({ count: sql<number>`count(*)` }).from(deaths).where(and(...pvpConditions));
+    
+    // PvE deaths with filters
+    const pveConditions = [...baseConditions, eq(deaths.isPvp, false)];
+    const [pveResult] = await db.select({ count: sql<number>`count(*)` }).from(deaths).where(and(...pveConditions));
     
     return {
       total: Number(totalResult.count),
