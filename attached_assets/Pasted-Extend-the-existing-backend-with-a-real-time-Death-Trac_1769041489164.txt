@@ -1,0 +1,82 @@
+Extend the existing backend with a real-time Death Tracker feature.
+
+Context:
+The project already includes:
+- Symfony backend
+- Discord bot integration
+- Guilds, characters, enemies
+- TibiaData API integration
+- Scheduled background jobs
+
+This task adds automatic death notifications to Discord.
+
+---
+
+### Death Tracker Requirements
+
+1. **Death Detection**
+- Periodically check TibiaData API for new deaths of:
+  - Main guild members
+  - Enemy guild members
+- Compare fetched deaths with stored data to avoid duplicates.
+- Store each new death in the database.
+
+2. **Death Entity**
+- Fields:
+  - id
+  - characterName
+  - level
+  - vocation
+  - killerName
+  - killerGuild (nullable)
+  - victimGuild (main / enemy)
+  - isPvp (boolean)
+  - occurredAt
+  - createdAt
+
+3. **Discord Channel Configuration**
+- Allow admins to configure:
+  - One Discord channel for main guild deaths
+  - One Discord channel for enemy deaths
+- Store channel IDs per Discord server.
+
+4. **Discord Notification**
+- When a new death is detected:
+  - Send a formatted embed message to the configured Discord channel.
+  - Include:
+    - Character name
+    - Level and vocation
+    - Killer (player or creature)
+    - Killer guild (if available)
+    - PvP indicator
+    - Timestamp
+- Use different embed colors for:
+  - Guild deaths
+  - Enemy deaths
+
+5. **Anti-Spam & Safety**
+- Ensure one notification per death.
+- Handle API downtime gracefully.
+- Log failures without crashing jobs.
+
+6. **Scheduling**
+- Run the death check every X minutes (configurable).
+- Use Symfony Messenger, cron, or scheduled command.
+
+7. **Permissions**
+- Only guild leaders / vice leaders can configure death channels.
+- Regular users only receive notifications.
+
+---
+
+### Output Requirements
+
+- Doctrine entity and repository for Death.
+- Service for death fetching and comparison.
+- Discord notification service using embeds.
+- Configuration endpoints or commands for channel setup.
+- Scheduled job / command for periodic execution.
+- README update explaining death tracker setup.
+
+Do NOT modify existing frontend or unrelated features.
+Keep the implementation modular and extensible.

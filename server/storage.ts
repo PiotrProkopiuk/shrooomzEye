@@ -39,6 +39,7 @@ export interface IStorage {
   // Deaths
   getDeaths(guildId: number, limit?: number): Promise<Death[]>;
   createDeath(death: InsertDeath): Promise<Death>;
+  getRecentDeaths(limit?: number): Promise<Death[]>;
 
   // PvP Logs
   getPvpLogs(guildId: number): Promise<PvpLog[]>;
@@ -163,6 +164,12 @@ export class DatabaseStorage implements IStorage {
   async createDeath(insertDeath: InsertDeath): Promise<Death> {
     const [death] = await db.insert(deaths).values(insertDeath).returning();
     return death;
+  }
+
+  async getRecentDeaths(limit = 20): Promise<Death[]> {
+    return await db.select().from(deaths)
+      .orderBy(desc(deaths.createdAt))
+      .limit(limit);
   }
 
   // PvP Logs

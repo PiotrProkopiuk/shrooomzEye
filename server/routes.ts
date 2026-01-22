@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, requireAuth, requireRole } from "./auth";
 import { fetchCharacter, fetchGuildMembers, fetchGuildInfo, verifyGuildDescription, scanCharacter } from "./tibiadata";
+import * as deathTracker from "./deathTracker";
 import { insertGuildSchema, insertPlayerSchema, insertEventSchema, insertTemplateSchema } from "@shared/schema";
 import crypto from "crypto";
 
@@ -157,6 +158,47 @@ export async function registerRoutes(
   app.get("/api/pvp-logs/:guildId", async (req, res) => {
     const logs = await storage.getPvpLogs(parseInt(req.params.guildId));
     res.json(logs);
+  });
+
+  // ============ DEATH TRACKER ============
+  // Get death tracker config for a guild
+  app.get("/api/death-tracker/:guildId", async (req, res) => {
+    const config = await deathTracker.getDeathTrackerConfig(parseInt(req.params.guildId));
+    res.json(config || null);
+  });
+
+  // Save/update death tracker config
+  app.post("/api/death-tracker/:guildId", requireAuth, requireRole("ADMIN", "MODERATOR"), async (req, res) => {
+    const guildId = parseInt(req.params.guildId);
+    const config = await deathTracker.saveDeathTrackerConfig({
+      guildId,
+      discordServerId: req.body.discordServerId,
+      mainGuildDeathChannelId: req.body.mainGuildDeathChannelId,
+      enemyDeathChannelId: req.body.enemyDeathChannelId,
+      enabled: req.body.enabled ?? true,
+      checkIntervalMinutes: req.body.checkIntervalMinutes ?? 5,
+    });
+    res.json(config);
+  });
+
+  // Manually trigger death check for a guild
+  app.post("/api/death-tracker/:guildId/check", requireAuth, async (req, res) => {
+    const guildId = parseInt(req.params.guildId);
+    const newDeaths = await deathTracker.checkDeathsForGuild(guildId);
+    res.json({ newDeaths });
+  });
+
+  // Get recent deaths (all guilds)
+  app.get("/api/death-tracker/recent", async (req, res) => {
+    const limit = parseInt(req.query.limit as string) || 20;
+    const recentDeaths = await storage.getRecentDeaths(limit);
+    res.json(recentDeaths);
+  });
+
+  // Get unnotified deaths
+  app.get("/api/death-tracker/unnotified", async (req, res) => {
+    const unnotified = await deathTracker.getUnnotifiedDeaths();
+    res.json(unnotified);
   });
 
   // ============ EVENTS ============

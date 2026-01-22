@@ -45,17 +45,37 @@ export const players = pgTable("players", {
   expGained: text("exp_gained"),
 });
 
-// Deaths/PvP Tracking
+// Deaths/PvP Tracking (Enhanced for Death Tracker)
 export const deaths = pgTable("deaths", {
   id: serial("id").primaryKey(),
   characterId: integer("character_id").references(() => players.id),
   characterName: text("character_name").notNull(),
+  level: integer("level"),
+  vocation: text("vocation"),
   killerName: text("killer_name"),
+  killerGuild: text("killer_guild"),
   killerGuildId: integer("killer_guild_id").references(() => guilds.id),
   victimGuildId: integer("victim_guild_id").references(() => guilds.id),
-  timestamp: timestamp("timestamp").defaultNow(),
-  level: integer("level"),
+  victimGuildType: text("victim_guild_type"), // 'main' or 'enemy'
+  isPvp: boolean("is_pvp").default(false),
+  occurredAt: timestamp("occurred_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  notified: boolean("notified").default(false),
+  deathHash: text("death_hash").unique(), // For duplicate detection
   description: text("description"),
+});
+
+// Death Tracker Channel Configuration
+export const deathTrackerConfig = pgTable("death_tracker_config", {
+  id: serial("id").primaryKey(),
+  guildId: integer("guild_id").references(() => guilds.id),
+  discordServerId: text("discord_server_id").notNull(),
+  mainGuildDeathChannelId: text("main_guild_death_channel_id"),
+  enemyDeathChannelId: text("enemy_death_channel_id"),
+  enabled: boolean("enabled").default(true),
+  checkIntervalMinutes: integer("check_interval_minutes").default(5),
+  lastCheckedAt: timestamp("last_checked_at"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // PvP Daily Summaries
@@ -125,12 +145,13 @@ export const scanCache = pgTable("scan_cache", {
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
 export const insertGuildSchema = createInsertSchema(guilds).omit({ id: true });
 export const insertPlayerSchema = createInsertSchema(players).omit({ id: true });
-export const insertDeathSchema = createInsertSchema(deaths).omit({ id: true });
+export const insertDeathSchema = createInsertSchema(deaths).omit({ id: true, createdAt: true });
 export const insertPvpLogSchema = createInsertSchema(pvpLogs).omit({ id: true });
 export const insertEventSchema = createInsertSchema(events).omit({ id: true, createdAt: true });
 export const insertEventParticipantSchema = createInsertSchema(eventParticipants).omit({ id: true, joinedAt: true });
 export const insertTemplateSchema = createInsertSchema(templates).omit({ id: true });
 export const insertPvpActionConfigSchema = createInsertSchema(pvpActionConfig).omit({ id: true });
+export const insertDeathTrackerConfigSchema = createInsertSchema(deathTrackerConfig).omit({ id: true, createdAt: true });
 
 // Types
 export type User = typeof users.$inferSelect;
@@ -151,3 +172,5 @@ export type Template = typeof templates.$inferSelect;
 export type InsertTemplate = z.infer<typeof insertTemplateSchema>;
 export type PvpActionConfig = typeof pvpActionConfig.$inferSelect;
 export type InsertPvpActionConfig = z.infer<typeof insertPvpActionConfigSchema>;
+export type DeathTrackerConfig = typeof deathTrackerConfig.$inferSelect;
+export type InsertDeathTrackerConfig = z.infer<typeof insertDeathTrackerConfigSchema>;
