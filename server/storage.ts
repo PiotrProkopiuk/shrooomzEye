@@ -157,7 +157,7 @@ export class DatabaseStorage implements IStorage {
   async getDeaths(guildId: number, limit = 50): Promise<Death[]> {
     return await db.select().from(deaths)
       .where(eq(deaths.victimGuildId, guildId))
-      .orderBy(desc(deaths.timestamp))
+      .orderBy(desc(deaths.occurredAt))
       .limit(limit);
   }
 
@@ -166,9 +166,9 @@ export class DatabaseStorage implements IStorage {
     return death;
   }
 
-  async getRecentDeaths(limit = 20): Promise<Death[]> {
+  async getRecentDeaths(limit = 100): Promise<Death[]> {
     return await db.select().from(deaths)
-      .orderBy(desc(deaths.createdAt))
+      .orderBy(desc(deaths.occurredAt))
       .limit(limit);
   }
 

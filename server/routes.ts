@@ -165,7 +165,7 @@ export async function registerRoutes(
 
   // Get recent deaths (all guilds)
   app.get("/api/death-tracker/recent", async (req, res) => {
-    const limit = parseInt(req.query.limit as string) || 20;
+    const limit = parseInt(req.query.limit as string) || 100;
     const recentDeaths = await storage.getRecentDeaths(limit);
     res.json(recentDeaths);
   });
