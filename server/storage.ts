@@ -39,7 +39,8 @@ export interface IStorage {
   // Deaths
   getDeaths(guildId: number, limit?: number): Promise<Death[]>;
   createDeath(death: InsertDeath): Promise<Death>;
-  getRecentDeaths(limit?: number): Promise<Death[]>;
+  getRecentDeaths(page?: number, pageSize?: number): Promise<{ deaths: Death[]; total: number; page: number; pageSize: number; totalPages: number }>;
+  getTotalDeathsCount(): Promise<number>;
 
   // PvP Logs
   getPvpLogs(guildId: number): Promise<PvpLog[]>;
@@ -166,10 +167,23 @@ export class DatabaseStorage implements IStorage {
     return death;
   }
 
-  async getRecentDeaths(limit = 100): Promise<Death[]> {
-    return await db.select().from(deaths)
+  async getRecentDeaths(page = 1, pageSize = 50): Promise<{ deaths: Death[]; total: number; page: number; pageSize: number; totalPages: number }> {
+    const offset = (page - 1) * pageSize;
+    const [countResult] = await db.select({ count: sql<number>`count(*)` }).from(deaths);
+    const total = Number(countResult.count);
+    const totalPages = Math.ceil(total / pageSize);
+    
+    const deathsList = await db.select().from(deaths)
       .orderBy(desc(deaths.occurredAt))
-      .limit(limit);
+      .limit(pageSize)
+      .offset(offset);
+    
+    return { deaths: deathsList, total, page, pageSize, totalPages };
+  }
+
+  async getTotalDeathsCount(): Promise<number> {
+    const [result] = await db.select({ count: sql<number>`count(*)` }).from(deaths);
+    return Number(result.count);
   }
 
   // PvP Logs

@@ -163,11 +163,12 @@ export async function registerRoutes(
   // ============ DEATH TRACKER ============
   // Static routes MUST come before parameterized routes
 
-  // Get recent deaths (all guilds)
+  // Get recent deaths (all guilds) with pagination
   app.get("/api/death-tracker/recent", async (req, res) => {
-    const limit = parseInt(req.query.limit as string) || 100;
-    const recentDeaths = await storage.getRecentDeaths(limit);
-    res.json(recentDeaths);
+    const page = parseInt(req.query.page as string) || 1;
+    const pageSize = parseInt(req.query.pageSize as string) || 50;
+    const result = await storage.getRecentDeaths(page, pageSize);
+    res.json(result);
   });
 
   // Get unnotified deaths

@@ -61,17 +61,35 @@ function formatTime(dateStr: string | null): string {
   }
 }
 
+interface DeathsResponse {
+  deaths: Death[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 export default function ActivityHistory() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("deaths");
   const [filterType, setFilterType] = useState<"all" | "friend" | "enemy">("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 50;
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: deaths = [], isLoading: deathsLoading } = useQuery<Death[]>({
-    queryKey: ["/api/death-tracker/recent"],
+  const { data: deathsData, isLoading: deathsLoading } = useQuery<DeathsResponse>({
+    queryKey: ["/api/death-tracker/recent", currentPage, pageSize],
+    queryFn: async () => {
+      const res = await fetch(`/api/death-tracker/recent?page=${currentPage}&pageSize=${pageSize}`);
+      return res.json();
+    },
     refetchInterval: 30000,
   });
+
+  const deaths = deathsData?.deaths || [];
+  const totalPages = deathsData?.totalPages || 1;
+  const totalDeaths = deathsData?.total || 0;
 
   const { data: guilds = [] } = useQuery<Guild[]>({
     queryKey: ["/api/guilds"],
@@ -87,10 +105,11 @@ export default function ActivityHistory() {
       return res.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/death-tracker/recent"] });
+      setCurrentPage(1);
+      queryClient.invalidateQueries({ queryKey: ["/api/death-tracker/recent", 1, pageSize] });
       toast({
-        title: "Scan Complete",
-        description: `Found ${data.totalNewDeaths || 0} new deaths`,
+        title: "Skanowanie zakończone",
+        description: `Znaleziono ${data.totalNewDeaths || 0} nowych śmierci`,
       });
     },
     onError: () => {
@@ -347,6 +366,35 @@ export default function ActivityHistory() {
                       </div>
                     );
                   })}
+                </div>
+              )}
+              
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between p-4 border-t border-white/5">
+                  <span className="text-sm text-muted-foreground">
+                    Strona {currentPage} z {totalPages} ({totalDeaths} śmierci)
+                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage <= 1}
+                      data-testid="button-prev-page"
+                    >
+                      Poprzednia
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage >= totalPages}
+                      data-testid="button-next-page"
+                    >
+                      Następna
+                    </Button>
+                  </div>
                 </div>
               )}
             </CardContent>
