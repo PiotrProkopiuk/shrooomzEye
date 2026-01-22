@@ -163,11 +163,34 @@ export async function registerRoutes(
   // ============ DEATH TRACKER ============
   // Static routes MUST come before parameterized routes
 
-  // Get recent deaths (all guilds) with pagination
+  // Get death statistics (totals for all deaths)
+  app.get("/api/death-tracker/stats", async (req, res) => {
+    const stats = await storage.getDeathStats();
+    res.json(stats);
+  });
+
+  // Get recent deaths (all guilds) with pagination and filters
   app.get("/api/death-tracker/recent", async (req, res) => {
     const page = parseInt(req.query.page as string) || 1;
     const pageSize = parseInt(req.query.pageSize as string) || 50;
-    const result = await storage.getRecentDeaths(page, pageSize);
+    
+    // Build filters
+    const filters: { dateFrom?: Date; dateTo?: Date; isPvp?: boolean; victimGuildType?: 'main' | 'enemy' } = {};
+    
+    if (req.query.dateFrom) {
+      filters.dateFrom = new Date(req.query.dateFrom as string);
+    }
+    if (req.query.dateTo) {
+      filters.dateTo = new Date(req.query.dateTo as string);
+    }
+    if (req.query.isPvp !== undefined) {
+      filters.isPvp = req.query.isPvp === 'true';
+    }
+    if (req.query.victimGuildType) {
+      filters.victimGuildType = req.query.victimGuildType as 'main' | 'enemy';
+    }
+    
+    const result = await storage.getRecentDeaths(page, pageSize, Object.keys(filters).length > 0 ? filters : undefined);
     res.json(result);
   });
 

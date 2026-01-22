@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -18,10 +19,12 @@ import {
   RefreshCw,
   Clock,
   Trophy,
-  HeartCrack
+  HeartCrack,
+  Filter,
+  X
 } from "lucide-react";
 import { useState } from "react";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format, subDays } from "date-fns";
 
 interface Death {
   id: number;
@@ -69,21 +72,80 @@ interface DeathsResponse {
   totalPages: number;
 }
 
+interface DeathStats {
+  total: number;
+  mainGuildDeaths: number;
+  enemyGuildDeaths: number;
+  pvpDeaths: number;
+  pveDeaths: number;
+}
+
 export default function ActivityHistory() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("deaths");
   const [filterType, setFilterType] = useState<"all" | "friend" | "enemy">("all");
+  const [deathType, setDeathType] = useState<"all" | "pvp" | "pve">("all");
+  const [dateRange, setDateRange] = useState<"all" | "today" | "week" | "month">("all");
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 50;
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  // Build query params for API
+  const buildQueryParams = () => {
+    const params = new URLSearchParams();
+    params.set("page", currentPage.toString());
+    params.set("pageSize", pageSize.toString());
+    
+    // Date filters
+    if (dateRange !== "all") {
+      const now = new Date();
+      let fromDate: Date;
+      switch (dateRange) {
+        case "today":
+          fromDate = subDays(now, 1);
+          break;
+        case "week":
+          fromDate = subDays(now, 7);
+          break;
+        case "month":
+          fromDate = subDays(now, 30);
+          break;
+        default:
+          fromDate = now;
+      }
+      params.set("dateFrom", fromDate.toISOString());
+    }
+    
+    // Death type filter (PvP/PvE) - applied via API
+    if (deathType === "pvp") {
+      params.set("isPvp", "true");
+    } else if (deathType === "pve") {
+      params.set("isPvp", "false");
+    }
+    
+    // Guild type filter - applied via API
+    if (filterType === "friend") {
+      params.set("victimGuildType", "main");
+    } else if (filterType === "enemy") {
+      params.set("victimGuildType", "enemy");
+    }
+    
+    return params.toString();
+  };
+
   const { data: deathsData, isLoading: deathsLoading } = useQuery<DeathsResponse>({
-    queryKey: ["/api/death-tracker/recent", currentPage, pageSize],
+    queryKey: ["/api/death-tracker/recent", currentPage, pageSize, filterType, deathType, dateRange],
     queryFn: async () => {
-      const res = await fetch(`/api/death-tracker/recent?page=${currentPage}&pageSize=${pageSize}`);
+      const res = await fetch(`/api/death-tracker/recent?${buildQueryParams()}`);
       return res.json();
     },
+    refetchInterval: 30000,
+  });
+
+  // Global stats (all deaths, no filters)
+  const { data: stats } = useQuery<DeathStats>({
+    queryKey: ["/api/death-tracker/stats"],
     refetchInterval: 30000,
   });
 
@@ -106,7 +168,8 @@ export default function ActivityHistory() {
     },
     onSuccess: (data) => {
       setCurrentPage(1);
-      queryClient.invalidateQueries({ queryKey: ["/api/death-tracker/recent", 1, pageSize] });
+      queryClient.invalidateQueries({ queryKey: ["/api/death-tracker/recent"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/death-tracker/stats"] });
       toast({
         title: "Skanowanie zakończone",
         description: `Znaleziono ${data.totalNewDeaths || 0} nowych śmierci`,
@@ -114,8 +177,8 @@ export default function ActivityHistory() {
     },
     onError: () => {
       toast({
-        title: "Scan Failed",
-        description: "Could not scan for deaths",
+        title: "Błąd skanowania",
+        description: "Nie udało się przeskanować śmierci",
         variant: "destructive",
       });
     },
@@ -126,25 +189,36 @@ export default function ActivityHistory() {
     return acc;
   }, {} as Record<number, string>);
 
-  const sortedDeaths = [...deaths].sort((a, b) => {
-    const dateA = new Date(a.occurredAt || a.createdAt || 0).getTime();
-    const dateB = new Date(b.occurredAt || b.createdAt || 0).getTime();
-    return dateB - dateA;
-  });
+  // Only local filter by search term (API handles other filters)
+  const filteredDeaths = deaths.filter(death => 
+    death.characterName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (death.killerName && death.killerName.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
-  const filteredDeaths = sortedDeaths
-    .filter(death => {
-      if (filterType === "friend") return death.victimGuildType === "main";
-      if (filterType === "enemy") return death.victimGuildType === "enemy";
-      return true;
-    })
-    .filter(death => 
-      death.characterName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (death.killerName && death.killerName.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+  // Reset page when filters change
+  const handleFilterChange = (type: "all" | "friend" | "enemy") => {
+    setFilterType(type);
+    setCurrentPage(1);
+  };
 
-  const friendDeaths = deaths.filter(d => d.victimGuildType === "main").length;
-  const enemyDeaths = deaths.filter(d => d.victimGuildType === "enemy").length;
+  const handleDeathTypeChange = (type: "all" | "pvp" | "pve") => {
+    setDeathType(type);
+    setCurrentPage(1);
+  };
+
+  const handleDateRangeChange = (range: "all" | "today" | "week" | "month") => {
+    setDateRange(range);
+    setCurrentPage(1);
+  };
+
+  const clearFilters = () => {
+    setFilterType("all");
+    setDeathType("all");
+    setDateRange("all");
+    setCurrentPage(1);
+  };
+
+  const hasActiveFilters = filterType !== "all" || deathType !== "all" || dateRange !== "all";
 
   const filteredLogs = STATIC_LOGS.filter(log =>
     log.msg.toLowerCase().includes(searchTerm.toLowerCase())
@@ -161,15 +235,15 @@ export default function ActivityHistory() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card className="bg-card/50 border-border/50">
           <CardContent className="p-4 flex items-center gap-4">
             <div className="h-12 w-12 rounded-lg bg-muted/50 flex items-center justify-center">
               <Skull className="h-6 w-6 text-muted-foreground" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{deaths.length}</p>
-              <p className="text-sm text-muted-foreground">Total Deaths</p>
+              <p className="text-2xl font-bold">{stats?.total || 0}</p>
+              <p className="text-sm text-muted-foreground">Wszystkie</p>
             </div>
           </CardContent>
         </Card>
@@ -179,8 +253,8 @@ export default function ActivityHistory() {
               <Trophy className="h-6 w-6 text-emerald-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-emerald-400">{enemyDeaths}</p>
-              <p className="text-sm text-emerald-400/70">Enemy Deaths (Frags!)</p>
+              <p className="text-2xl font-bold text-emerald-400">{stats?.enemyGuildDeaths || 0}</p>
+              <p className="text-sm text-emerald-400/70">Fragi (Enemy)</p>
             </div>
           </CardContent>
         </Card>
@@ -190,8 +264,30 @@ export default function ActivityHistory() {
               <HeartCrack className="h-6 w-6 text-red-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-red-400">{friendDeaths}</p>
-              <p className="text-sm text-red-400/70">Guild Deaths</p>
+              <p className="text-2xl font-bold text-red-400">{stats?.mainGuildDeaths || 0}</p>
+              <p className="text-sm text-red-400/70">Straty (Guild)</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-orange-500/10 border-orange-500/30">
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="h-12 w-12 rounded-lg bg-orange-500/20 flex items-center justify-center">
+              <Swords className="h-6 w-6 text-orange-500" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-orange-400">{stats?.pvpDeaths || 0}</p>
+              <p className="text-sm text-orange-400/70">PvP</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-blue-500/10 border-blue-500/30">
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="h-12 w-12 rounded-lg bg-blue-500/20 flex items-center justify-center">
+              <Skull className="h-6 w-6 text-blue-500" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-blue-400">{stats?.pveDeaths || 0}</p>
+              <p className="text-sm text-blue-400/70">PvE</p>
             </div>
           </CardContent>
         </Card>
@@ -212,57 +308,117 @@ export default function ActivityHistory() {
         <TabsContent value="deaths" className="mt-4">
           <Card className="bg-card/50 border-border/50">
             <CardHeader className="pb-3 border-b border-white/5">
-              <div className="flex items-center gap-4 flex-wrap">
-                <div className="relative flex-1 min-w-[200px]">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    placeholder="Search deaths by character or killer..." 
-                    className="pl-10 bg-background/50 border-white/10"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    data-testid="input-search-deaths"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant={filterType === "all" ? "default" : "outline"}
+              <div className="flex flex-col gap-4">
+                {/* First row: Search and Scan */}
+                <div className="flex items-center gap-4 flex-wrap">
+                  <div className="relative flex-1 min-w-[200px]">
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                      placeholder="Szukaj po nazwie postaci lub zabójcy..." 
+                      className="pl-10 bg-background/50 border-white/10"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      data-testid="input-search-deaths"
+                    />
+                  </div>
+                  <Button 
+                    variant="outline" 
                     size="sm"
-                    onClick={() => setFilterType("all")}
-                    data-testid="filter-all"
+                    onClick={() => scanMutation.mutate()}
+                    disabled={scanMutation.isPending}
+                    data-testid="button-refresh-deaths"
                   >
-                    All
-                  </Button>
-                  <Button
-                    variant={filterType === "enemy" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setFilterType("enemy")}
-                    className={filterType === "enemy" ? "bg-emerald-600 hover:bg-emerald-700" : ""}
-                    data-testid="filter-enemy"
-                  >
-                    <Trophy className="h-4 w-4 mr-1" />
-                    Enemy
-                  </Button>
-                  <Button
-                    variant={filterType === "friend" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setFilterType("friend")}
-                    className={filterType === "friend" ? "bg-red-600 hover:bg-red-700" : ""}
-                    data-testid="filter-friend"
-                  >
-                    <HeartCrack className="h-4 w-4 mr-1" />
-                    Guild
+                    <RefreshCw className={`h-4 w-4 mr-2 ${scanMutation.isPending ? 'animate-spin' : ''}`} />
+                    {scanMutation.isPending ? 'Skanowanie...' : 'Skanuj teraz'}
                   </Button>
                 </div>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => scanMutation.mutate()}
-                  disabled={scanMutation.isPending}
-                  data-testid="button-refresh-deaths"
-                >
-                  <RefreshCw className={`h-4 w-4 mr-2 ${scanMutation.isPending ? 'animate-spin' : ''}`} />
-                  {scanMutation.isPending ? 'Scanning...' : 'Scan Now'}
-                </Button>
+                
+                {/* Second row: Filters */}
+                <div className="flex items-center gap-4 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Filtry:</span>
+                  </div>
+                  
+                  {/* Guild type filter */}
+                  <div className="flex gap-1">
+                    <Button
+                      variant={filterType === "all" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handleFilterChange("all")}
+                      data-testid="filter-all"
+                    >
+                      Wszyscy
+                    </Button>
+                    <Button
+                      variant={filterType === "enemy" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handleFilterChange("enemy")}
+                      className={filterType === "enemy" ? "bg-emerald-600 hover:bg-emerald-700" : ""}
+                      data-testid="filter-enemy"
+                    >
+                      <Trophy className="h-4 w-4 mr-1" />
+                      Enemy
+                    </Button>
+                    <Button
+                      variant={filterType === "friend" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handleFilterChange("friend")}
+                      className={filterType === "friend" ? "bg-red-600 hover:bg-red-700" : ""}
+                      data-testid="filter-friend"
+                    >
+                      <HeartCrack className="h-4 w-4 mr-1" />
+                      Gildia
+                    </Button>
+                  </div>
+                  
+                  {/* Death type filter (PvP/PvE) */}
+                  <Select value={deathType} onValueChange={(v) => handleDeathTypeChange(v as "all" | "pvp" | "pve")}>
+                    <SelectTrigger className="w-[130px] bg-background/50 border-white/10" data-testid="filter-death-type">
+                      <SelectValue placeholder="Rodzaj" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Wszystkie</SelectItem>
+                      <SelectItem value="pvp">Tylko PvP</SelectItem>
+                      <SelectItem value="pve">Tylko PvE</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  {/* Date range filter */}
+                  <Select value={dateRange} onValueChange={(v) => handleDateRangeChange(v as "all" | "today" | "week" | "month")}>
+                    <SelectTrigger className="w-[150px] bg-background/50 border-white/10" data-testid="filter-date-range">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      <SelectValue placeholder="Okres" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Cała historia</SelectItem>
+                      <SelectItem value="today">Ostatnie 24h</SelectItem>
+                      <SelectItem value="week">Ostatni tydzień</SelectItem>
+                      <SelectItem value="month">Ostatni miesiąc</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  {/* Clear filters button */}
+                  {hasActiveFilters && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearFilters}
+                      className="text-muted-foreground hover:text-foreground"
+                      data-testid="button-clear-filters"
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Wyczyść filtry
+                    </Button>
+                  )}
+                </div>
+                
+                {/* Active filters indicator */}
+                {hasActiveFilters && (
+                  <div className="text-sm text-muted-foreground">
+                    Wyświetlono {totalDeaths} wyników z filtrami
+                  </div>
+                )}
               </div>
             </CardHeader>
             <CardContent className="p-0">
