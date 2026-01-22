@@ -76,7 +76,7 @@ function parseDeathEntry(characterName: string, level: number, vocation: string,
   };
 }
 
-export async function checkDeathsForGuild(guildId: number, maxAgeDays: number = 1): Promise<number> {
+export async function checkDeathsForGuild(guildId: number, maxAgeDays: number = 365): Promise<number> {
   const guild = await storage.getGuild(guildId);
   if (!guild) return 0;
 
@@ -133,7 +133,7 @@ export async function checkDeathsForGuild(guildId: number, maxAgeDays: number = 
 }
 
 // Scan all guilds (both main and enemy)
-export async function scanAllGuildsForDeaths(maxAgeDays: number = 1): Promise<{ guild: string; type: string; newDeaths: number }[]> {
+export async function scanAllGuildsForDeaths(maxAgeDays: number = 365): Promise<{ guild: string; type: string; newDeaths: number }[]> {
   const allGuilds = await storage.getGuilds();
   const results: { guild: string; type: string; newDeaths: number }[] = [];
 
