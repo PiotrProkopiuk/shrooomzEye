@@ -218,6 +218,56 @@ export async function saveDeathTrackerConfig(config: any) {
 // Background job to run periodically
 let deathTrackerInterval: NodeJS.Timeout | null = null;
 
+// Process and send notifications for unnotified deaths
+export async function processNotifications(): Promise<number> {
+  const unnotified = await getUnnotifiedDeaths();
+  if (unnotified.length === 0) return 0;
+
+  // Get all configs with webhooks
+  const configs = await db.select().from(deathTrackerConfig).where(eq(deathTrackerConfig.enabled, true));
+  
+  let notifiedCount = 0;
+  
+  for (const death of unnotified) {
+    const isEnemy = death.victimGuildType === "enemy";
+    
+    // Find configs that should receive this notification
+    for (const config of configs) {
+      // Check if this death belongs to a guild linked to this config
+      if (config.guildId !== death.victimGuildId) continue;
+      
+      // Check notification preferences
+      if (isEnemy && !config.notifyEnemyGuildDeaths) continue;
+      if (!isEnemy && !config.notifyMainGuildDeaths) continue;
+      
+      // Get the appropriate webhook URL
+      const webhookUrl = isEnemy ? config.enemyGuildWebhookUrl : config.mainGuildWebhookUrl;
+      if (!webhookUrl) continue;
+      
+      // Send notification
+      const embed = formatDeathEmbed(death, isEnemy);
+      const success = await sendDiscordNotification(webhookUrl, embed);
+      
+      if (success) {
+        console.log(`[DeathTracker] Sent notification for ${death.characterName} to Discord`);
+      } else {
+        console.error(`[DeathTracker] Failed to notify for ${death.characterName}`);
+      }
+    }
+    
+    // Mark as notified regardless (to prevent spam on webhook errors)
+    await markDeathAsNotified(death.id);
+    notifiedCount++;
+  }
+  
+  return notifiedCount;
+}
+
+// Get all configs (for API)
+export async function getAllDeathTrackerConfigs() {
+  return await db.select().from(deathTrackerConfig);
+}
+
 export function startDeathTrackerJob(intervalMinutes: number = 5) {
   if (deathTrackerInterval) {
     clearInterval(deathTrackerInterval);
@@ -237,9 +287,13 @@ export function startDeathTrackerJob(intervalMinutes: number = 5) {
         }
       }
       
-      // Process unnotified deaths
+      // Process unnotified deaths and send Discord notifications
       const unnotified = await getUnnotifiedDeaths();
-      console.log(`[DeathTracker] ${unnotified.length} deaths pending notification`);
+      if (unnotified.length > 0) {
+        console.log(`[DeathTracker] ${unnotified.length} deaths pending notification`);
+        const notified = await processNotifications();
+        console.log(`[DeathTracker] Sent ${notified} notifications`);
+      }
       
     } catch (error) {
       console.error("[DeathTracker] Error in background job:", error);

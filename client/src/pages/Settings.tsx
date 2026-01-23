@@ -1,3 +1,5 @@
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,168 +8,381 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Save, Bot, MessageSquare, ShieldAlert, Zap, Bell, Server, Volume2, Users, Sliders, Eye, Clock } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Save, Bot, MessageSquare, ShieldAlert, Zap, Bell, Server, Volume2, Users, Sliders, Eye, Clock, Webhook, TestTube2, CheckCircle, XCircle } from "lucide-react";
+
+interface Guild {
+  id: number;
+  name: string;
+  isEnemy: boolean;
+}
+
+interface DeathTrackerConfig {
+  id?: number;
+  guildId: number;
+  discordServerId: string;
+  mainGuildWebhookUrl: string | null;
+  enemyGuildWebhookUrl: string | null;
+  enabled: boolean;
+  notifyMainGuildDeaths: boolean;
+  notifyEnemyGuildDeaths: boolean;
+}
 
 export default function Settings() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  // State for webhook configuration
+  const [selectedGuildId, setSelectedGuildId] = useState<number | null>(null);
+  const [mainWebhookUrl, setMainWebhookUrl] = useState("");
+  const [enemyWebhookUrl, setEnemyWebhookUrl] = useState("");
+  const [notifyMainDeaths, setNotifyMainDeaths] = useState(true);
+  const [notifyEnemyDeaths, setNotifyEnemyDeaths] = useState(true);
+  const [enabled, setEnabled] = useState(true);
+  
+  // Fetch guilds
+  const { data: guilds = [] } = useQuery<Guild[]>({
+    queryKey: ["/api/guilds"],
+  });
+  
+  // Find main guild (not enemy)
+  const mainGuild = guilds.find(g => !g.isEnemy);
+  
+  // Fetch config for selected guild
+  const { data: config, isLoading: configLoading } = useQuery<DeathTrackerConfig | null>({
+    queryKey: ["/api/death-tracker/config", selectedGuildId],
+    queryFn: async () => {
+      if (!selectedGuildId) return null;
+      const res = await fetch(`/api/death-tracker/config/${selectedGuildId}`);
+      return res.json();
+    },
+    enabled: !!selectedGuildId,
+  });
+  
+  // Set main guild as default when loaded
+  useEffect(() => {
+    if (mainGuild && !selectedGuildId) {
+      setSelectedGuildId(mainGuild.id);
+    }
+  }, [mainGuild, selectedGuildId]);
+  
+  // Update form when config loads
+  useEffect(() => {
+    if (config) {
+      setMainWebhookUrl(config.mainGuildWebhookUrl || "");
+      setEnemyWebhookUrl(config.enemyGuildWebhookUrl || "");
+      setNotifyMainDeaths(config.notifyMainGuildDeaths ?? true);
+      setNotifyEnemyDeaths(config.notifyEnemyGuildDeaths ?? true);
+      setEnabled(config.enabled ?? true);
+    }
+  }, [config]);
+  
+  // Save config mutation
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/death-tracker/config/${selectedGuildId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mainGuildWebhookUrl: mainWebhookUrl || null,
+          enemyGuildWebhookUrl: enemyWebhookUrl || null,
+          notifyMainGuildDeaths: notifyMainDeaths,
+          notifyEnemyGuildDeaths: notifyEnemyDeaths,
+          enabled,
+          discordServerId: "default",
+        }),
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/death-tracker/config"] });
+      toast({
+        title: "Zapisano",
+        description: "Konfiguracja webhooków została zapisana.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Błąd",
+        description: "Nie udało się zapisać konfiguracji.",
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Test webhook mutation
+  const testWebhookMutation = useMutation({
+    mutationFn: async (webhookUrl: string) => {
+      const res = await fetch("/api/death-tracker/test-webhook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ webhookUrl }),
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        toast({
+          title: "Test udany",
+          description: "Wiadomość testowa została wysłana na Discord.",
+        });
+      } else {
+        toast({
+          title: "Test nieudany",
+          description: "Nie udało się wysłać wiadomości. Sprawdź URL webhooka.",
+          variant: "destructive",
+        });
+      }
+    },
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-display font-bold text-foreground">Server Configuration</h1>
-          <p className="text-muted-foreground">Manage guild settings for the current Discord server.</p>
+          <h1 className="text-3xl font-display font-bold text-foreground">Konfiguracja serwera</h1>
+          <p className="text-muted-foreground">Zarządzaj ustawieniami gildii i powiadomieniami Discord.</p>
         </div>
-        <Button className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
+        <Button 
+          className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+          onClick={() => saveMutation.mutate()}
+          disabled={saveMutation.isPending}
+          data-testid="button-save-config"
+        >
           <Save className="h-4 w-4" />
-          Save Server Config
+          {saveMutation.isPending ? "Zapisywanie..." : "Zapisz konfigurację"}
         </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
+          
+          {/* Discord Webhook Configuration */}
+          <Card className="bg-card/50 border-indigo-500/20 border">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-indigo-400">
+                  <Webhook className="h-5 w-5" />
+                  Powiadomienia Discord - Webhooks
+                </CardTitle>
+                <Badge className="bg-indigo-500/10 text-indigo-400 border-indigo-500/20">
+                  Death Tracker
+                </Badge>
+              </div>
+              <CardDescription>
+                Skonfiguruj webhooki Discord, aby otrzymywać powiadomienia o śmierciach graczy.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between p-4 rounded bg-background/30 border border-white/5">
+                <div className="space-y-0.5">
+                  <Label className="text-sm font-medium">Powiadomienia włączone</Label>
+                  <p className="text-xs text-muted-foreground">Włącz/wyłącz wszystkie powiadomienia o śmierciach.</p>
+                </div>
+                <Switch 
+                  checked={enabled} 
+                  onCheckedChange={setEnabled}
+                  data-testid="switch-notifications-enabled"
+                />
+              </div>
+              
+              <Separator className="bg-white/5" />
+              
+              {/* Main Guild Webhook */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded-full bg-red-500" />
+                  <Label className="text-sm font-medium text-red-400">Śmierci gildii (straty)</Label>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 rounded bg-background/20 border border-white/5">
+                  <div className="space-y-0.5">
+                    <Label className="text-xs">Powiadamiaj o śmierciach członków gildii</Label>
+                  </div>
+                  <Switch 
+                    checked={notifyMainDeaths} 
+                    onCheckedChange={setNotifyMainDeaths}
+                    data-testid="switch-notify-main-deaths"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="main-webhook" className="text-xs text-muted-foreground">
+                    Webhook URL dla śmierci gildii
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input 
+                      id="main-webhook"
+                      type="password"
+                      placeholder="https://discord.com/api/webhooks/..."
+                      value={mainWebhookUrl}
+                      onChange={(e) => setMainWebhookUrl(e.target.value)}
+                      className="bg-background/50 border-white/10 font-mono text-xs flex-1"
+                      data-testid="input-main-webhook"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => mainWebhookUrl && testWebhookMutation.mutate(mainWebhookUrl)}
+                      disabled={!mainWebhookUrl || testWebhookMutation.isPending}
+                      data-testid="button-test-main-webhook"
+                    >
+                      <TestTube2 className="h-4 w-4 mr-1" />
+                      Test
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              
+              <Separator className="bg-white/5" />
+              
+              {/* Enemy Guild Webhook */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded-full bg-emerald-500" />
+                  <Label className="text-sm font-medium text-emerald-400">Śmierci wrogów (fragi!)</Label>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 rounded bg-background/20 border border-white/5">
+                  <div className="space-y-0.5">
+                    <Label className="text-xs">Powiadamiaj o śmierciach wrogów</Label>
+                  </div>
+                  <Switch 
+                    checked={notifyEnemyDeaths} 
+                    onCheckedChange={setNotifyEnemyDeaths}
+                    data-testid="switch-notify-enemy-deaths"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="enemy-webhook" className="text-xs text-muted-foreground">
+                    Webhook URL dla śmierci wrogów
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input 
+                      id="enemy-webhook"
+                      type="password"
+                      placeholder="https://discord.com/api/webhooks/..."
+                      value={enemyWebhookUrl}
+                      onChange={(e) => setEnemyWebhookUrl(e.target.value)}
+                      className="bg-background/50 border-white/10 font-mono text-xs flex-1"
+                      data-testid="input-enemy-webhook"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => enemyWebhookUrl && testWebhookMutation.mutate(enemyWebhookUrl)}
+                      disabled={!enemyWebhookUrl || testWebhookMutation.isPending}
+                      data-testid="button-test-enemy-webhook"
+                    >
+                      <TestTube2 className="h-4 w-4 mr-1" />
+                      Test
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-4 mt-4">
+                <h4 className="text-sm font-medium text-indigo-400 mb-2">Jak uzyskać URL webhooka?</h4>
+                <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+                  <li>Otwórz ustawienia kanału Discord</li>
+                  <li>Przejdź do zakładki "Integracje"</li>
+                  <li>Kliknij "Utwórz webhook"</li>
+                  <li>Skopiuj URL webhooka i wklej tutaj</li>
+                </ol>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card className="bg-card/50 border-border/50">
-              <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                      <Server className="h-5 w-5 text-primary" />
-                      Guild & Bot Identity
-                  </CardTitle>
-                  <CardDescription>These settings are isolated to the active server ID.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                  <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                          <Label htmlFor="guild-name">Tracked Guild Name</Label>
-                          <Input id="guild-name" defaultValue="Dark Alliance" className="bg-background/50 border-white/10" />
-                      </div>
-                      <div className="space-y-2">
-                          <Label htmlFor="server-id">Discord Server ID</Label>
-                          <Input id="server-id" defaultValue="1234567890" disabled className="bg-background/10 border-white/5 opacity-50 font-mono" />
-                      </div>
-                  </div>
-              </CardContent>
-          </Card>
-
-          {/* New TibSpy Configuration Section */}
-          <Card className="bg-card/50 border-emerald-500/20 border">
-              <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2 text-emerald-500">
-                        <Eye className="h-5 w-5" />
-                        TibSpy API Integration
-                    </CardTitle>
-                    <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20">Advanced Scans</Badge>
-                  </div>
-                  <CardDescription>Configure cyclic scans and character tracking behavior.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                  <div className="space-y-4">
-                      <div className="space-y-2">
-                          <Label htmlFor="tibspy-key">TibSpy API Key</Label>
-                          <Input id="tibspy-key" type="password" placeholder="Enter your API key..." className="bg-background/50 border-white/10" />
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="flex items-center justify-between p-3 rounded bg-background/30 border border-white/5">
-                            <div className="space-y-0.5">
-                                <Label className="text-xs">Scan on Add</Label>
-                                <p className="text-[10px] text-muted-foreground">Auto-scan new players.</p>
-                            </div>
-                            <Switch defaultChecked />
-                        </div>
-                        <div className="flex items-center justify-between p-3 rounded bg-background/30 border border-white/5">
-                            <div className="space-y-0.5">
-                                <Label className="text-xs">Cyclic Enemy Scans</Label>
-                                <p className="text-[10px] text-muted-foreground">Daily nightly scan.</p>
-                            </div>
-                            <Switch defaultChecked />
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-4 bg-background/20 p-4 rounded-lg border border-white/5">
-                        <Clock className="h-5 w-5 text-muted-foreground" />
-                        <div className="flex-1">
-                            <Label className="text-sm">Scan Schedule (Nightly)</Label>
-                            <div className="flex gap-2 mt-1">
-                                <Input type="time" defaultValue="03:00" className="w-24 bg-background/50 border-white/10 h-8" />
-                                <p className="text-[10px] text-muted-foreground self-center italic">Time in Server Time (CET)</p>
-                            </div>
-                        </div>
-                      </div>
-                  </div>
-              </CardContent>
-          </Card>
-
-          <Card className="bg-card/50 border-primary/20 border">
-              <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                        <Volume2 className="h-5 w-5 text-primary" />
-                        War Command: /pvp_action
-                    </CardTitle>
-                    <Badge className="bg-primary/20 text-primary border-primary/30">Leader Only</Badge>
-                  </div>
-                  <CardDescription>Configure the voice channel mass-move command for war situations.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                  <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                          <Label htmlFor="cmd-alias">Command Name / Alias</Label>
-                          <Input id="cmd-alias" defaultValue="/pvp_action" className="bg-background/50 border-white/10 font-mono" />
-                      </div>
-                      <div className="space-y-2">
-                          <Label htmlFor="target-role">Admin Role Required</Label>
-                          <Select defaultValue="leader">
-                            <SelectTrigger className="bg-background/50 border-white/10">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="leader">Leader & Vice</SelectItem>
-                                <SelectItem value="council">Council Members</SelectItem>
-                            </SelectContent>
-                          </Select>
-                      </div>
-                  </div>
-              </CardContent>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Server className="h-5 w-5 text-primary" />
+                Tożsamość gildii
+              </CardTitle>
+              <CardDescription>Podstawowe ustawienia śledzenia gildii.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guild-name">Śledzona gildia</Label>
+                  <Input 
+                    id="guild-name" 
+                    defaultValue={mainGuild?.name || "Brak"} 
+                    disabled 
+                    className="bg-background/10 border-white/5 opacity-50" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="server-id">ID serwera Discord</Label>
+                  <Input 
+                    id="server-id" 
+                    defaultValue="Domyślny" 
+                    disabled 
+                    className="bg-background/10 border-white/5 opacity-50 font-mono" 
+                  />
+                </div>
+              </div>
+            </CardContent>
           </Card>
         </div>
 
         <div className="space-y-6">
-            <Card className="bg-card/50 border-border/50">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-base">
-                        <MessageSquare className="h-4 w-4 text-emerald-500" />
-                        Server Reports
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <Label className="text-xs">Daily Summary</Label>
-                        <Switch defaultChecked />
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <Label className="text-xs">Weekly Stats</Label>
-                        <Switch defaultChecked />
-                    </div>
-                    <Separator className="bg-white/5" />
-                    <div className="space-y-2">
-                        <Label className="text-xs">Discord Channel ID</Label>
-                        <Input defaultValue="9876543210123456" className="bg-background/50 border-white/10 font-mono text-xs" />
-                    </div>
-                </CardContent>
-            </Card>
+          <Card className="bg-card/50 border-border/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Bell className="h-4 w-4 text-emerald-500" />
+                Status powiadomień
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs">Powiadomienia</span>
+                {enabled ? (
+                  <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 gap-1">
+                    <CheckCircle className="h-3 w-3" />
+                    Aktywne
+                  </Badge>
+                ) : (
+                  <Badge className="bg-red-500/10 text-red-400 border-red-500/20 gap-1">
+                    <XCircle className="h-3 w-3" />
+                    Wyłączone
+                  </Badge>
+                )}
+              </div>
+              <Separator className="bg-white/5" />
+              <div className="flex items-center justify-between">
+                <span className="text-xs">Webhook gildii</span>
+                {mainWebhookUrl ? (
+                  <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">Skonfigurowany</Badge>
+                ) : (
+                  <Badge className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20">Brak</Badge>
+                )}
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs">Webhook wrogów</span>
+                {enemyWebhookUrl ? (
+                  <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">Skonfigurowany</Badge>
+                ) : (
+                  <Badge className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20">Brak</Badge>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
-             <Card className="bg-destructive/10 border-destructive/20">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-base text-destructive">
-                        <ShieldAlert className="h-4 w-4" />
-                        Danger Zone
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                    <Button variant="destructive" className="w-full text-xs" size="sm">
-                        Purge Server Data
-                    </Button>
-                </CardContent>
-            </Card>
+          <Card className="bg-destructive/10 border-destructive/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base text-destructive">
+                <ShieldAlert className="h-4 w-4" />
+                Strefa zagrożenia
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Button variant="destructive" className="w-full text-xs" size="sm">
+                Wyczyść dane serwera
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

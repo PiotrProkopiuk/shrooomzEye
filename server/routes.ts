@@ -236,13 +236,44 @@ export async function registerRoutes(
     const guildId = parseInt(req.params.guildId);
     const config = await deathTracker.saveDeathTrackerConfig({
       guildId,
-      discordServerId: req.body.discordServerId,
+      discordServerId: req.body.discordServerId || "",
       mainGuildDeathChannelId: req.body.mainGuildDeathChannelId,
       enemyDeathChannelId: req.body.enemyDeathChannelId,
+      mainGuildWebhookUrl: req.body.mainGuildWebhookUrl,
+      enemyGuildWebhookUrl: req.body.enemyGuildWebhookUrl,
       enabled: req.body.enabled ?? true,
+      notifyMainGuildDeaths: req.body.notifyMainGuildDeaths ?? true,
+      notifyEnemyGuildDeaths: req.body.notifyEnemyGuildDeaths ?? true,
       checkIntervalMinutes: req.body.checkIntervalMinutes ?? 5,
     });
     res.json(config);
+  });
+  
+  // Get all death tracker configs
+  app.get("/api/death-tracker/configs", async (req, res) => {
+    const configs = await deathTracker.getAllDeathTrackerConfigs();
+    res.json(configs);
+  });
+  
+  // Test webhook
+  app.post("/api/death-tracker/test-webhook", requireAuth, async (req, res) => {
+    const { webhookUrl } = req.body;
+    if (!webhookUrl) {
+      return res.status(400).json({ error: "webhookUrl is required" });
+    }
+    
+    const testEmbed = {
+      embeds: [{
+        title: "🧪 Test powiadomienia",
+        description: "Webhook działa poprawnie! Będziesz otrzymywać powiadomienia o śmierciach.",
+        color: 0x5865F2,
+        footer: { text: "TibiaGuildBot Death Tracker" },
+        timestamp: new Date().toISOString(),
+      }],
+    };
+    
+    const success = await deathTracker.sendDiscordNotification(webhookUrl, testEmbed);
+    res.json({ success });
   });
 
   // Manually trigger death check for a guild
