@@ -25,19 +25,32 @@ interface TibiaGuildMember {
 const cache = new Map<string, { data: any; expires: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-async function cachedFetch(url: string): Promise<any> {
+async function cachedFetch(url: string, retries = 3): Promise<any> {
   const cached = cache.get(url);
   if (cached && cached.expires > Date.now()) {
     return cached.data;
   }
 
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`TibiaData API error: ${response.status}`);
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        if (response.status === 503 && attempt < retries) {
+          console.log(`[TibiaData] 503 error, retrying in ${attempt * 2}s (attempt ${attempt}/${retries})`);
+          await new Promise(r => setTimeout(r, attempt * 2000));
+          continue;
+        }
+        throw new Error(`TibiaData API error: ${response.status}`);
+      }
+      const data = await response.json();
+      cache.set(url, { data, expires: Date.now() + CACHE_TTL });
+      return data;
+    } catch (error) {
+      if (attempt === retries) throw error;
+      console.log(`[TibiaData] Request failed, retrying... (attempt ${attempt}/${retries})`);
+      await new Promise(r => setTimeout(r, attempt * 1000));
+    }
   }
-  const data = await response.json();
-  cache.set(url, { data, expires: Date.now() + CACHE_TTL });
-  return data;
 }
 
 export async function fetchCharacter(name: string): Promise<TibiaCharacter | null> {
