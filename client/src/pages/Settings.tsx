@@ -6,10 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Bot, MessageSquare, ShieldAlert, Zap, Bell, Server, Volume2, Users, Sliders, Eye, Clock, Webhook, TestTube2, CheckCircle, XCircle } from "lucide-react";
+import { Save, ShieldAlert, Bell, Server, Webhook, TestTube2, CheckCircle, XCircle } from "lucide-react";
 
 interface Guild {
   id: number;
@@ -32,7 +31,6 @@ export default function Settings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // State for webhook configuration
   const [selectedGuildId, setSelectedGuildId] = useState<number | null>(null);
   const [mainWebhookUrl, setMainWebhookUrl] = useState("");
   const [enemyWebhookUrl, setEnemyWebhookUrl] = useState("");
@@ -40,16 +38,13 @@ export default function Settings() {
   const [notifyEnemyDeaths, setNotifyEnemyDeaths] = useState(true);
   const [enabled, setEnabled] = useState(true);
   
-  // Fetch guilds
   const { data: guilds = [] } = useQuery<Guild[]>({
     queryKey: ["/api/guilds"],
   });
   
-  // Find main guild (not enemy)
   const mainGuild = guilds.find(g => !g.isEnemy);
   
-  // Fetch config for selected guild
-  const { data: config, isLoading: configLoading } = useQuery<DeathTrackerConfig | null>({
+  const { data: config } = useQuery<DeathTrackerConfig | null>({
     queryKey: ["/api/death-tracker/config", selectedGuildId],
     queryFn: async () => {
       if (!selectedGuildId) return null;
@@ -59,14 +54,12 @@ export default function Settings() {
     enabled: !!selectedGuildId,
   });
   
-  // Set main guild as default when loaded
   useEffect(() => {
     if (mainGuild && !selectedGuildId) {
       setSelectedGuildId(mainGuild.id);
     }
   }, [mainGuild, selectedGuildId]);
   
-  // Update form when config loads
   useEffect(() => {
     if (config) {
       setMainWebhookUrl(config.mainGuildWebhookUrl || "");
@@ -77,7 +70,6 @@ export default function Settings() {
     }
   }, [config]);
   
-  // Save config mutation
   const saveMutation = useMutation({
     mutationFn: async () => {
       const res = await fetch(`/api/death-tracker/config/${selectedGuildId}`, {
@@ -97,20 +89,19 @@ export default function Settings() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/death-tracker/config"] });
       toast({
-        title: "Zapisano",
-        description: "Konfiguracja webhooków została zapisana.",
+        title: "Saved",
+        description: "Webhook configuration has been saved.",
       });
     },
     onError: () => {
       toast({
-        title: "Błąd",
-        description: "Nie udało się zapisać konfiguracji.",
+        title: "Error",
+        description: "Failed to save configuration.",
         variant: "destructive",
       });
     },
   });
   
-  // Test webhook mutation
   const testWebhookMutation = useMutation({
     mutationFn: async (webhookUrl: string) => {
       const res = await fetch("/api/death-tracker/test-webhook", {
@@ -123,13 +114,13 @@ export default function Settings() {
     onSuccess: (data) => {
       if (data.success) {
         toast({
-          title: "Test udany",
-          description: "Wiadomość testowa została wysłana na Discord.",
+          title: "Test successful",
+          description: "Test message was sent to Discord.",
         });
       } else {
         toast({
-          title: "Test nieudany",
-          description: "Nie udało się wysłać wiadomości. Sprawdź URL webhooka.",
+          title: "Test failed",
+          description: "Failed to send message. Check the webhook URL.",
           variant: "destructive",
         });
       }
@@ -140,8 +131,8 @@ export default function Settings() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-display font-bold text-foreground">Konfiguracja serwera</h1>
-          <p className="text-muted-foreground">Zarządzaj ustawieniami gildii i powiadomieniami Discord.</p>
+          <h1 className="text-3xl font-display font-bold text-foreground">Server Configuration</h1>
+          <p className="text-muted-foreground">Manage guild settings and Discord notifications.</p>
         </div>
         <Button 
           className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
@@ -150,34 +141,33 @@ export default function Settings() {
           data-testid="button-save-config"
         >
           <Save className="h-4 w-4" />
-          {saveMutation.isPending ? "Zapisywanie..." : "Zapisz konfigurację"}
+          {saveMutation.isPending ? "Saving..." : "Save Configuration"}
         </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
           
-          {/* Discord Webhook Configuration */}
           <Card className="bg-card/50 border-indigo-500/20 border">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-indigo-400">
                   <Webhook className="h-5 w-5" />
-                  Powiadomienia Discord - Webhooks
+                  Discord Notifications - Webhooks
                 </CardTitle>
                 <Badge className="bg-indigo-500/10 text-indigo-400 border-indigo-500/20">
                   Death Tracker
                 </Badge>
               </div>
               <CardDescription>
-                Skonfiguruj webhooki Discord, aby otrzymywać powiadomienia o śmierciach graczy.
+                Configure Discord webhooks to receive player death notifications.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between p-4 rounded bg-background/30 border border-white/5">
                 <div className="space-y-0.5">
-                  <Label className="text-sm font-medium">Powiadomienia włączone</Label>
-                  <p className="text-xs text-muted-foreground">Włącz/wyłącz wszystkie powiadomienia o śmierciach.</p>
+                  <Label className="text-sm font-medium">Notifications Enabled</Label>
+                  <p className="text-xs text-muted-foreground">Enable/disable all death notifications.</p>
                 </div>
                 <Switch 
                   checked={enabled} 
@@ -188,16 +178,15 @@ export default function Settings() {
               
               <Separator className="bg-white/5" />
               
-              {/* Main Guild Webhook */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <div className="h-3 w-3 rounded-full bg-red-500" />
-                  <Label className="text-sm font-medium text-red-400">Śmierci gildii (straty)</Label>
+                  <Label className="text-sm font-medium text-red-400">Guild Deaths (Losses)</Label>
                 </div>
                 
                 <div className="flex items-center justify-between p-3 rounded bg-background/20 border border-white/5">
                   <div className="space-y-0.5">
-                    <Label className="text-xs">Powiadamiaj o śmierciach członków gildii</Label>
+                    <Label className="text-xs">Notify on guild member deaths</Label>
                   </div>
                   <Switch 
                     checked={notifyMainDeaths} 
@@ -208,7 +197,7 @@ export default function Settings() {
                 
                 <div className="space-y-2">
                   <Label htmlFor="main-webhook" className="text-xs text-muted-foreground">
-                    Webhook URL dla śmierci gildii
+                    Webhook URL for guild deaths
                   </Label>
                   <div className="flex gap-2">
                     <Input 
@@ -236,16 +225,15 @@ export default function Settings() {
               
               <Separator className="bg-white/5" />
               
-              {/* Enemy Guild Webhook */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <div className="h-3 w-3 rounded-full bg-emerald-500" />
-                  <Label className="text-sm font-medium text-emerald-400">Śmierci wrogów (fragi!)</Label>
+                  <Label className="text-sm font-medium text-emerald-400">Enemy Deaths (Frags!)</Label>
                 </div>
                 
                 <div className="flex items-center justify-between p-3 rounded bg-background/20 border border-white/5">
                   <div className="space-y-0.5">
-                    <Label className="text-xs">Powiadamiaj o śmierciach wrogów</Label>
+                    <Label className="text-xs">Notify on enemy deaths</Label>
                   </div>
                   <Switch 
                     checked={notifyEnemyDeaths} 
@@ -256,7 +244,7 @@ export default function Settings() {
                 
                 <div className="space-y-2">
                   <Label htmlFor="enemy-webhook" className="text-xs text-muted-foreground">
-                    Webhook URL dla śmierci wrogów
+                    Webhook URL for enemy deaths
                   </Label>
                   <div className="flex gap-2">
                     <Input 
@@ -283,12 +271,12 @@ export default function Settings() {
               </div>
               
               <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-4 mt-4">
-                <h4 className="text-sm font-medium text-indigo-400 mb-2">Jak uzyskać URL webhooka?</h4>
+                <h4 className="text-sm font-medium text-indigo-400 mb-2">How to get a webhook URL?</h4>
                 <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
-                  <li>Otwórz ustawienia kanału Discord</li>
-                  <li>Przejdź do zakładki "Integracje"</li>
-                  <li>Kliknij "Utwórz webhook"</li>
-                  <li>Skopiuj URL webhooka i wklej tutaj</li>
+                  <li>Open Discord channel settings</li>
+                  <li>Go to the "Integrations" tab</li>
+                  <li>Click "Create Webhook"</li>
+                  <li>Copy the webhook URL and paste it here</li>
                 </ol>
               </div>
             </CardContent>
@@ -298,26 +286,26 @@ export default function Settings() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Server className="h-5 w-5 text-primary" />
-                Tożsamość gildii
+                Guild Identity
               </CardTitle>
-              <CardDescription>Podstawowe ustawienia śledzenia gildii.</CardDescription>
+              <CardDescription>Basic guild tracking settings.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="guild-name">Śledzona gildia</Label>
+                  <Label htmlFor="guild-name">Tracked Guild</Label>
                   <Input 
                     id="guild-name" 
-                    defaultValue={mainGuild?.name || "Brak"} 
+                    defaultValue={mainGuild?.name || "None"} 
                     disabled 
                     className="bg-background/10 border-white/5 opacity-50" 
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="server-id">ID serwera Discord</Label>
+                  <Label htmlFor="server-id">Discord Server ID</Label>
                   <Input 
                     id="server-id" 
-                    defaultValue="Domyślny" 
+                    defaultValue="Default" 
                     disabled 
                     className="bg-background/10 border-white/5 opacity-50 font-mono" 
                   />
@@ -332,39 +320,39 @@ export default function Settings() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <Bell className="h-4 w-4 text-emerald-500" />
-                Status powiadomień
+                Notification Status
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs">Powiadomienia</span>
+                <span className="text-xs">Notifications</span>
                 {enabled ? (
                   <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 gap-1">
                     <CheckCircle className="h-3 w-3" />
-                    Aktywne
+                    Active
                   </Badge>
                 ) : (
                   <Badge className="bg-red-500/10 text-red-400 border-red-500/20 gap-1">
                     <XCircle className="h-3 w-3" />
-                    Wyłączone
+                    Disabled
                   </Badge>
                 )}
               </div>
               <Separator className="bg-white/5" />
               <div className="flex items-center justify-between">
-                <span className="text-xs">Webhook gildii</span>
+                <span className="text-xs">Guild Webhook</span>
                 {mainWebhookUrl ? (
-                  <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">Skonfigurowany</Badge>
+                  <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">Configured</Badge>
                 ) : (
-                  <Badge className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20">Brak</Badge>
+                  <Badge className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20">Not Set</Badge>
                 )}
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs">Webhook wrogów</span>
+                <span className="text-xs">Enemy Webhook</span>
                 {enemyWebhookUrl ? (
-                  <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">Skonfigurowany</Badge>
+                  <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">Configured</Badge>
                 ) : (
-                  <Badge className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20">Brak</Badge>
+                  <Badge className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20">Not Set</Badge>
                 )}
               </div>
             </CardContent>
@@ -374,12 +362,12 @@ export default function Settings() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base text-destructive">
                 <ShieldAlert className="h-4 w-4" />
-                Strefa zagrożenia
+                Danger Zone
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <Button variant="destructive" className="w-full text-xs" size="sm">
-                Wyczyść dane serwera
+                Clear Server Data
               </Button>
             </CardContent>
           </Card>

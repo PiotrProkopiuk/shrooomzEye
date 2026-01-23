@@ -212,14 +212,14 @@ export default function ActivityHistory() {
       queryClient.invalidateQueries({ queryKey: ["/api/death-tracker/recent"] });
       queryClient.invalidateQueries({ queryKey: ["/api/death-tracker/stats"] });
       toast({
-        title: "Skanowanie zakończone",
-        description: `Znaleziono ${data.totalNewDeaths || 0} nowych śmierci`,
+        title: "Scan Complete",
+        description: `Found ${data.totalNewDeaths || 0} new deaths`,
       });
     },
     onError: () => {
       toast({
-        title: "Błąd skanowania",
-        description: "Nie udało się przeskanować śmierci",
+        title: "Scan Error",
+        description: "Failed to scan for deaths",
         variant: "destructive",
       });
     },
@@ -284,7 +284,7 @@ export default function ActivityHistory() {
             </div>
             <div>
               <p className="text-2xl font-bold">{stats?.total || 0}</p>
-              <p className="text-sm text-muted-foreground">Wszystkie</p>
+              <p className="text-sm text-muted-foreground">All Deaths</p>
             </div>
           </CardContent>
         </Card>
@@ -295,7 +295,7 @@ export default function ActivityHistory() {
             </div>
             <div>
               <p className="text-2xl font-bold text-emerald-400">{stats?.enemyGuildDeaths || 0}</p>
-              <p className="text-sm text-emerald-400/70">Fragi (Enemy)</p>
+              <p className="text-sm text-emerald-400/70">Frags (Enemy)</p>
             </div>
           </CardContent>
         </Card>
@@ -306,7 +306,7 @@ export default function ActivityHistory() {
             </div>
             <div>
               <p className="text-2xl font-bold text-red-400">{stats?.mainGuildDeaths || 0}</p>
-              <p className="text-sm text-red-400/70">Straty (Guild)</p>
+              <p className="text-sm text-red-400/70">Losses (Guild)</p>
             </div>
           </CardContent>
         </Card>
@@ -355,7 +355,7 @@ export default function ActivityHistory() {
                   <div className="relative flex-1 min-w-[200px]">
                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input 
-                      placeholder="Szukaj po nazwie postaci lub zabójcy..." 
+                      placeholder="Search by character or killer name..." 
                       className="pl-10 bg-background/50 border-white/10"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
@@ -370,7 +370,7 @@ export default function ActivityHistory() {
                     data-testid="button-refresh-deaths"
                   >
                     <RefreshCw className={`h-4 w-4 mr-2 ${scanMutation.isPending ? 'animate-spin' : ''}`} />
-                    {scanMutation.isPending ? 'Skanowanie...' : 'Skanuj teraz'}
+                    {scanMutation.isPending ? 'Scanning...' : 'Scan Now'}
                   </Button>
                 </div>
                 
@@ -378,7 +378,7 @@ export default function ActivityHistory() {
                 <div className="flex items-center gap-4 flex-wrap">
                   <div className="flex items-center gap-2">
                     <Filter className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Filtry:</span>
+                    <span className="text-sm text-muted-foreground">Filters:</span>
                   </div>
                   
                   {/* Guild type filter */}
@@ -389,7 +389,7 @@ export default function ActivityHistory() {
                       onClick={() => handleFilterChange("all")}
                       data-testid="filter-all"
                     >
-                      Wszyscy
+                      All
                     </Button>
                     <Button
                       variant={filterType === "enemy" ? "default" : "outline"}
@@ -409,19 +409,19 @@ export default function ActivityHistory() {
                       data-testid="filter-friend"
                     >
                       <HeartCrack className="h-4 w-4 mr-1" />
-                      Gildia
+                      Guild
                     </Button>
                   </div>
                   
                   {/* Death type filter (PvP/PvE) */}
                   <Select value={deathType} onValueChange={(v) => handleDeathTypeChange(v as "all" | "pvp" | "pve")}>
                     <SelectTrigger className="w-[130px] bg-background/50 border-white/10" data-testid="filter-death-type">
-                      <SelectValue placeholder="Rodzaj" />
+                      <SelectValue placeholder="Type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Wszystkie</SelectItem>
-                      <SelectItem value="pvp">Tylko PvP</SelectItem>
-                      <SelectItem value="pve">Tylko PvE</SelectItem>
+                      <SelectItem value="all">All Types</SelectItem>
+                      <SelectItem value="pvp">PvP Only</SelectItem>
+                      <SelectItem value="pve">PvE Only</SelectItem>
                     </SelectContent>
                   </Select>
                   
@@ -429,13 +429,13 @@ export default function ActivityHistory() {
                   <Select value={dateRange} onValueChange={(v) => handleDateRangeChange(v as "all" | "today" | "week" | "month")}>
                     <SelectTrigger className="w-[150px] bg-background/50 border-white/10" data-testid="filter-date-range">
                       <Calendar className="h-4 w-4 mr-2" />
-                      <SelectValue placeholder="Okres" />
+                      <SelectValue placeholder="Period" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Cała historia</SelectItem>
-                      <SelectItem value="today">Ostatnie 24h</SelectItem>
-                      <SelectItem value="week">Ostatni tydzień</SelectItem>
-                      <SelectItem value="month">Ostatni miesiąc</SelectItem>
+                      <SelectItem value="all">All Time</SelectItem>
+                      <SelectItem value="today">Last 24h</SelectItem>
+                      <SelectItem value="week">Last Week</SelectItem>
+                      <SelectItem value="month">Last Month</SelectItem>
                     </SelectContent>
                   </Select>
                   
@@ -449,7 +449,7 @@ export default function ActivityHistory() {
                       data-testid="button-clear-filters"
                     >
                       <X className="h-4 w-4 mr-1" />
-                      Wyczyść filtry
+                      Clear Filters
                     </Button>
                   )}
                 </div>
@@ -457,7 +457,7 @@ export default function ActivityHistory() {
                 {/* Active filters indicator */}
                 {hasActiveFilters && (
                   <div className="text-sm text-muted-foreground">
-                    Wyświetlono {totalDeaths} wyników z filtrami
+                    Showing {totalDeaths} results with active filters
                   </div>
                 )}
               </div>

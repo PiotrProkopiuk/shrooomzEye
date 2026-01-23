@@ -15,6 +15,7 @@ The application uses Discord OAuth2 for authentication. Required secrets:
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+Interface language: English (UI should be in English)
 
 ## System Architecture
 
