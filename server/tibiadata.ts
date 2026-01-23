@@ -8,6 +8,7 @@ interface TibiaCharacter {
   world: string;
   guild?: { name: string };
   online?: boolean;
+  experience?: number;
 }
 
 interface TibiaGuildMember {
@@ -51,9 +52,26 @@ export async function fetchCharacter(name: string): Promise<TibiaCharacter | nul
       vocation: char.vocation,
       world: char.world,
       guild: char.guild ? { name: char.guild.name } : undefined,
+      experience: char.experience_points,
     };
   } catch (error) {
     console.error(`Failed to fetch character ${name}:`, error);
+    return null;
+  }
+}
+
+// Fetch detailed character data including experience
+export async function fetchCharacterDetails(name: string): Promise<{ level: number; experience: number } | null> {
+  try {
+    const data = await cachedFetch(`${TIBIADATA_BASE}/character/${encodeURIComponent(name)}`);
+    if (!data.character?.character) return null;
+    
+    return {
+      level: data.character.character.level,
+      experience: data.character.character.experience_points || 0,
+    };
+  } catch (error) {
+    console.error(`Failed to fetch character details ${name}:`, error);
     return null;
   }
 }

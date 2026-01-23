@@ -4,14 +4,14 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, RefreshCw, Eye, Users, ExternalLink, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Search, RefreshCw, Eye, Users, ExternalLink, ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, TrendingUp } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { type Player, type Guild } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 
-type SortField = "name" | "rank" | "vocation" | "level" | "online";
+type SortField = "name" | "rank" | "vocation" | "level" | "online" | "levelsGained";
 type SortDirection = "asc" | "desc";
 
 export default function Players() {
@@ -54,6 +54,26 @@ export default function Players() {
       toast({
         title: "Scan Failed",
         description: "Could not fetch guild members from TibiaData.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const resetTrackingMutation = useMutation({
+    mutationFn: async (guildId: number) => {
+      return apiRequest("POST", `/api/guilds/${guildId}/reset-tracking`, {});
+    },
+    onSuccess: async () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/players?guildId=${selectedGuildId}`] });
+      toast({
+        title: "Tracking Reset",
+        description: "Level tracking has been reset. Current levels are now the baseline.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Reset Failed",
+        description: "Could not reset level tracking.",
         variant: "destructive",
       });
     }
@@ -112,6 +132,9 @@ export default function Players() {
         case "online":
           comparison = (a.online ? 1 : 0) - (b.online ? 1 : 0);
           break;
+        case "levelsGained":
+          comparison = (a.levelsGained || 0) - (b.levelsGained || 0);
+          break;
       }
       return sortDirection === "asc" ? comparison : -comparison;
     });
@@ -168,6 +191,29 @@ export default function Players() {
                         <span className="text-muted-foreground">Online Now</span>
                         <span className="font-mono text-emerald-500">{onlineCount}</span>
                     </div>
+                    <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Total Lvl Gained</span>
+                        <span className="font-mono text-emerald-500">
+                          +{players?.reduce((sum, p) => sum + (p.levelsGained || 0), 0) || 0}
+                        </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Players Leveled</span>
+                        <span className="font-mono">
+                          {players?.filter(p => (p.levelsGained || 0) > 0).length || 0}
+                        </span>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full mt-2 text-xs"
+                      onClick={() => selectedGuildId && resetTrackingMutation.mutate(selectedGuildId)}
+                      disabled={resetTrackingMutation.isPending || !selectedGuildId}
+                      data-testid="button-reset-tracking"
+                    >
+                      <RotateCcw className={`h-3 w-3 mr-1 ${resetTrackingMutation.isPending ? 'animate-spin' : ''}`} />
+                      Reset Level Tracking
+                    </Button>
                 </CardContent>
             </Card>
 
@@ -248,6 +294,15 @@ export default function Players() {
                                 </div>
                               </TableHead>
                               <TableHead 
+                                className="cursor-pointer select-none hover:text-foreground transition-colors"
+                                onClick={() => handleSort("levelsGained")}
+                              >
+                                <div className="flex items-center">
+                                  <TrendingUp className="h-4 w-4 mr-1" />
+                                  Gained {getSortIcon("levelsGained")}
+                                </div>
+                              </TableHead>
+                              <TableHead 
                                 className="text-right cursor-pointer select-none hover:text-foreground transition-colors"
                                 onClick={() => handleSort("online")}
                               >
@@ -279,7 +334,13 @@ export default function Players() {
                                   <TableCell className="text-muted-foreground">{p.vocation}</TableCell>
                                   <TableCell className="font-mono">
                                       {p.level}
-                                      {p.levelsGained != null && p.levelsGained > 0 && <span className="text-emerald-500 text-xs ml-1">+{p.levelsGained}</span>}
+                                  </TableCell>
+                                  <TableCell className="font-mono">
+                                      {(p.levelsGained || 0) > 0 ? (
+                                        <span className="text-emerald-500 font-bold">+{p.levelsGained}</span>
+                                      ) : (
+                                        <span className="text-muted-foreground">-</span>
+                                      )}
                                   </TableCell>
                                   <TableCell className="text-right">
                                       <Badge variant="outline" className={`border-0 ${p.online ? 'bg-emerald-500/10 text-emerald-500' : 'bg-secondary text-muted-foreground'}`}>

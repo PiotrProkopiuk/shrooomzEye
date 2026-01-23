@@ -105,11 +105,17 @@ export async function registerRoutes(
     for (const member of members) {
       const existing = await storage.getPlayerByName(member.name);
       if (existing) {
+        // Calculate levels gained
+        const startLevel = existing.startLevel || existing.level;
+        const levelsGained = member.level - startLevel;
+        
         await storage.updatePlayer(existing.id, {
           level: member.level,
           vocation: member.vocation,
           rank: member.rank,
+          online: member.status === "online",
           lastScan: new Date(),
+          levelsGained: levelsGained > 0 ? levelsGained : 0,
         });
         results.updated++;
       } else {
@@ -120,12 +126,29 @@ export async function registerRoutes(
           vocation: member.vocation,
           rank: member.rank,
           online: member.status === "online",
+          startLevel: member.level,
+          levelsGained: 0,
         });
         results.created++;
       }
     }
 
     res.json(results);
+  });
+  
+  // Reset level tracking (set current level as new baseline)
+  app.post("/api/guilds/:id/reset-tracking", requireAuth, requireRole("ADMIN", "MODERATOR"), async (req, res) => {
+    const guildId = parseInt(req.params.id as string);
+    const players = await storage.getPlayers(guildId);
+    
+    for (const player of players) {
+      await storage.updatePlayer(player.id, {
+        startLevel: player.level,
+        levelsGained: 0,
+      });
+    }
+    
+    res.json({ success: true, playersReset: players.length });
   });
 
   // Update player
