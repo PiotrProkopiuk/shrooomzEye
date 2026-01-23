@@ -207,8 +207,11 @@ export async function getDeathTrackerConfig(guildId: number) {
 export async function saveDeathTrackerConfig(config: any) {
   const existing = await getDeathTrackerConfig(config.guildId);
   if (existing) {
-    await db.update(deathTrackerConfig).set(config).where(eq(deathTrackerConfig.id, existing.id));
-    return existing;
+    const [updated] = await db.update(deathTrackerConfig)
+      .set(config)
+      .where(eq(deathTrackerConfig.id, existing.id))
+      .returning();
+    return updated;
   } else {
     const [created] = await db.insert(deathTrackerConfig).values(config).returning();
     return created;
@@ -223,18 +226,28 @@ export async function processNotifications(): Promise<number> {
   const unnotified = await getUnnotifiedDeaths();
   if (unnotified.length === 0) return 0;
 
-  // Get all configs with webhooks
+  // Get all enabled configs with webhooks
   const configs = await db.select().from(deathTrackerConfig).where(eq(deathTrackerConfig.enabled, true));
   
   let notifiedCount = 0;
   
   for (const death of unnotified) {
     const isEnemy = death.victimGuildType === "enemy";
+    let notificationSent = false;
     
     // Find configs that should receive this notification
+    // A single config can handle both main and enemy deaths - we look for configs linked to main guild
+    // or any enabled config (for server-wide notifications)
     for (const config of configs) {
-      // Check if this death belongs to a guild linked to this config
-      if (config.guildId !== death.victimGuildId) continue;
+      // For main guild deaths, config.guildId should match the victim's guild
+      // For enemy deaths, we use the config from the main guild (which tracks enemies)
+      // So we look for configs where guildId matches main guild (not enemy)
+      
+      // Get the main guild this death is related to
+      const relatedGuildId = isEnemy ? config.guildId : death.victimGuildId;
+      
+      // Skip if this config is not for the related guild
+      if (config.guildId !== relatedGuildId && !isEnemy) continue;
       
       // Check notification preferences
       if (isEnemy && !config.notifyEnemyGuildDeaths) continue;
@@ -250,14 +263,22 @@ export async function processNotifications(): Promise<number> {
       
       if (success) {
         console.log(`[DeathTracker] Sent notification for ${death.characterName} to Discord`);
+        notificationSent = true;
       } else {
         console.error(`[DeathTracker] Failed to notify for ${death.characterName}`);
       }
     }
     
-    // Mark as notified regardless (to prevent spam on webhook errors)
-    await markDeathAsNotified(death.id);
-    notifiedCount++;
+    // Only mark as notified if we actually sent the notification or if no webhooks are configured
+    // This allows retries if webhook delivery fails when webhooks ARE configured
+    const hasAnyWebhook = configs.some(c => 
+      (isEnemy && c.enemyGuildWebhookUrl) || (!isEnemy && c.mainGuildWebhookUrl)
+    );
+    
+    if (notificationSent || !hasAnyWebhook) {
+      await markDeathAsNotified(death.id);
+      notifiedCount++;
+    }
   }
   
   return notifiedCount;
