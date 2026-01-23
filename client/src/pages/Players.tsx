@@ -183,8 +183,8 @@ export default function Players() {
                                   <TableCell className="text-muted-foreground text-sm">{p.rank || "Member"}</TableCell>
                                   <TableCell className="text-muted-foreground">{p.vocation}</TableCell>
                                   <TableCell className="font-mono">
-                                      {p.level} 
-                                      {p.levelsGained && p.levelsGained > 0 && <span className="text-emerald-500 text-xs ml-1">+{p.levelsGained}</span>}
+                                      {p.level}
+                                      {p.levelsGained != null && p.levelsGained > 0 && <span className="text-emerald-500 text-xs ml-1">+{p.levelsGained}</span>}
                                   </TableCell>
                                   <TableCell className="text-right">
                                       <Badge variant="outline" className={`border-0 ${p.online ? 'bg-emerald-500/10 text-emerald-500' : 'bg-secondary text-muted-foreground'}`}>
