@@ -4,18 +4,23 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter, RefreshCw, Eye, Users } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Search, RefreshCw, Eye, Users, ExternalLink, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { type Player, type Guild } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
+
+type SortField = "name" | "rank" | "vocation" | "level" | "online";
+type SortDirection = "asc" | "desc";
 
 export default function Players() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedGuildId, setSelectedGuildId] = useState<number | null>(null);
+  const [sortField, setSortField] = useState<SortField>("level");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   
   const { data: guilds } = useQuery<Guild[]>({ queryKey: ["/api/guilds"] });
   
@@ -63,10 +68,56 @@ export default function Players() {
     scanAllMutation.mutate(selectedGuildId);
   };
 
-  const filteredPlayers = players?.filter(p => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.vocation?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection(field === "level" ? "desc" : "asc");
+    }
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) return <ArrowUpDown className="h-4 w-4 ml-1 opacity-30" />;
+    return sortDirection === "asc" 
+      ? <ArrowUp className="h-4 w-4 ml-1 text-primary" /> 
+      : <ArrowDown className="h-4 w-4 ml-1 text-primary" />;
+  };
+
+  const getTibiaLink = (name: string) => {
+    return `https://www.tibia.com/community/?name=${encodeURIComponent(name)}`;
+  };
+
+  const sortedAndFilteredPlayers = useMemo(() => {
+    let result = players?.filter(p => 
+      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.vocation?.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
+
+    result.sort((a, b) => {
+      let comparison = 0;
+      switch (sortField) {
+        case "name":
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case "rank":
+          comparison = (a.rank || "Member").localeCompare(b.rank || "Member");
+          break;
+        case "vocation":
+          comparison = (a.vocation || "").localeCompare(b.vocation || "");
+          break;
+        case "level":
+          comparison = (a.level || 0) - (b.level || 0);
+          break;
+        case "online":
+          comparison = (a.online ? 1 : 0) - (b.online ? 1 : 0);
+          break;
+      }
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
+
+    return result;
+  }, [players, searchTerm, sortField, sortDirection]);
 
   const onlineCount = players?.filter(p => p.online).length || 0;
 
@@ -154,7 +205,7 @@ export default function Players() {
                 <CardContent>
                     {isLoading ? (
                       <div className="text-center py-8 text-muted-foreground">Loading players...</div>
-                    ) : filteredPlayers.length === 0 ? (
+                    ) : sortedAndFilteredPlayers.length === 0 ? (
                       <div className="text-center py-8">
                         <Users className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
                         <p className="text-muted-foreground">No players yet</p>
@@ -164,19 +215,63 @@ export default function Players() {
                       <Table>
                           <TableHeader>
                           <TableRow className="border-white/5 hover:bg-transparent">
-                              <TableHead>Name</TableHead>
-                              <TableHead>Rank</TableHead>
-                              <TableHead>Vocation</TableHead>
-                              <TableHead>Level</TableHead>
-                              <TableHead className="text-right">Status</TableHead>
+                              <TableHead 
+                                className="cursor-pointer select-none hover:text-foreground transition-colors"
+                                onClick={() => handleSort("name")}
+                              >
+                                <div className="flex items-center">
+                                  Name {getSortIcon("name")}
+                                </div>
+                              </TableHead>
+                              <TableHead 
+                                className="cursor-pointer select-none hover:text-foreground transition-colors"
+                                onClick={() => handleSort("rank")}
+                              >
+                                <div className="flex items-center">
+                                  Rank {getSortIcon("rank")}
+                                </div>
+                              </TableHead>
+                              <TableHead 
+                                className="cursor-pointer select-none hover:text-foreground transition-colors"
+                                onClick={() => handleSort("vocation")}
+                              >
+                                <div className="flex items-center">
+                                  Vocation {getSortIcon("vocation")}
+                                </div>
+                              </TableHead>
+                              <TableHead 
+                                className="cursor-pointer select-none hover:text-foreground transition-colors"
+                                onClick={() => handleSort("level")}
+                              >
+                                <div className="flex items-center">
+                                  Level {getSortIcon("level")}
+                                </div>
+                              </TableHead>
+                              <TableHead 
+                                className="text-right cursor-pointer select-none hover:text-foreground transition-colors"
+                                onClick={() => handleSort("online")}
+                              >
+                                <div className="flex items-center justify-end">
+                                  Status {getSortIcon("online")}
+                                </div>
+                              </TableHead>
                           </TableRow>
                           </TableHeader>
                           <TableBody>
-                          {filteredPlayers.map((p, i) => (
-                              <TableRow key={i} className="border-white/5 hover:bg-white/5 group cursor-pointer" data-testid={`row-player-${p.id}`}>
-                                  <TableCell className="font-medium text-primary group-hover:text-accent transition-colors">
+                          {sortedAndFilteredPlayers.map((p, i) => (
+                              <TableRow key={i} className="border-white/5 hover:bg-white/5 group" data-testid={`row-player-${p.id}`}>
+                                  <TableCell className="font-medium">
                                       <div className="flex flex-col">
-                                          <span>{p.name}</span>
+                                          <a 
+                                            href={getTibiaLink(p.name)} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="text-primary hover:text-accent hover:underline transition-colors flex items-center gap-1"
+                                            data-testid={`link-player-${p.id}`}
+                                          >
+                                            {p.name}
+                                            <ExternalLink className="h-3 w-3 opacity-50 group-hover:opacity-100" />
+                                          </a>
                                           <span className="text-[10px] text-muted-foreground">{selectedGuild?.name}</span>
                                       </div>
                                   </TableCell>
