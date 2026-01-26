@@ -4,7 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, RefreshCw, Eye, Users, ExternalLink, ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, TrendingUp } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Search, RefreshCw, Eye, Users, ExternalLink, ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, TrendingUp, Sparkles, Loader2 } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -14,6 +16,27 @@ import { apiRequest } from "@/lib/queryClient";
 type SortField = "name" | "rank" | "vocation" | "level" | "online" | "levelsGained";
 type SortDirection = "asc" | "desc";
 
+interface TibSpyCharacterData {
+  characterName: string;
+  lastScrapedAt: string | null;
+  scrapeCount: number;
+  data: {
+    name?: string;
+    level?: number;
+    vocation?: string;
+    world?: string;
+    residence?: string;
+    guild?: string;
+    house?: string;
+    marriedTo?: string;
+    lastLogin?: string;
+    accountStatus?: string;
+    achievements?: number;
+    deaths?: any[];
+    characters?: any[];
+  } | null;
+}
+
 export default function Players() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -21,8 +44,25 @@ export default function Players() {
   const [selectedGuildId, setSelectedGuildId] = useState<number | null>(null);
   const [sortField, setSortField] = useState<SortField>("level");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [tibspyDialogOpen, setTibspyDialogOpen] = useState(false);
+  const [selectedTibspyPlayer, setSelectedTibspyPlayer] = useState<string | null>(null);
   
   const { data: guilds } = useQuery<Guild[]>({ queryKey: ["/api/guilds"] });
+  
+  const { data: tibspyData, isLoading: tibspyLoading } = useQuery<TibSpyCharacterData | null>({
+    queryKey: ["/api/tibspy/character", selectedTibspyPlayer],
+    queryFn: async () => {
+      const res = await fetch(`/api/tibspy/character/${encodeURIComponent(selectedTibspyPlayer!)}`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!selectedTibspyPlayer && tibspyDialogOpen,
+  });
+
+  const openTibspyDialog = (playerName: string) => {
+    setSelectedTibspyPlayer(playerName);
+    setTibspyDialogOpen(true);
+  };
   
   useEffect(() => {
     if (guilds?.length && !selectedGuildId) {
@@ -310,6 +350,20 @@ export default function Players() {
                                   Status {getSortIcon("online")}
                                 </div>
                               </TableHead>
+                              <TableHead className="text-center w-16" data-testid="header-tibspy">
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div className="flex items-center justify-center" data-testid="icon-tibspy-header">
+                                        <Sparkles className="h-4 w-4 text-amber-500" />
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>TibSpy Data</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </TableHead>
                           </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -347,6 +401,26 @@ export default function Players() {
                                           {p.online ? 'Online' : 'Offline'}
                                       </Badge>
                                   </TableCell>
+                                  <TableCell className="text-center">
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-7 w-7 p-0 hover:bg-amber-500/10"
+                                            onClick={() => openTibspyDialog(p.name)}
+                                            data-testid={`button-tibspy-${p.id}`}
+                                          >
+                                            <Sparkles className="h-4 w-4 text-amber-500/70 hover:text-amber-500" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>View TibSpy Data</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  </TableCell>
                               </TableRow>
                           ))}
                           </TableBody>
@@ -356,6 +430,126 @@ export default function Players() {
             </Card>
         </div>
       </div>
+
+      <Dialog open={tibspyDialogOpen} onOpenChange={setTibspyDialogOpen}>
+        <DialogContent className="max-w-2xl bg-card border-border/50" data-testid="dialog-tibspy">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 font-display" data-testid="text-tibspy-title">
+              <Sparkles className="h-5 w-5 text-amber-500" />
+              TibSpy Data - {selectedTibspyPlayer}
+            </DialogTitle>
+            <DialogDescription data-testid="text-tibspy-description">
+              Extended character information from TibSpy
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {tibspyLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+              </div>
+            ) : !tibspyData ? (
+              <div className="text-center py-8">
+                <Sparkles className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
+                <p className="text-muted-foreground">No TibSpy data available for this character</p>
+                <p className="text-sm text-muted-foreground/70 mt-1">
+                  This character hasn't been scraped yet or is in the queue
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <div>
+                      <span className="text-xs text-muted-foreground uppercase tracking-wide">Last Scraped</span>
+                      <p className="text-sm font-medium" data-testid="text-last-scraped">
+                        {tibspyData.lastScrapedAt 
+                          ? new Date(tibspyData.lastScrapedAt).toLocaleString() 
+                          : 'Never'}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-xs text-muted-foreground uppercase tracking-wide">Scrape Count</span>
+                      <p className="text-sm font-medium" data-testid="text-scrape-count">{tibspyData.scrapeCount}</p>
+                    </div>
+                  </div>
+                  
+                  {tibspyData.data && (
+                    <div className="space-y-3">
+                      {tibspyData.data.residence && (
+                        <div>
+                          <span className="text-xs text-muted-foreground uppercase tracking-wide">Residence</span>
+                          <p className="text-sm font-medium">{tibspyData.data.residence}</p>
+                        </div>
+                      )}
+                      {tibspyData.data.house && (
+                        <div>
+                          <span className="text-xs text-muted-foreground uppercase tracking-wide">House</span>
+                          <p className="text-sm font-medium">{tibspyData.data.house}</p>
+                        </div>
+                      )}
+                      {tibspyData.data.marriedTo && (
+                        <div>
+                          <span className="text-xs text-muted-foreground uppercase tracking-wide">Married To</span>
+                          <p className="text-sm font-medium text-pink-400">{tibspyData.data.marriedTo}</p>
+                        </div>
+                      )}
+                      {tibspyData.data.achievements !== undefined && (
+                        <div>
+                          <span className="text-xs text-muted-foreground uppercase tracking-wide">Achievement Points</span>
+                          <p className="text-sm font-medium">{tibspyData.data.achievements}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {tibspyData.data?.characters && tibspyData.data.characters.length > 0 && (
+                  <div className="mt-4" data-testid="section-other-characters">
+                    <h4 className="text-sm font-medium text-amber-500 mb-2 flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      Other Characters on Account ({tibspyData.data.characters.length})
+                    </h4>
+                    <div className="bg-background/50 rounded-lg p-3 max-h-48 overflow-y-auto">
+                      <div className="grid grid-cols-2 gap-2">
+                        {tibspyData.data.characters.slice(0, 20).map((char: any, idx: number) => (
+                          <div key={idx} className="flex items-center justify-between text-sm py-1 px-2 rounded hover:bg-white/5">
+                            <span className="truncate">{char.name || char}</span>
+                            {char.level && (
+                              <Badge variant="outline" className="ml-2 text-xs">
+                                Lvl {char.level}
+                              </Badge>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      {tibspyData.data.characters.length > 20 && (
+                        <p className="text-xs text-muted-foreground mt-2 text-center">
+                          +{tibspyData.data.characters.length - 20} more characters
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {tibspyData.data?.deaths && tibspyData.data.deaths.length > 0 && (
+                  <div className="mt-4" data-testid="section-deaths">
+                    <h4 className="text-sm font-medium text-red-400 mb-2">Recent Deaths ({tibspyData.data.deaths.length})</h4>
+                    <div className="bg-background/50 rounded-lg p-3 max-h-32 overflow-y-auto">
+                      {tibspyData.data.deaths.slice(0, 5).map((death: any, idx: number) => (
+                        <div key={idx} className="text-sm py-1 border-b border-white/5 last:border-0">
+                          <span className="text-red-400">Died</span> at level {death.level || '?'} 
+                          {death.killers && ` by ${death.killers}`}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
