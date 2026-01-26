@@ -366,9 +366,19 @@ export default function Settings() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Button variant="destructive" className="w-full text-xs" size="sm">
+              <Button 
+                variant="destructive" 
+                className="w-full text-xs" 
+                size="sm"
+                disabled
+                title="Contact support to clear server data"
+                data-testid="button-clear-server-data"
+              >
                 Clear Server Data
               </Button>
+              <p className="text-[10px] text-muted-foreground text-center">
+                Contact support to clear all data
+              </p>
             </CardContent>
           </Card>
         </div>

@@ -1,0 +1,86 @@
+Perform a full application review AND complete missing or placeholder functionality.
+
+Context:
+- Symfony backend
+- Web dashboard already designed
+- Discord bot integration
+- Several dashboard views contain:
+  - placeholders
+  - TODOs
+  - partially implemented logic
+  - hardcoded or mock data
+
+Goal:
+Clean up the application and ensure all existing UI elements are functional.
+
+---
+
+### Review & Completion Scope
+
+1. **Dashboard View Audit**
+- Identify dashboard views with:
+  - disabled buttons
+  - placeholder text
+  - TODO comments
+  - mock or hardcoded data
+- For each view:
+  - determine intended functionality based on UI and context
+  - implement missing backend logic
+  - connect it to existing data sources
+
+2. **Functionality Completion Rules**
+- Use ONLY data that is already collected:
+  - deaths
+  - online snapshots
+  - level snapshots
+  - guilds and enemies
+  - correlations
+- Do NOT add new scrapers or collectors.
+- If a feature cannot be fully implemented with current data:
+  - clearly mark it as intentionally unavailable
+  - provide a safe fallback (empty state or disabled action)
+
+3. **API & Controller Updates**
+- Implement missing endpoints required by existing views.
+- Remove duplicated or unused endpoints.
+- Ensure consistent response formats.
+
+4. **Service Layer Alignment**
+- Move view-specific logic out of controllers.
+- Reuse existing services where possible.
+- Refactor duplicated aggregation logic into shared services.
+
+5. **Permissions & Visibility**
+- Ensure unfinished features respect permission rules:
+  - admin / vice leader only where applicable
+  - hide or disable controls for regular users
+- Avoid exposing incomplete intelligence data.
+
+6. **UX Improvements for Incomplete States**
+- Replace TODOs with:
+  - proper empty states
+  - loading indicators
+  - permission warnings
+- Avoid broken or misleading UI elements.
+
+---
+
+### Output Requirements
+
+- A written audit report listing:
+  - completed features
+  - features intentionally disabled
+  - features removed due to redundancy
+- Implemented backend logic for all viable views.
+- Refactored controllers and services.
+- Updated README documenting:
+  - completed functionality
+  - known limitations
+  - intentional exclusions
+
+Do NOT:
+- Invent new features beyond the current UI.
+- Change the visual design.
+- Add new data collectors or scrapers.
+
+Focus on correctness, consistency, and completeness.

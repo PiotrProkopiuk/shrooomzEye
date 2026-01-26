@@ -73,6 +73,7 @@ export interface IStorage {
   // Templates
   getTemplates(): Promise<Template[]>;
   createTemplate(template: InsertTemplate): Promise<Template>;
+  deleteTemplate(id: number): Promise<void>;
 
   // PvP Action Config
   getPvpActionConfig(guildId: number): Promise<PvpActionConfig | undefined>;
@@ -320,6 +321,10 @@ export class DatabaseStorage implements IStorage {
   async createTemplate(insertTemplate: InsertTemplate): Promise<Template> {
     const [template] = await db.insert(templates).values(insertTemplate).returning();
     return template;
+  }
+
+  async deleteTemplate(id: number): Promise<void> {
+    await db.delete(templates).where(eq(templates.id, id));
   }
 
   // PvP Action Config

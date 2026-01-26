@@ -132,3 +132,26 @@ All parameters are configurable via the API or database:
 - Data freshness is not critical - stale data is acceptable
 - The scraper must behave politely and predictably
 - Core logic does NOT depend on TibSpy availability
+
+## Codebase Audit (January 2026)
+
+### Completed Fixes
+1. **Templates.tsx** - Converted from hardcoded TEMPLATES array to real API (`GET /api/templates`, `POST /api/templates`, `DELETE /api/templates/:id`). Shows empty state when no templates exist.
+2. **Events.tsx** - Removed mock event fallback data. Now shows proper empty state with call-to-action to create first event.
+3. **Settings.tsx** - "Clear Server Data" button disabled with guidance to contact support (destructive action requires manual intervention).
+4. **mockData.ts** - Removed unused mock data file.
+5. **storage.ts** - Added `deleteTemplate()` method to interface and implementation.
+
+### Known Placeholders (By Design)
+- **Mock Authentication** - localStorage-based login in `Login.tsx`, `App.tsx`, `Layout.tsx`. Designed for development; Discord OAuth2 ready for production.
+- **Danger Zone** - Server data clearing disabled pending proper confirmation flow.
+
+### Data Sources
+All UI pages now use real API endpoints connected to PostgreSQL:
+- Dashboard: `/api/guilds`, `/api/players`, `/api/online/*`, `/api/death-tracker/*`
+- Players: `/api/players`, `/api/tibspy/character/:name`
+- Events: `/api/events/:guildId`, `/api/templates`
+- Templates: `/api/templates`
+- Activity History: `/api/death-tracker/recent`
+- Guilds: `/api/guilds`, `/api/tibia/guild/:name`
+- Settings: `/api/death-tracker/config/:guildId`

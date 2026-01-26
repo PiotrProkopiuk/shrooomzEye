@@ -369,6 +369,12 @@ export async function registerRoutes(
     res.json(template);
   });
 
+  app.delete("/api/templates/:id", requireAuth, requireRole("ADMIN", "MODERATOR"), async (req, res) => {
+    const id = parseInt(req.params.id);
+    await storage.deleteTemplate(id);
+    res.json({ success: true });
+  });
+
   // ============ STATISTICS ============
   app.get("/api/stats/:guildId", async (req, res) => {
     const stats = await storage.getGuildStats(parseInt(req.params.guildId));

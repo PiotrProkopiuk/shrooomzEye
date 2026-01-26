@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Users, Plus, MapPin, MoreHorizontal } from "lucide-react";
+import { Calendar, Users, Plus, MapPin, MoreHorizontal, CalendarX } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -74,28 +74,8 @@ export default function Events() {
     });
   };
 
-  const mockEvents = [
-    {
-      title: "Soul War Service - Goshnar's Malice",
-      type: "Quest Service",
-      date: "Today, 20:00 CET",
-      participants: 12,
-      max: 15,
-      loc: "Goshnar's Taint",
-      status: "Open",
-    },
-    {
-      title: "Heart of Destruction - Full Run",
-      type: "Boss Run",
-      date: "Tomorrow, 18:00 CET",
-      participants: 15,
-      max: 15,
-      loc: "Otherworld",
-      status: "FULL",
-    },
-  ];
-
-  const displayEvents = events?.length ? events.map(e => ({
+  const displayEvents = events?.map(e => ({
+    id: e.id,
     title: e.title,
     type: e.type,
     date: e.startTime ? new Date(e.startTime).toLocaleString() : "TBD",
@@ -103,7 +83,7 @@ export default function Events() {
     max: e.maxParticipants || 15,
     loc: "TBD",
     status: e.status === "full" ? "FULL" : e.status === "open" ? "Open" : e.status,
-  })) : mockEvents;
+  })) || [];
 
   return (
     <div className="space-y-6">
@@ -115,7 +95,7 @@ export default function Events() {
         
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2">
+            <Button className="gap-2" data-testid="button-create-event">
               <Plus className="h-4 w-4" />
               Create Event
             </Button>
@@ -131,34 +111,34 @@ export default function Events() {
               <div className="space-y-2">
                 <Label>Use Template</Label>
                 <Select onValueChange={handleTemplateChange}>
-                  <SelectTrigger className="bg-background/50 border-white/10">
+                  <SelectTrigger className="bg-background/50 border-white/10" data-testid="select-event-template">
                     <SelectValue placeholder="Select a template..." />
                   </SelectTrigger>
                   <SelectContent>
                     {templates?.map(t => (
-                      <SelectItem key={t.name} value={t.name}>{t.name}</SelectItem>
+                      <SelectItem key={t.name} value={t.name} data-testid={`select-template-${t.name.replace(/\s+/g, '-').toLowerCase()}`}>{t.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="title">Event Name</Label>
-                <Input id="title" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="bg-background/50 border-white/10" />
+                <Input id="title" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="bg-background/50 border-white/10" data-testid="input-event-title" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="date">Date & Time</Label>
-                  <Input id="date" type="datetime-local" value={formData.startTime} onChange={e => setFormData({...formData, startTime: e.target.value})} className="bg-background/50 border-white/10" />
+                  <Input id="date" type="datetime-local" value={formData.startTime} onChange={e => setFormData({...formData, startTime: e.target.value})} className="bg-background/50 border-white/10" data-testid="input-event-datetime" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="max">Max Participants</Label>
-                  <Input id="max" type="number" value={formData.maxParticipants} onChange={e => setFormData({...formData, maxParticipants: e.target.value})} className="bg-background/50 border-white/10" />
+                  <Input id="max" type="number" value={formData.maxParticipants} onChange={e => setFormData({...formData, maxParticipants: e.target.value})} className="bg-background/50 border-white/10" data-testid="input-event-max" />
                 </div>
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" className="border-white/10" onClick={() => setDialogOpen(false)}>Cancel</Button>
-              <Button onClick={handleCreate} disabled={createEventMutation.isPending}>
+              <Button variant="outline" className="border-white/10" onClick={() => setDialogOpen(false)} data-testid="button-cancel-event">Cancel</Button>
+              <Button onClick={handleCreate} disabled={createEventMutation.isPending} data-testid="button-submit-event">
                 {createEventMutation.isPending ? "Creating..." : "Create Event"}
               </Button>
             </DialogFooter>
@@ -166,6 +146,17 @@ export default function Events() {
         </Dialog>
       </div>
 
+      {displayEvents.length === 0 ? (
+        <div className="text-center py-16" data-testid="text-events-empty">
+          <CalendarX className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
+          <h3 className="text-lg font-medium text-muted-foreground mb-2">No events scheduled</h3>
+          <p className="text-sm text-muted-foreground/70 mb-6">Create your first event to start organizing quests and boss runs.</p>
+          <Button onClick={() => setDialogOpen(true)} className="gap-2" data-testid="button-create-first-event">
+            <Plus className="h-4 w-4" />
+            Create First Event
+          </Button>
+        </div>
+      ) : (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {displayEvents.map((event, i) => (
           <Card key={i} className="bg-card/50 border-border/50 overflow-hidden relative group">
@@ -217,6 +208,7 @@ export default function Events() {
           </Card>
         ))}
       </div>
+      )}
     </div>
   );
 }
