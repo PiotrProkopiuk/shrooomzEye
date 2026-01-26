@@ -188,7 +188,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                             <ChevronDown className="h-4 w-4 text-muted-foreground" />
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-72 bg-[hsl(var(--sidebar-background))] border-sidebar-border text-foreground shadow-xl z-50">
+                    <DropdownMenuContent className="w-72 bg-sidebar border border-sidebar-border text-foreground shadow-2xl z-50">
                         <DropdownMenuLabel>Switch Guild Context</DropdownMenuLabel>
                         <DropdownMenuSeparator className="bg-white/5" />
                         {guilds.filter(g => !g.isEnemy).length > 0 && (
