@@ -497,8 +497,8 @@ export async function registerRoutes(
     res.json(data);
   });
 
-  // Request scrape for a character (any authenticated user, normal priority)
-  app.post("/api/tibspy/request-scrape/:name", requireAuth, async (req, res) => {
+  // Request scrape for a character (public endpoint for on-demand scraping)
+  app.post("/api/tibspy/request-scrape/:name", async (req, res) => {
     const characterName = req.params.name;
     if (!characterName) {
       return res.status(400).json({ error: "Character name is required" });
