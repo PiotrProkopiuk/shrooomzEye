@@ -40,7 +40,7 @@ export default function Guilds() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [verifyDialogOpen, setVerifyDialogOpen] = useState(false);
   const [selectedGuild, setSelectedGuild] = useState<Guild | null>(null);
-  const [formData, setFormData] = useState({ name: "", server: "Antica", isEnemy: false });
+  const [formData, setFormData] = useState({ name: "", server: "Antica", guildType: "main" as "main" | "ally" | "enemy" });
 
   const { data: guilds, isLoading } = useQuery<Guild[]>({ 
     queryKey: ["/api/guilds"] 
@@ -55,7 +55,7 @@ export default function Guilds() {
       queryClient.invalidateQueries({ queryKey: ["/api/guilds"] });
       toast({ title: "Guild Added", description: `${guild.name} has been added. Verify ownership to unlock features.` });
       setDialogOpen(false);
-      setFormData({ name: "", server: "Antica", isEnemy: false });
+      setFormData({ name: "", server: "Antica", guildType: "main" });
       setSelectedGuild(guild);
       setVerifyDialogOpen(true);
     },
@@ -118,7 +118,8 @@ export default function Guilds() {
   ) || [];
 
   const getGuildType = (guild: Guild) => {
-    if (guild.isEnemy) return "Enemy";
+    if (guild.guildType === "enemy" || guild.isEnemy) return "Enemy";
+    if (guild.guildType === "ally") return "Ally";
     if (guild.verified) return "Main";
     return "Pending";
   };
@@ -175,15 +176,18 @@ export default function Guilds() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex items-center gap-3">
-                <input 
-                  type="checkbox" 
-                  id="isEnemy"
-                  checked={formData.isEnemy}
-                  onChange={e => setFormData({...formData, isEnemy: e.target.checked})}
-                  className="h-4 w-4"
-                />
-                <Label htmlFor="isEnemy" className="text-sm">Mark as Enemy Guild</Label>
+              <div className="space-y-2">
+                <Label htmlFor="guildType">Guild Type</Label>
+                <Select value={formData.guildType} onValueChange={v => setFormData({...formData, guildType: v as "main" | "ally" | "enemy"})}>
+                  <SelectTrigger className="bg-background/50 border-white/10">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="main">Main Guild (Your Guild)</SelectItem>
+                    <SelectItem value="ally">Ally Guild</SelectItem>
+                    <SelectItem value="enemy">Enemy Guild</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <DialogFooter>

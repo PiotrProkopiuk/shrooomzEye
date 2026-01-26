@@ -21,7 +21,8 @@ export const guilds = pgTable("guilds", {
   formationDate: text("formation_date"),
   totalExp: text("total_exp"),
   guildPower: integer("guild_power").default(0),
-  isEnemy: boolean("is_enemy").default(false),
+  guildType: text("guild_type").default("main"), // 'main', 'ally', 'enemy'
+  isEnemy: boolean("is_enemy").default(false), // deprecated, use guildType
   verified: boolean("verified").default(false),
   verificationCode: text("verification_code"),
   verifiedAt: timestamp("verified_at"),
