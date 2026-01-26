@@ -576,24 +576,39 @@ export default function Players() {
                   <div className="mt-4" data-testid="section-other-characters">
                     <h4 className="text-sm font-medium text-amber-500 mb-2 flex items-center gap-2">
                       <Users className="h-4 w-4" />
-                      Other Characters on Account ({tibspyData.data.characters.length})
+                      Linked Characters ({tibspyData.data.characters.length})
                     </h4>
-                    <div className="bg-background/50 rounded-lg p-3 max-h-48 overflow-y-auto">
-                      <div className="grid grid-cols-2 gap-2">
-                        {tibspyData.data.characters.slice(0, 20).map((char: any, idx: number) => (
-                          <div key={idx} className="flex items-center justify-between text-sm py-1 px-2 rounded hover:bg-white/5">
-                            <span className="truncate">{char.name || char}</span>
-                            {char.level && (
-                              <Badge variant="outline" className="ml-2 text-xs">
-                                Lvl {char.level}
-                              </Badge>
-                            )}
+                    <div className="bg-background/50 rounded-lg p-3 max-h-64 overflow-y-auto">
+                      <div className="space-y-1">
+                        {tibspyData.data.characters.slice(0, 30).map((char: any, idx: number) => (
+                          <div key={idx} className="flex items-center justify-between text-sm py-1.5 px-2 rounded hover:bg-white/5 border-b border-white/5 last:border-0">
+                            <span className="truncate font-medium">{char.name || char}</span>
+                            <div className="flex items-center gap-2">
+                              {char.visibleCounter && (
+                                <span className="text-xs text-muted-foreground">
+                                  {char.visibleCounter}x seen
+                                </span>
+                              )}
+                              {char.label && (
+                                <Badge 
+                                  variant="outline" 
+                                  className={`text-xs ${
+                                    char.label === 'VERY HIGH' ? 'border-red-500 text-red-400' :
+                                    char.label === 'HIGH' ? 'border-orange-500 text-orange-400' :
+                                    char.label === 'MEDIUM' ? 'border-yellow-500 text-yellow-400' :
+                                    'border-gray-500 text-gray-400'
+                                  }`}
+                                >
+                                  {char.label}
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>
-                      {tibspyData.data.characters.length > 20 && (
+                      {tibspyData.data.characters.length > 30 && (
                         <p className="text-xs text-muted-foreground mt-2 text-center">
-                          +{tibspyData.data.characters.length - 20} more characters
+                          +{tibspyData.data.characters.length - 30} more characters
                         </p>
                       )}
                     </div>

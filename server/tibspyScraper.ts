@@ -9,7 +9,8 @@ import {
   type Guild
 } from "@shared/schema";
 import { eq, desc, and, lt, sql, isNull, or, asc } from "drizzle-orm";
-import puppeteer from "puppeteer";
+
+const TIBSPY_API_BASE = "https://api.tibspy.com/api/private/v1";
 
 interface TibSpyScraperConfig {
   dailyScrapeLimit: number;
@@ -232,70 +233,92 @@ class TibSpyScraperService {
   }
 
   private async scrapeCharacter(characterName: string): Promise<ScrapeResult> {
-    let browser = null;
     try {
-      console.log(`[TibSpy] Starting Puppeteer scrape for ${characterName}`);
+      console.log(`[TibSpy] Starting API scrape for ${characterName}`);
       
-      browser = await puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-      });
-      
-      const page = await browser.newPage();
-      await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
-      
-      const url = `https://tibspy.com/character/${encodeURIComponent(characterName)}`;
-      await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
-      
-      await page.waitForSelector('body', { timeout: 10000 });
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      const data = await page.evaluate(() => {
-        const result: any = {};
-        
-        const pageText = document.body.innerText;
-        
-        if (pageText.includes('Character not found') || pageText.includes('No results')) {
-          return null;
-        }
-        
-        const tables = document.querySelectorAll('table');
-        const cards = document.querySelectorAll('.card, .panel, [class*="character"]');
-        
-        result.rawText = pageText.substring(0, 5000);
-        
-        const characterNames: string[] = [];
-        const links = document.querySelectorAll('a[href*="/character/"]');
-        links.forEach(link => {
-          const name = link.textContent?.trim();
-          if (name && name.length > 2 && name.length < 50) {
-            characterNames.push(name);
-          }
-        });
-        result.characters = Array.from(new Set(characterNames));
-        
-        const levelMatch = pageText.match(/Level:?\s*(\d+)/i);
-        if (levelMatch) result.level = parseInt(levelMatch[1]);
-        
-        const vocationMatch = pageText.match(/Vocation:?\s*([A-Za-z\s]+)/i);
-        if (vocationMatch) result.vocation = vocationMatch[1].trim();
-        
-        const worldMatch = pageText.match(/World:?\s*([A-Za-z]+)/i);
-        if (worldMatch) result.world = worldMatch[1].trim();
-        
-        const guildMatch = pageText.match(/Guild:?\s*([^\n]+)/i);
-        if (guildMatch) result.guild = guildMatch[1].trim();
-        
-        return result;
+      const registerResponse = await fetch(`${TIBSPY_API_BASE}/report/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'TibiaGuildBot/1.0',
+        },
+        body: JSON.stringify({ characterName: characterName.toLowerCase() }),
       });
 
-      await browser.close();
-      browser = null;
-
-      if (!data) {
-        console.log(`[TibSpy] Character ${characterName} not found on TibSpy`);
-        return { characterName, success: false, reason: 'not_found' };
+      if (!registerResponse.ok) {
+        console.log(`[TibSpy] Register failed for ${characterName}: ${registerResponse.status}`);
+        return { characterName, success: false, reason: 'register_failed' };
       }
+
+      const registerData = await registerResponse.json();
+      const jobId = registerData.jobId;
+
+      if (!jobId) {
+        console.log(`[TibSpy] No jobId returned for ${characterName}`);
+        return { characterName, success: false, reason: 'no_job_id' };
+      }
+
+      console.log(`[TibSpy] Job registered for ${characterName}: ${jobId}`);
+
+      let attempts = 0;
+      const maxAttempts = 30;
+      let isReady = false;
+
+      while (attempts < maxAttempts && !isReady) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        const statusResponse = await fetch(`${TIBSPY_API_BASE}/report/${jobId}/status`, {
+          headers: { 'User-Agent': 'TibiaGuildBot/1.0' },
+        });
+
+        if (statusResponse.ok) {
+          const statusData = await statusResponse.json();
+          if (statusData.reportDataStatus === 'READY') {
+            isReady = true;
+            console.log(`[TibSpy] Report ready for ${characterName}`);
+          }
+        }
+        attempts++;
+      }
+
+      if (!isReady) {
+        console.log(`[TibSpy] Timeout waiting for report: ${characterName}`);
+        return { characterName, success: false, reason: 'timeout' };
+      }
+
+      const historyResponse = await fetch(`${TIBSPY_API_BASE}/report/history/${encodeURIComponent(characterName.toLowerCase())}`, {
+        headers: { 'User-Agent': 'TibiaGuildBot/1.0' },
+      });
+
+      if (!historyResponse.ok) {
+        console.log(`[TibSpy] History fetch failed for ${characterName}: ${historyResponse.status}`);
+        return { characterName, success: false, reason: 'history_failed' };
+      }
+
+      const historyData = await historyResponse.json();
+      
+      if (!historyData || !Array.isArray(historyData) || historyData.length === 0) {
+        console.log(`[TibSpy] No history data for ${characterName}`);
+        return { characterName, success: false, reason: 'no_data' };
+      }
+
+      const latestReport = historyData[0];
+      let parsedData: any = {};
+
+      try {
+        if (latestReport.jsonData) {
+          parsedData = JSON.parse(latestReport.jsonData);
+        }
+      } catch (e) {
+        console.log(`[TibSpy] Failed to parse jsonData for ${characterName}`);
+      }
+
+      const data = {
+        scannedCharacter: parsedData.scannedCharacter || characterName,
+        characters: parsedData.characters || [],
+        jobId: latestReport.jobId,
+        createTimestamp: latestReport.createTimestamp,
+      };
 
       console.log(`[TibSpy] Successfully scraped ${characterName}, found ${data.characters?.length || 0} linked characters`);
 
@@ -320,12 +343,6 @@ class TibSpyScraperService {
     } catch (error: any) {
       console.error(`[TibSpy] Error scraping ${characterName}:`, error.message);
       return { characterName, success: false, reason: 'error' };
-    } finally {
-      if (browser) {
-        try {
-          await browser.close();
-        } catch (e) {}
-      }
     }
   }
 
