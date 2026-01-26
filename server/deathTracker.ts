@@ -32,21 +32,38 @@ interface CharacterDeaths {
 }
 
 export async function fetchCharacterDeaths(characterName: string): Promise<CharacterDeaths | null> {
-  try {
-    const response = await fetch(`${TIBIADATA_BASE}/character/${encodeURIComponent(characterName)}`);
-    if (!response.ok) return null;
-    
-    const data = await response.json();
-    if (!data.character?.character) return null;
-    
-    return {
-      name: data.character.character.name,
-      deaths: data.character.deaths || [],
-    };
-  } catch (error) {
-    console.error(`Failed to fetch deaths for ${characterName}:`, error);
-    return null;
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      const response = await fetch(`${TIBIADATA_BASE}/character/${encodeURIComponent(characterName)}`);
+      
+      if (response.status === 503) {
+        // TibiaData overloaded, wait and retry
+        if (attempt < MAX_RETRIES - 1) {
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAYS[attempt]));
+          continue;
+        }
+        return null;
+      }
+      
+      if (!response.ok) return null;
+      
+      const data = await response.json();
+      if (!data.character?.character) return null;
+      
+      return {
+        name: data.character.character.name,
+        deaths: data.character.deaths || [],
+      };
+    } catch (error) {
+      if (attempt < MAX_RETRIES - 1) {
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAYS[attempt]));
+        continue;
+      }
+      console.error(`Failed to fetch deaths for ${characterName} after ${MAX_RETRIES} attempts:`, error);
+      return null;
+    }
   }
+  return null;
 }
 
 function generateDeathHash(characterName: string, deathTime: string, level: number): string {
@@ -361,16 +378,31 @@ async function checkDeathsForAnyCharacter(characterName: string): Promise<number
   return newDeathsCount;
 }
 
+// Get ALL online characters (not just tracked guilds)
+async function getAllOnlineCharacters(): Promise<string[]> {
+  const onlineChars = await db.select({ name: onlineCharacters.characterName })
+    .from(onlineCharacters)
+    .where(eq(onlineCharacters.isCurrentlyOnline, true));
+  return onlineChars.map(c => c.name);
+}
+
 // Priority death check for online players (runs every 1 minute)
+// Checks ALL online players and stores all deaths, notifies only for relevant ones
 export async function runOnlinePlayerDeathCheck(): Promise<number> {
-  const onlinePlayers = await getOnlineTrackedPlayers();
-  if (onlinePlayers.length === 0) return 0;
+  // Get tracked players for priority
+  const trackedOnline = await getOnlineTrackedPlayers();
   
-  console.log(`[DeathTracker] Priority check: ${onlinePlayers.length} online tracked players`);
+  if (trackedOnline.length === 0) {
+    return 0;
+  }
+  
+  console.log(`[DeathTracker] Priority check: ${trackedOnline.length} tracked online players`);
   
   let totalNewDeaths = 0;
-  for (const playerName of onlinePlayers) {
-    const newDeaths = await checkDeathsForCharacter(playerName);
+  
+  // Check tracked online players with checkDeathsForAnyCharacter (stores all, notifies relevant)
+  for (const playerName of trackedOnline) {
+    const newDeaths = await checkDeathsForAnyCharacter(playerName);
     totalNewDeaths += newDeaths;
     
     // Small delay to avoid rate limiting

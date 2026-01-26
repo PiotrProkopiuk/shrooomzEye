@@ -89,9 +89,17 @@ export async function processOnlineSnapshot(world: string = "Antica"): Promise<{
 
   const onlineNames = onlinePlayers.map(p => p.name);
   
-  const trackedGuilds = await db.select({ name: guilds.name })
-    .from(guilds);
-  const trackedGuildNames = new Set(trackedGuilds.map(g => g.name.toLowerCase()));
+  // Get all tracked players (from main + enemy guilds)
+  const trackedPlayers = await db.select({
+    name: players.name,
+    guildId: players.guildId
+  }).from(players);
+  const trackedPlayerNames = new Set(trackedPlayers.map(p => p.name));
+  
+  // Get all guilds for guild name lookup
+  const allGuilds = await db.select().from(guilds);
+  const guildMap = new Map(allGuilds.map(g => [g.id, g]));
+  const playerGuildMap = new Map(trackedPlayers.map(p => [p.name, p.guildId]));
 
   const currentlyOnline = await db.select()
     .from(onlineCharacters)
@@ -104,6 +112,12 @@ export async function processOnlineSnapshot(world: string = "Antica"): Promise<{
   const loggedOff = currentlyOnline.filter(c => !nowOnlineNames.has(c.characterName));
 
   for (const player of onlinePlayers) {
+    // Check if this player is from a tracked guild
+    const isTracked = trackedPlayerNames.has(player.name);
+    const guildId = playerGuildMap.get(player.name);
+    const guild = guildId ? guildMap.get(guildId) : null;
+    const guildName = guild?.name || null;
+    
     const existing = await db.select()
       .from(onlineCharacters)
       .where(eq(onlineCharacters.characterName, player.name))
@@ -117,7 +131,8 @@ export async function processOnlineSnapshot(world: string = "Antica"): Promise<{
         vocation: player.vocation,
         lastSeen: now,
         isCurrentlyOnline: true,
-        isTrackedGuild: false,
+        isTrackedGuild: isTracked,
+        guildName: guildName,
       });
     } else {
       await db.update(onlineCharacters)
@@ -126,6 +141,8 @@ export async function processOnlineSnapshot(world: string = "Antica"): Promise<{
           vocation: player.vocation,
           lastSeen: now,
           isCurrentlyOnline: true,
+          isTrackedGuild: isTracked,
+          guildName: guildName,
         })
         .where(eq(onlineCharacters.characterName, player.name));
     }

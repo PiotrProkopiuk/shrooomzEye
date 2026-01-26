@@ -1,0 +1,139 @@
+Extend the existing web dashboard using already collected backend data.
+Do NOT introduce new data sources or scraping logic.
+
+Context:
+- Symfony backend
+- REST API already available
+- Data available:
+  - Characters
+  - OnlineSnapshots & OnlineSessions
+  - Deaths (PvP & non-PvP)
+  - CharacterLevelSnapshots (up to 90 days)
+  - Guilds (main + enemies)
+  - Correlation / alt-detection scores
+
+Frontend already exists.
+Your task is to enhance dashboard views and API consumption logic only.
+
+---
+
+### Dashboard Sections to Implement / Extend
+
+1. **Guild Overview (Main Page)**
+Display:
+- Total members
+- Members online now
+- Enemies online now
+- Total deaths today (guild vs enemies)
+- PvP deaths today (guild vs enemies)
+- Total levels gained (last 7 / 30 / 90 days)
+
+Use cached API endpoints where possible.
+
+---
+
+2. **Online Activity View**
+Visualize:
+- Online count over time (guild vs enemies)
+- Peak online hours (based on OnlineSessions)
+- Current online list with:
+  - character name
+  - level
+  - vocation
+  - guild affiliation
+
+Charts:
+- Line chart: online count per hour
+- Bar chart: activity by hour of day
+
+---
+
+3. **Deaths & PvP Dashboard**
+Show:
+- Recent deaths feed (last 24h)
+- PvP-only filter
+- Grouped PvP summary:
+  - Codex vs Retro Rushers (example)
+  - kills / deaths ratio per day
+
+Visuals:
+- Timeline of deaths
+- Daily PvP summary cards
+
+---
+
+4. **Level Progress Dashboard**
+Use CharacterLevelSnapshots:
+- Guild total level gain over:
+  - last 7 days
+  - last 30 days
+  - last 90 days
+- Top level gainers (guild & enemies)
+
+Charts:
+- Line chart: cumulative level gain
+- Ranking table: top characters by gained levels
+
+---
+
+5. **Enemy Intelligence View**
+Aggregate enemy data:
+- Enemies online now
+- Enemy level gains (7 / 30 days)
+- Enemy PvP deaths involving main guild
+- Most active enemy characters
+
+This view is visible only to admins and vice leaders.
+
+---
+
+6. **Character Profile Page**
+For a single character:
+- Online history (sessions)
+- Death history
+- Level history (chart)
+- PvP involvement summary
+- Potential alt correlations (score + explanation)
+
+Alt correlation data:
+- Visible only to admins / vice leaders
+- Clearly labeled as probabilistic
+
+---
+
+7. **Correlation & Intelligence Panel**
+Admin-only section:
+- List strongest correlations detected recently
+- Show:
+  - characters involved
+  - score
+  - contributing factors
+  - last overlapping session
+
+No accusations or public flags.
+
+---
+
+### UX & Performance Rules
+
+- Use existing REST endpoints only.
+- Do not add new backend logic.
+- Lazy-load heavy datasets.
+- Use clear labels explaining data freshness and limitations.
+- Prefer charts over tables where trends matter.
+
+---
+
+### Output Requirements
+
+- Updated dashboard components/pages.
+- API usage examples per view.
+- Clear separation between:
+  - public views
+  - admin-only intelligence views
+- README update describing dashboard sections and permissions.
+
+Do NOT:
+- Change backend schema.
+- Add new collectors or cron jobs.
+Focus on visualization and insight.
