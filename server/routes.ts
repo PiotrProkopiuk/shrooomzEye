@@ -34,9 +34,18 @@ export async function registerRoutes(
     const parsed = insertGuildSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json(parsed.error);
     
-    // Generate verification code
-    const verificationCode = `TIBIABOT-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
-    const guild = await storage.createGuild({ ...parsed.data, verificationCode });
+    const guildType = parsed.data.guildType || "main";
+    
+    // Only main guilds need verification - ally/enemy are auto-verified
+    const isAutoVerified = guildType === "ally" || guildType === "enemy";
+    const verificationCode = isAutoVerified ? null : `TIBIABOT-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
+    
+    const guild = await storage.createGuild({ 
+      ...parsed.data, 
+      verificationCode,
+      verified: isAutoVerified,
+      isEnemy: guildType === "enemy",
+    });
     res.json(guild);
   });
 

@@ -53,11 +53,18 @@ export default function Guilds() {
     onSuccess: async (response) => {
       const guild = await response.json();
       queryClient.invalidateQueries({ queryKey: ["/api/guilds"] });
-      toast({ title: "Guild Added", description: `${guild.name} has been added. Verify ownership to unlock features.` });
       setDialogOpen(false);
+      
+      // Only show verification dialog for main guilds
+      if (formData.guildType === "main") {
+        toast({ title: "Guild Added", description: `${guild.name} has been added. Verify ownership to unlock features.` });
+        setSelectedGuild(guild);
+        setVerifyDialogOpen(true);
+      } else {
+        toast({ title: "Guild Added", description: `${guild.name} has been added as ${formData.guildType} guild.` });
+      }
+      
       setFormData({ name: "", server: "Antica", guildType: "main" });
-      setSelectedGuild(guild);
-      setVerifyDialogOpen(true);
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to add guild.", variant: "destructive" });
@@ -318,7 +325,7 @@ export default function Guilds() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="bg-card border-white/10">
-                          {!guild.verified && (
+                          {!guild.verified && guild.guildType === "main" && (
                             <DropdownMenuItem onClick={() => { setSelectedGuild(guild); setVerifyDialogOpen(true); }}>
                               <CheckCircle className="h-4 w-4 mr-2" />
                               Verify Ownership
