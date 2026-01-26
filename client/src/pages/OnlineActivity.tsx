@@ -41,7 +41,7 @@ export default function OnlineActivity() {
   });
 
   const { data: sessions } = useQuery<OnlineSession[]>({
-    queryKey: ["/api/online/sessions?limit=100"],
+    queryKey: ["/api/online/sessions?limit=5000"],
   });
 
   const trackedPlayers = onlinePlayers?.filter(p => p.isTrackedGuild) || [];
