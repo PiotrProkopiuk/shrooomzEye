@@ -284,6 +284,83 @@ async function checkDeathsForCharacter(characterName: string): Promise<number> {
   return newDeathsCount;
 }
 
+// Check if a character belongs to a tracked guild
+async function getCharacterGuildInfo(characterName: string): Promise<{guildId: number | null, guildType: string | null, guildName: string | null}> {
+  const player = await storage.getPlayerByName(characterName);
+  if (player && player.guildId) {
+    const guild = await storage.getGuild(player.guildId);
+    return {
+      guildId: player.guildId,
+      guildType: guild?.isEnemy ? "enemy" : "main",
+      guildName: guild?.name || null
+    };
+  }
+  return { guildId: null, guildType: null, guildName: null };
+}
+
+// Check deaths for any online character (not just tracked guild members)
+async function checkDeathsForAnyCharacter(characterName: string): Promise<number> {
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - 1); // Only last 24 hours
+  
+  let newDeathsCount = 0;
+  
+  try {
+    const characterDeaths = await fetchCharacterDeaths(characterName);
+    if (!characterDeaths || !characterDeaths.deaths.length) return 0;
+    
+    // Get victim's guild info (may be null for non-tracked players)
+    const victimInfo = await getCharacterGuildInfo(characterName);
+    
+    for (const death of characterDeaths.deaths) {
+      const deathDate = new Date(death.time);
+      if (deathDate < cutoffDate) continue;
+      
+      const deathHash = generateDeathHash(characterName, death.time, death.level);
+      const [existing] = await db.select().from(deaths).where(eq(deaths.deathHash, deathHash));
+      if (existing) continue;
+      
+      // Check if killer is from a tracked guild
+      const mainKiller = death.killers[0];
+      let killerGuildInfo = { guildId: null as number | null, guildType: null as string | null, guildName: null as string | null };
+      if (mainKiller?.player) {
+        killerGuildInfo = await getCharacterGuildInfo(mainKiller.name);
+      }
+      
+      // Store death if either victim OR killer is from tracked guilds
+      const isRelevant = victimInfo.guildId !== null || killerGuildInfo.guildId !== null;
+      
+      // Create death record
+      const deathData = {
+        characterName,
+        level: death.level,
+        vocation: "Unknown",
+        killerName: mainKiller?.name || "Unknown",
+        killerGuild: killerGuildInfo.guildName,
+        killerGuildId: killerGuildInfo.guildId,
+        victimGuildId: victimInfo.guildId,
+        victimGuildType: victimInfo.guildType,
+        isPvp: death.killers.some(k => k.player),
+        occurredAt: new Date(death.time),
+        deathHash,
+        description: death.reason,
+        notified: !isRelevant, // Mark as already notified if not relevant (won't send notification)
+      };
+      
+      await db.insert(deaths).values(deathData);
+      newDeathsCount++;
+      
+      if (isRelevant) {
+        console.log(`[DeathTracker] Relevant death: ${characterName} killed by ${deathData.killerName}`);
+      }
+    }
+  } catch (error) {
+    console.error(`[DeathTracker] Error checking deaths for ${characterName}:`, error);
+  }
+  
+  return newDeathsCount;
+}
+
 // Priority death check for online players (runs every 1 minute)
 export async function runOnlinePlayerDeathCheck(): Promise<number> {
   const onlinePlayers = await getOnlineTrackedPlayers();
