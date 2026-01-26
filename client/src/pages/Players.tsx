@@ -49,7 +49,9 @@ export default function Players() {
   
   const { data: guilds } = useQuery<Guild[]>({ queryKey: ["/api/guilds"] });
   
-  const { data: tibspyData, isLoading: tibspyLoading } = useQuery<TibSpyCharacterData | null>({
+  const [scrapeRequested, setScrapeRequested] = useState<string | null>(null);
+
+  const { data: tibspyData, isLoading: tibspyLoading, refetch: refetchTibspy } = useQuery<TibSpyCharacterData | null>({
     queryKey: ["/api/tibspy/character", selectedTibspyPlayer],
     queryFn: async () => {
       const res = await fetch(`/api/tibspy/character/${encodeURIComponent(selectedTibspyPlayer!)}`);
@@ -59,9 +61,31 @@ export default function Players() {
     enabled: !!selectedTibspyPlayer && tibspyDialogOpen,
   });
 
+  const requestScrapeMutation = useMutation({
+    mutationFn: async (characterName: string) => {
+      const res = await apiRequest("POST", `/api/tibspy/request-scrape/${encodeURIComponent(characterName)}`, {});
+      return res.json();
+    },
+    onSuccess: (data, characterName) => {
+      setScrapeRequested(characterName);
+      toast({
+        title: "Scrape Queued",
+        description: `${characterName} has been queued for TibSpy data collection. Check back in a few minutes.`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Queue Failed",
+        description: "Could not queue character for scraping. Please try again later.",
+        variant: "destructive",
+      });
+    }
+  });
+
   const openTibspyDialog = (playerName: string) => {
     setSelectedTibspyPlayer(playerName);
     setTibspyDialogOpen(true);
+    setScrapeRequested(null);
   };
   
   useEffect(() => {
@@ -452,9 +476,44 @@ export default function Players() {
               <div className="text-center py-8">
                 <Sparkles className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
                 <p className="text-muted-foreground">No TibSpy data available for this character</p>
-                <p className="text-sm text-muted-foreground/70 mt-1">
-                  This character hasn't been scraped yet or is in the queue
-                </p>
+                {scrapeRequested === selectedTibspyPlayer ? (
+                  <div className="mt-4">
+                    <p className="text-sm text-amber-500/70 mb-3">
+                      Character queued for data collection. This usually takes a few minutes.
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => refetchTibspy()}
+                      className="border-amber-500/30 text-amber-500 hover:bg-amber-500/10"
+                      data-testid="button-refresh-tibspy"
+                    >
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Check Again
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="mt-4">
+                    <p className="text-sm text-muted-foreground/70 mb-3">
+                      Click below to queue this character for TibSpy data collection
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => selectedTibspyPlayer && requestScrapeMutation.mutate(selectedTibspyPlayer)}
+                      disabled={requestScrapeMutation.isPending}
+                      className="border-amber-500/30 text-amber-500 hover:bg-amber-500/10"
+                      data-testid="button-request-tibspy"
+                    >
+                      {requestScrapeMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-4 w-4 mr-2" />
+                      )}
+                      Fetch TibSpy Data
+                    </Button>
+                  </div>
+                )}
               </div>
             ) : (
               <>

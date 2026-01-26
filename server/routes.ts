@@ -497,6 +497,20 @@ export async function registerRoutes(
     res.json(data);
   });
 
+  // Request scrape for a character (any authenticated user, normal priority)
+  app.post("/api/tibspy/request-scrape/:name", requireAuth, async (req, res) => {
+    const characterName = req.params.name;
+    if (!characterName) {
+      return res.status(400).json({ error: "Character name is required" });
+    }
+    try {
+      await tibspyScraper.queueCharacter(characterName, 'normal');
+      res.json({ success: true, message: `Queued ${characterName} for scraping`, queued: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to queue character" });
+    }
+  });
+
   // Admin: Queue character for scraping (high priority)
   app.post("/api/tibspy/queue", requireAuth, requireRole("ADMIN"), async (req, res) => {
     const { characterName, priority } = req.body;
