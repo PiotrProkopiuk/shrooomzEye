@@ -16,6 +16,10 @@ import Templates from "@/pages/Templates";
 import Verification from "@/pages/Verification";
 import GuildStats from "@/pages/GuildStats";
 import Login from "@/pages/Login";
+import OnlineActivity from "@/pages/OnlineActivity";
+import DeathsDashboard from "@/pages/DeathsDashboard";
+import LevelProgress from "@/pages/LevelProgress";
+import CharacterProfile from "@/pages/CharacterProfile";
 import { useEffect, useState } from "react";
 
 function Router() {
@@ -67,6 +71,10 @@ function Router() {
         <Route path="/templates" component={Templates} />
         <Route path="/history" component={ActivityHistory} />
         <Route path="/settings" component={Settings} />
+        <Route path="/online" component={OnlineActivity} />
+        <Route path="/deaths" component={DeathsDashboard} />
+        <Route path="/levels" component={LevelProgress} />
+        <Route path="/character/:name" component={CharacterProfile} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

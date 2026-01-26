@@ -9,7 +9,8 @@ import {
   Send,
   Shield,
   Zap,
-  TrendingUp
+  TrendingUp,
+  Eye
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -18,7 +19,30 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { type Guild } from "@shared/schema";
+import { type Guild, type Player, type Death } from "@shared/schema";
+
+interface OnlineStatus {
+  running: boolean;
+  lastScrape: string | null;
+  lastPlayerCount: number;
+}
+
+interface OnlinePlayer {
+  id: number;
+  characterName: string;
+  level: number;
+  vocation: string;
+  isTrackedGuild: boolean;
+  guildName: string | null;
+}
+
+interface DeathStats {
+  total: number;
+  mainGuildDeaths: number;
+  enemyGuildDeaths: number;
+  pvpDeaths: number;
+  pveDeaths: number;
+}
 
 export default function Dashboard() {
   const [cmd, setCmd] = useState("");
@@ -28,16 +52,56 @@ export default function Dashboard() {
     queryKey: ["/api/guilds"] 
   });
 
-  const mainGuild = guilds?.find(g => !g.isEnemy) || {
-    name: "Codex",
-    stats: { membersOnline: 12, avgLevel: 420, expToday: "145.2M", totalMembers: 145 }
-  } as any;
+  const { data: players } = useQuery<Player[]>({
+    queryKey: ["/api/players"]
+  });
+
+  const { data: onlineStatus } = useQuery<OnlineStatus>({
+    queryKey: ["/api/online/status"],
+    refetchInterval: 30000
+  });
+
+  const { data: onlinePlayers } = useQuery<OnlinePlayer[]>({
+    queryKey: ["/api/online/players"],
+    refetchInterval: 30000
+  });
+
+  const { data: deathStats } = useQuery<DeathStats>({
+    queryKey: ["/api/death-tracker/stats"]
+  });
+
+  const { data: recentDeaths } = useQuery<{ deaths: Death[] }>({
+    queryKey: ["/api/death-tracker/recent?pageSize=5"]
+  });
+
+  const mainGuild = guilds?.find(g => !g.isEnemy);
+  const enemyGuild = guilds?.find(g => g.isEnemy);
+  
+  const mainGuildPlayers = players?.filter(p => {
+    const guild = guilds?.find(g => g.id === p.guildId);
+    return guild && !guild.isEnemy;
+  }) || [];
+  
+  const enemyGuildPlayers = players?.filter(p => {
+    const guild = guilds?.find(g => g.id === p.guildId);
+    return guild && guild.isEnemy;
+  }) || [];
+
+  const trackedOnline = onlinePlayers?.filter(p => p.isTrackedGuild) || [];
+  const enemyOnline = onlinePlayers?.filter(p => {
+    const player = players?.find(pl => pl.name === p.characterName);
+    if (!player) return false;
+    const guild = guilds?.find(g => g.id === player.guildId);
+    return guild?.isEnemy;
+  }) || [];
+
+  const totalLevelsGained = mainGuildPlayers.reduce((sum, p) => sum + (p.levelsGained || 0), 0);
 
   const stats = [
-    { title: "Tracked Guilds", value: guilds?.length || 3, icon: ShieldAlert, trend: "+1 this week", color: "text-primary" },
-    { title: "Members Online", value: mainGuild.stats?.membersOnline || 12, icon: Users, trend: "Stable (Active)", color: "text-emerald-500" },
-    { title: "Avg. Guild Level", value: mainGuild.stats?.avgLevel || 420, icon: Zap, trend: "+2.4 levels this week", color: "text-yellow-500" },
-    { title: "EXP Today", value: mainGuild.stats?.expToday || "145.2M", icon: TrendingUp, trend: "Top 5% of server", color: "text-blue-400" },
+    { title: "Total Members", value: mainGuildPlayers.length, icon: Users, trend: `${enemyGuildPlayers.length} enemies tracked`, color: "text-primary" },
+    { title: "Online Now", value: onlineStatus?.lastPlayerCount || 0, icon: Eye, trend: `${trackedOnline.length} tracked online`, color: "text-emerald-500" },
+    { title: "Deaths Today", value: deathStats?.total || 0, icon: Skull, trend: `${deathStats?.pvpDeaths || 0} PvP deaths`, color: "text-destructive" },
+    { title: "Levels Gained", value: totalLevelsGained, icon: TrendingUp, trend: "Since tracking started", color: "text-yellow-500" },
   ];
 
   const handleSimulate = (e: React.FormEvent) => {
@@ -123,27 +187,32 @@ export default function Dashboard() {
           <Card className="bg-card/50 border-border/50">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5 text-primary" />
-                Live Activity Feed
+                <Skull className="h-5 w-5 text-destructive" />
+                Recent Deaths
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {[
-                  { time: "2 mins ago", msg: "Player 'Eternal Oblivion' logged in.", type: "login" },
-                  { time: "15 mins ago", msg: "War Event: Battle for Thais started.", type: "event" },
-                  { time: "23 mins ago", msg: "Player 'Bubble' died at level 250 by Dragon Lord.", type: "death" },
-                  { time: "1 hour ago", msg: "New Guild Ally added: 'Red Rose'.", type: "system" },
-                ].map((log, i) => (
-                  <div key={i} className="flex gap-4 items-start pb-4 border-b border-white/5 last:border-0 last:pb-0">
-                    <span className="text-xs text-muted-foreground whitespace-nowrap mt-1 min-w-[80px]">{log.time}</span>
-                    <div className="flex-1">
-                      <p className={`text-sm ${log.type === 'death' ? 'text-destructive' : 'text-foreground'}`}>
-                        {log.msg}
-                      </p>
+                {recentDeaths?.deaths?.slice(0, 5).map((death, i) => {
+                  const timeAgo = death.occurredAt 
+                    ? formatTimeAgo(new Date(death.occurredAt))
+                    : "Unknown";
+                  return (
+                    <div key={i} className="flex gap-4 items-start pb-4 border-b border-white/5 last:border-0 last:pb-0">
+                      <span className="text-xs text-muted-foreground whitespace-nowrap mt-1 min-w-[80px]">{timeAgo}</span>
+                      <div className="flex-1">
+                        <p className={`text-sm ${death.isPvp ? 'text-destructive' : 'text-foreground'}`}>
+                          <span className="font-medium">{death.characterName}</span> (Lvl {death.level}) killed by{" "}
+                          <span className="font-medium">{death.killerName}</span>
+                          {death.isPvp && <Badge variant="destructive" className="ml-2 text-[10px]">PvP</Badge>}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
+                {(!recentDeaths?.deaths || recentDeaths.deaths.length === 0) && (
+                  <p className="text-muted-foreground text-sm">No recent deaths recorded</p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -179,6 +248,19 @@ export default function Dashboard() {
 
 function BotIcon({ className }: { className?: string }) {
     return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>;
+}
+
+function formatTimeAgo(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  
+  if (diffMins < 1) return "Just now";
+  if (diffMins < 60) return `${diffMins} min ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  return `${diffDays}d ago`;
 }
 
 function StatsCard({ title, value, icon: Icon, trend, color }: any) {
