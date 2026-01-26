@@ -1,0 +1,101 @@
+Extend the existing TibSpy Scraper with strict limits and batch-based execution.
+
+Context:
+- TibSpyScraperService already exists
+- Scraper is optional and experimental
+- TibSpy is a secondary enrichment source
+- Data freshness is NOT critical
+
+---
+
+### Scraping Limits
+
+1. **Global Daily Limit**
+- Introduce a global daily scrape limit.
+- Example:
+  - max 100 character scrapes per day (configurable)
+- Persist daily counters in database or cache.
+- Automatically stop scraping when the daily limit is reached.
+
+2. **Per-Character Cooldown**
+- Each character can be scraped:
+  - max once per 24 hours
+- Skip characters scanned recently.
+- Store lastScrapedAt timestamp per character.
+
+3. **Batch Processing**
+- Process characters in small batches:
+  - e.g. 5–10 characters per batch
+- Insert a delay between batches (configurable, e.g. 10–30 seconds).
+- Ensure batches can resume safely if the job is interrupted.
+
+4. **Priority Rules**
+Scraping priority order:
+1. Newly added characters (manual trigger)
+2. Enemy characters
+3. Main guild characters (lowest priority)
+
+If daily limit is reached:
+- Higher priority items are processed first.
+- Lower priority items are skipped automatically.
+
+---
+
+### Scheduler Behavior
+
+5. **Nightly Execution**
+- Run TibSpy scraping only during a defined time window:
+  - e.g. 01:00–05:00 server time
+- Outside this window, scraper must not run.
+
+6. **Failure Handling**
+- If TibSpy blocks requests or returns unexpected HTML:
+  - Stop scraping immediately.
+  - Mark scraper as temporarily disabled.
+  - Resume automatically next day.
+
+---
+
+### Storage & Monitoring
+
+7. **ScrapeLog / Metrics**
+Track:
+- date
+- total attempts
+- successful scrapes
+- skipped (cooldown / limit)
+- blocked / failed
+
+Expose metrics for admin debugging only.
+
+---
+
+### Configuration
+
+8. **Configurable Parameters**
+All of the following must be configurable via env or config files:
+- daily scrape limit
+- batch size
+- delay between requests
+- nightly execution window
+- per-character cooldown
+
+Defaults must be conservative.
+
+---
+
+### Output Requirements
+
+- Updated TibSpyScraperService with limits.
+- Batch execution logic.
+- Daily counter persistence.
+- Cooldown checks.
+- Scheduler-safe behavior.
+- README update explaining limits and safety measures.
+
+Do NOT:
+- Increase scrape frequency.
+- Remove existing safety guards.
+- Depend core logic on TibSpy availability.
+
+This scraper must behave politely and predictably.

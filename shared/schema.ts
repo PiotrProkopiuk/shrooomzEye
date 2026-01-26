@@ -180,6 +180,42 @@ export const onlineCharacters = pgTable("online_characters", {
   isTrackedGuild: boolean("is_tracked_guild").default(false), // main or enemy guild
 });
 
+// TibSpy Scraper - Character enrichment data
+export const tibspyCharacterData = pgTable("tibspy_character_data", {
+  id: serial("id").primaryKey(),
+  characterName: text("character_name").notNull().unique(),
+  playerId: integer("player_id").references(() => players.id),
+  lastScrapedAt: timestamp("last_scraped_at"),
+  scrapeCount: integer("scrape_count").default(0),
+  priority: text("priority").default("normal"), // 'high', 'normal', 'low'
+  data: jsonb("data"), // Raw TibSpy response data
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// TibSpy Daily Scrape Logs - Track daily metrics
+export const tibspyScrapeLogs = pgTable("tibspy_scrape_logs", {
+  id: serial("id").primaryKey(),
+  date: text("date").notNull().unique(), // YYYY-MM-DD format
+  totalAttempts: integer("total_attempts").default(0),
+  successfulScrapes: integer("successful_scrapes").default(0),
+  skippedCooldown: integer("skipped_cooldown").default(0),
+  skippedLimit: integer("skipped_limit").default(0),
+  blocked: integer("blocked").default(0),
+  failed: integer("failed").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// TibSpy Config - Configurable parameters
+export const tibspyConfig = pgTable("tibspy_config", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  value: text("value").notNull(),
+  description: text("description"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Insert Schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
 export const insertGuildSchema = createInsertSchema(guilds).omit({ id: true });
@@ -194,6 +230,9 @@ export const insertDeathTrackerConfigSchema = createInsertSchema(deathTrackerCon
 export const insertOnlineSnapshotSchema = createInsertSchema(onlineSnapshots).omit({ id: true, checkedAt: true });
 export const insertOnlineSessionSchema = createInsertSchema(onlineSessions).omit({ id: true, createdAt: true });
 export const insertOnlineCharacterSchema = createInsertSchema(onlineCharacters).omit({ id: true });
+export const insertTibspyCharacterDataSchema = createInsertSchema(tibspyCharacterData).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertTibspyScrapeLogSchema = createInsertSchema(tibspyScrapeLogs).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertTibspyConfigSchema = createInsertSchema(tibspyConfig).omit({ id: true, updatedAt: true });
 
 // Types
 export type User = typeof users.$inferSelect;
@@ -222,3 +261,9 @@ export type OnlineSession = typeof onlineSessions.$inferSelect;
 export type InsertOnlineSession = z.infer<typeof insertOnlineSessionSchema>;
 export type OnlineCharacter = typeof onlineCharacters.$inferSelect;
 export type InsertOnlineCharacter = z.infer<typeof insertOnlineCharacterSchema>;
+export type TibspyCharacterData = typeof tibspyCharacterData.$inferSelect;
+export type InsertTibspyCharacterData = z.infer<typeof insertTibspyCharacterDataSchema>;
+export type TibspyScrapeLog = typeof tibspyScrapeLogs.$inferSelect;
+export type InsertTibspyScrapeLog = z.infer<typeof insertTibspyScrapeLogSchema>;
+export type TibspyConfig = typeof tibspyConfig.$inferSelect;
+export type InsertTibspyConfig = z.infer<typeof insertTibspyConfigSchema>;

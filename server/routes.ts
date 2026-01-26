@@ -460,5 +460,79 @@ export async function registerRoutes(
     res.json(trackedOnline);
   });
 
+  // ============ TIBSPY SCRAPER ============
+  const { tibspyScraper } = await import("./tibspyScraper");
+
+  // Get TibSpy scraper status and metrics
+  app.get("/api/tibspy/status", async (req, res) => {
+    const status = await tibspyScraper.getStatus();
+    res.json(status);
+  });
+
+  // Get TibSpy metrics only
+  app.get("/api/tibspy/metrics", async (req, res) => {
+    const metrics = await tibspyScraper.getMetrics();
+    res.json(metrics);
+  });
+
+  // Get recent scrape logs
+  app.get("/api/tibspy/logs", async (req, res) => {
+    const days = parseInt(req.query.days as string) || 7;
+    const logs = await tibspyScraper.getRecentLogs(days);
+    res.json(logs);
+  });
+
+  // Get character data from TibSpy
+  app.get("/api/tibspy/character/:name", async (req, res) => {
+    const data = await tibspyScraper.getCharacterData(req.params.name);
+    if (!data) {
+      return res.status(404).json({ error: "Character not found in TibSpy cache" });
+    }
+    res.json(data);
+  });
+
+  // Admin: Queue character for scraping (high priority)
+  app.post("/api/tibspy/queue", requireAuth, requireRole("ADMIN"), async (req, res) => {
+    const { characterName, priority } = req.body;
+    if (!characterName) {
+      return res.status(400).json({ error: "characterName is required" });
+    }
+    await tibspyScraper.queueCharacter(characterName, priority || 'high');
+    res.json({ success: true, message: `Queued ${characterName} for scraping` });
+  });
+
+  // Admin: Manually trigger a batch scrape
+  app.post("/api/tibspy/run-batch", requireAuth, requireRole("ADMIN"), async (req, res) => {
+    const result = await tibspyScraper.runBatchScrape();
+    res.json(result);
+  });
+
+  // Admin: Enable scraper
+  app.post("/api/tibspy/enable", requireAuth, requireRole("ADMIN"), async (req, res) => {
+    await tibspyScraper.enable();
+    res.json({ success: true, message: "TibSpy scraper enabled" });
+  });
+
+  // Admin: Disable scraper
+  app.post("/api/tibspy/disable", requireAuth, requireRole("ADMIN"), async (req, res) => {
+    await tibspyScraper.disable();
+    res.json({ success: true, message: "TibSpy scraper disabled" });
+  });
+
+  // Admin: Update config
+  app.put("/api/tibspy/config", requireAuth, requireRole("ADMIN"), async (req, res) => {
+    const { key, value } = req.body;
+    const validKeys = [
+      'dailyScrapeLimit', 'batchSize', 'delayBetweenRequests', 
+      'delayBetweenBatches', 'characterCooldownHours', 
+      'nightlyStartHour', 'nightlyEndHour', 'enabled'
+    ];
+    if (!validKeys.includes(key)) {
+      return res.status(400).json({ error: `Invalid config key. Valid keys: ${validKeys.join(', ')}` });
+    }
+    await tibspyScraper.setConfigValue(key, String(value));
+    res.json({ success: true, message: `Config ${key} updated to ${value}` });
+  });
+
   return httpServer;
 }

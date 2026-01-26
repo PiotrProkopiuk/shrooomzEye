@@ -82,3 +82,53 @@ Core entities:
 - Vite dev server on port 5000 with HMR
 - TypeScript with bundler module resolution
 - Custom Vite plugins for Replit-specific features (cartographer, dev banner, meta images)
+
+## TibSpy Scraper (Experimental)
+
+The TibSpy scraper is an optional, secondary enrichment source for character data. It operates with strict limits and safety measures.
+
+### Safety Measures
+- **Global Daily Limit**: Max 100 character scrapes per day (configurable)
+- **Per-Character Cooldown**: Each character can only be scraped once per 24 hours
+- **Batch Processing**: Processes 5-10 characters per batch with delays
+- **Nightly Execution Window**: Only runs between 01:00-05:00 server time by default
+- **Automatic Blocking**: If TibSpy blocks requests, scraper stops until next day
+
+### Priority System
+Characters are scraped in this priority order:
+1. Newly added characters (high priority, manual trigger)
+2. Enemy guild characters (normal priority)
+3. Main guild characters (low priority)
+
+### Configuration (Environment/Database)
+All parameters are configurable via the API or database:
+- `tibspy_daily_limit`: Max scrapes per day (default: 100)
+- `tibspy_batch_size`: Characters per batch (default: 5)
+- `tibspy_request_delay_ms`: Delay between requests (default: 2000ms)
+- `tibspy_batch_delay_ms`: Delay between batches (default: 15000ms)
+- `tibspy_cooldown_hours`: Per-character cooldown (default: 24)
+- `tibspy_nightly_start_hour`: Start of execution window (default: 1)
+- `tibspy_nightly_end_hour`: End of execution window (default: 5)
+- `tibspy_enabled`: Enable/disable scraper (default: true)
+
+### API Endpoints
+- `GET /api/tibspy/status` - Get scraper status and config
+- `GET /api/tibspy/metrics` - Get daily metrics
+- `GET /api/tibspy/logs` - Get recent scrape logs
+- `GET /api/tibspy/character/:name` - Get cached character data
+- `POST /api/tibspy/queue` - Queue character for scraping (admin)
+- `POST /api/tibspy/run-batch` - Manually trigger batch (admin)
+- `POST /api/tibspy/enable` - Enable scraper (admin)
+- `POST /api/tibspy/disable` - Disable scraper (admin)
+- `PUT /api/tibspy/config` - Update configuration (admin)
+
+### Database Tables
+- `tibspy_character_data`: Cached character data with scrape history
+- `tibspy_scrape_logs`: Daily metrics (attempts, success, failures)
+- `tibspy_config`: Configurable parameters
+
+### Important Notes
+- TibSpy is NOT required for core functionality
+- Data freshness is not critical - stale data is acceptable
+- The scraper must behave politely and predictably
+- Core logic does NOT depend on TibSpy availability
