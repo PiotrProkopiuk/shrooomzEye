@@ -50,6 +50,7 @@ export interface IStorage {
   createPlayer(player: InsertPlayer): Promise<Player>;
   updatePlayer(id: number, player: Partial<InsertPlayer>): Promise<Player>;
   getOnlinePlayers(guildId: number): Promise<Player[]>;
+  resetAllPlayersStartLevel(): Promise<number>;
 
   // Deaths
   getDeaths(guildId: number, limit?: number): Promise<Death[]>;
@@ -169,6 +170,17 @@ export class DatabaseStorage implements IStorage {
 
   async getOnlinePlayers(guildId: number): Promise<Player[]> {
     return await db.select().from(players).where(and(eq(players.guildId, guildId), eq(players.online, true)));
+  }
+
+  async resetAllPlayersStartLevel(): Promise<number> {
+    const allPlayers = await db.select().from(players);
+    for (const player of allPlayers) {
+      await db.update(players).set({
+        startLevel: player.level,
+        levelsGained: 0,
+      }).where(eq(players.id, player.id));
+    }
+    return allPlayers.length;
   }
 
   // Deaths

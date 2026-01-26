@@ -139,7 +139,7 @@ export async function registerRoutes(
     res.json(results);
   });
   
-  // Reset level tracking (set current level as new baseline)
+  // Reset level tracking (set current level as new baseline) - single guild
   app.post("/api/guilds/:id/reset-tracking", requireAuth, requireRole("ADMIN", "MODERATOR"), async (req, res) => {
     const guildId = parseInt(req.params.id as string);
     const players = await storage.getPlayers(guildId);
@@ -152,6 +152,12 @@ export async function registerRoutes(
     }
     
     res.json({ success: true, playersReset: players.length });
+  });
+  
+  // Reset all players (server save simulation) - all guilds
+  app.post("/api/reset-all-levels", requireAuth, requireRole("ADMIN"), async (req, res) => {
+    const count = await storage.resetAllPlayersStartLevel();
+    res.json({ success: true, playersReset: count, message: "Server save reset simulated" });
   });
 
   // Update player

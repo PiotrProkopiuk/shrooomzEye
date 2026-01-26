@@ -4,6 +4,7 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import { startDeathTrackerJob } from "./deathTracker";
 import { startOnlineScraper } from "./onlineScraper";
+import { storage } from "./storage";
 
 const app = express();
 const httpServer = createServer(app);
@@ -108,6 +109,26 @@ app.use((req, res, next) => {
       // Start the online players scraper (every 60 seconds)
       startOnlineScraper({ world: "Antica", scrapeIntervalMs: 60000 });
       log(`Online scraper cron started (every 60 seconds)`);
+      
+      // Server save level reset scheduler (10:00 CET daily)
+      let lastResetDate = "";
+      setInterval(async () => {
+        const now = new Date();
+        const hour = now.getUTCHours() + 1; // CET = UTC+1
+        const todayDate = now.toISOString().split('T')[0];
+        
+        // Reset at 10:00 CET (09:00 UTC) if not already reset today
+        if (hour === 10 && now.getUTCMinutes() < 5 && lastResetDate !== todayDate) {
+          try {
+            const count = await storage.resetAllPlayersStartLevel();
+            log(`Server save reset: ${count} players start levels reset`);
+            lastResetDate = todayDate;
+          } catch (err) {
+            log(`Server save reset error: ${err}`);
+          }
+        }
+      }, 60000); // Check every minute
+      log(`Server save scheduler started (resets at 10:00 CET)`);
     },
   );
 })();
