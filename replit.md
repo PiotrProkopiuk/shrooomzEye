@@ -1,8 +1,27 @@
-# TibiaGuildBot Panel
+# ShrooomzEye
 
 ## Overview
 
-This is a Discord bot management panel for Tibia game guilds.
+ShrooomzEye is a guild intelligence dashboard for Tibia game guilds. It provides comprehensive tracking, analytics, and management tools for Discord-integrated guild operations.
+
+## Branding
+
+**Project Name:** ShrooomzEye  
+**Tagline:** your guild intelligence dashboard
+
+### Branding Locations
+- **Sidebar Header:** Project name with Eye icon
+- **Page Title:** `<title>ShrooomzEye - Guild Intelligence Dashboard</title>`
+- **Footer:** Project name (left) + tagline (right)
+- **Hover Tooltip:** Tagline displays on hover over brand elements
+- **Meta Tags:** OpenGraph and Twitter cards use project name and tagline
+
+### Branding Guidelines
+- Font: Cinzel (display font) for project name
+- Icon: Eye icon from Lucide
+- Color: Primary theme color (gold/amber)
+- Keep branding subtle and non-intrusive
+- Do not duplicate branding in page content areas
 
 ## Discord OAuth2 Configuration
 

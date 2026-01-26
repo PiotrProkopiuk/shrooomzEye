@@ -60,13 +60,13 @@ function Sidebar({ location }: { location: string }) {
         />
         
       <div className="p-6 border-b border-sidebar-border z-10">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3" title="your guild intelligence dashboard">
             <div className="h-10 w-10 bg-primary/20 rounded-lg flex items-center justify-center border border-primary/30">
-                <Ghost className="h-6 w-6 text-primary" />
+                <Eye className="h-6 w-6 text-primary" />
             </div>
           <div>
-            <h1 className="font-display font-bold text-xl leading-none text-foreground">TibiaBot</h1>
-            <span className="text-xs text-muted-foreground">Admin Panel</span>
+            <h1 className="font-display font-bold text-xl leading-none text-foreground" data-testid="brand-name">ShrooomzEye</h1>
+            <span className="text-xs text-muted-foreground">Intelligence Dashboard</span>
           </div>
         </div>
       </div>
@@ -198,6 +198,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {children}
           </div>
         </div>
+
+        <footer className="border-t border-border bg-background/50 backdrop-blur-sm py-3 px-6 z-10">
+          <div className="max-w-6xl mx-auto flex items-center justify-between">
+            <div 
+              className="flex items-center gap-2 cursor-default" 
+              title="your guild intelligence dashboard"
+              data-testid="footer-brand"
+            >
+              <Eye className="h-4 w-4 text-primary/70" />
+              <span className="text-sm font-display font-semibold text-muted-foreground">ShrooomzEye</span>
+            </div>
+            <span className="text-xs text-muted-foreground/70 italic" data-testid="footer-tagline">
+              your guild intelligence dashboard
+            </span>
+          </div>
+        </footer>
       </main>
     </div>
   );
