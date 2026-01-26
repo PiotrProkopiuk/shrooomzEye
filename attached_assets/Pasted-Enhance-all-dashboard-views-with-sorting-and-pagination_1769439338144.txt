@@ -1,0 +1,79 @@
+Enhance all dashboard views with sorting and pagination where missing.
+
+Context:
+- Symfony backend
+- Web dashboard with multiple views
+- Views now merged to reduce duplication
+- Some tables or lists currently lack sorting or pagination
+- Goal: improve UX and performance
+
+---
+
+### Task Requirements
+
+1. **Identify Target Views**
+- Scan all dashboard views after the merge
+- Identify tables or lists that:
+  - display more than 10–15 items
+  - have no sorting
+  - have no pagination
+- Examples:
+  - Guild members / activity lists
+  - Enemy characters / intelligence lists
+  - Death feeds or PvP logs
+  - Level gain / top gainers
+
+2. **Sorting**
+- Enable column-based sorting:
+  - alphabetically for names
+  - numerically for levels, kills, deaths, experience, scores
+- Preserve current default sort order if not specified
+- Ensure sorting works in combination with pagination
+
+3. **Pagination**
+- Implement server-side pagination for all long lists
+- Default page size: 10–20 items (configurable)
+- Provide navigation controls: previous, next, page numbers
+- Ensure seamless integration with sorting
+
+4. **Backend Adjustments**
+- Update API endpoints to support:
+  - `sortBy` parameter
+  - `sortDirection` (asc / desc)
+  - `page` and `pageSize` parameters
+- Ensure efficient queries (avoid fetching all records)
+- Reuse existing services for aggregation and filtering
+
+5. **UX**
+- Clearly indicate sortable columns (e.g., arrows)
+- Show current page / total pages
+- Display total count of items
+- Maintain responsive design
+
+6. **Permissions**
+- Respect visibility rules:
+  - admin-only sections
+  - vice leader / regular user access
+- Pagination and sorting must not expose hidden data
+
+---
+
+### Output Requirements
+
+- Updated dashboard views with sorting and pagination
+- Backend support for paginated and sortable endpoints
+- Updated services / repositories to handle efficient queries
+- README updates documenting:
+  - sortable columns per view
+  - default page size
+  - API parameters for pagination and sorting
+
+Do NOT:
+- Add new metrics or data sources
+- Remove existing filters or logic
+- Change visual design drastically
+
+Focus on:
+- usability
+- performance
+- consistency across all views

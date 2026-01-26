@@ -1,0 +1,73 @@
+Review all existing dashboard views and combine redundant or overlapping sections into unified, coherent panels.
+
+Context:
+- Symfony backend
+- Web dashboard with multiple views
+- Some views display similar statistics, charts, or tables
+- Goal: simplify navigation, reduce duplication, and improve maintainability
+
+---
+
+### Task Requirements
+
+1. **Identify Redundant Views**
+- Scan all dashboard pages for:
+  - duplicated statistics (e.g., total deaths shown in multiple panels)
+  - repeated charts or tables
+  - overlapping online activity or level gain displays
+- Document which elements are repeated across pages.
+
+2. **Merge Strategy**
+- For overlapping panels:
+  - combine data into a single panel or section
+  - maintain clarity and readability
+  - retain all important metrics without losing context
+- Examples:
+  - Guild Overview + PvP Summary → Unified “Guild Activity” panel
+  - Level Progress + Top Gainers → Unified “Progress & Rankings” panel
+  - Enemy Online + Enemy Level Gains → Unified “Enemy Intelligence” panel
+
+3. **Navigation & Layout**
+- Update dashboard navigation to reflect merged panels
+- Remove now-redundant pages or sections
+- Ensure all links/buttons lead to merged content logically
+
+4. **Backend Adjustments**
+- Reuse existing services and API endpoints for merged panels
+- Refactor duplicated aggregation logic into shared services
+- Remove endpoints that served only redundant views
+- Ensure data consistency and single source of truth
+
+5. **Permissions**
+- Ensure merged views respect:
+  - admin / vice leader visibility rules
+  - regular user restrictions
+- Any intelligence or alt-detection data remains admin-only
+
+6. **UX & Presentation**
+- Maintain clarity and readability in merged panels
+- Use tabs or expandable sections if needed to prevent clutter
+- Add clear headings explaining metrics
+- Avoid duplicate charts or tables
+
+---
+
+### Output Requirements
+
+- Refactored dashboard pages with merged panels
+- Updated navigation reflecting merged content
+- Updated backend services/controllers to support merged views
+- Documentation / README describing:
+  - which views were merged
+  - why
+  - how to maintain the new structure
+
+Do NOT:
+- Remove critical metrics
+- Add new features beyond merging and cleaning
+- Change data sources
+
+Focus on:
+- eliminating duplication
+- improving maintainability
+- keeping dashboard intuitive and readable
