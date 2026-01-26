@@ -1,0 +1,81 @@
+Extend the existing backend with Character Level History tracking.
+
+Context:
+- Symfony backend
+- Characters already stored
+- TibiaData API integration available
+- Periodic jobs already exist
+- Data collection starts from now (no historical backfill)
+
+---
+
+### Level History Requirements
+
+1. **Level Snapshot Collection**
+- Periodically fetch current level and experience for:
+  - Main guild characters
+  - Enemy characters
+  - Neutral characters already tracked (e.g. online scraper)
+- Frequency:
+  - 2 times per day (configurable)
+
+2. **CharacterLevelSnapshot Entity**
+Fields:
+- id
+- characterName
+- level
+- experience (approximate)
+- world
+- snapshotDate (date only, no time)
+- createdAt
+
+Ensure:
+- Only one snapshot per character per day.
+- Idempotent inserts.
+
+3. **Rolling History Window**
+- Keep snapshots for the last 90 days.
+- Automatically purge older snapshots via scheduled cleanup job.
+
+4. **Derived Statistics**
+- Calculate:
+  - levels gained over period
+  - total EXP gained (approximate using Tibia EXP table)
+  - average daily EXP
+- Make these available via service layer.
+
+5. **API Endpoints**
+- Fetch level history for a character.
+- Fetch aggregated level gains for:
+  - main guild
+  - enemy guild
+- Return time-series friendly JSON.
+
+6. **Permissions**
+- Level history visible only to:
+  - guild leaders
+  - vice leaders
+- Public Discord users do NOT see this data.
+
+7. **Performance & Safety**
+- Use caching for API calls.
+- Gracefully handle missing data or temporary API failures.
+- Log skipped snapshots without breaking the job.
+
+---
+
+### Output Requirements
+
+- Doctrine entity and repository for CharacterLevelSnapshot.
+- Scheduled command for snapshot collection.
+- Cleanup command for old data.
+- Services for calculating gains and EXP deltas.
+- README update describing:
+  - snapshot frequency
+  - data retention
+  - limitations of approximate EXP
+
+Do NOT:
+- Attempt historical reconstruction.
+- Modify frontend or Discord commands.
+Focus on reliable long-term data collection.
