@@ -1,18 +1,30 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Ghost, LogIn, Shield, Info } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Ghost, LogIn, Shield, Info, Key } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import bgTexture from "@assets/generated_images/dark_stone_rpg_texture_background.png";
 
+const DEMO_PASSWORD = "Codex123!";
+
 export default function Login() {
+  const { toast } = useToast();
+  const [demoPassword, setDemoPassword] = useState("");
+  const [showDemoForm, setShowDemoForm] = useState(false);
+
   const handleDiscordLogin = () => {
-    // Redirect to Discord OAuth
     window.location.href = "/api/auth/discord";
   };
 
-  const handleMockLogin = () => {
-    // For development/testing without Discord
-    localStorage.setItem("mock_auth", "true");
-    window.location.href = "/";
+  const handleDemoLogin = () => {
+    if (demoPassword === DEMO_PASSWORD) {
+      localStorage.setItem("mock_auth", "true");
+      window.location.href = "/";
+    } else {
+      toast({ title: "Invalid Password", description: "Demo password is incorrect.", variant: "destructive" });
+    }
   };
 
   return (
@@ -57,14 +69,40 @@ export default function Login() {
               </div>
             </div>
 
-            <Button 
-              variant="outline" 
-              onClick={handleMockLogin}
-              className="w-full border-white/10"
-              data-testid="button-mock-login"
-            >
-              Continue as Demo User
-            </Button>
+            {!showDemoForm ? (
+              <Button 
+                variant="outline" 
+                onClick={() => setShowDemoForm(true)}
+                className="w-full border-white/10"
+                data-testid="button-show-demo"
+              >
+                <Key className="h-4 w-4 mr-2" />
+                Demo Access
+              </Button>
+            ) : (
+              <div className="space-y-3 p-3 rounded-lg bg-background/50 border border-white/10">
+                <div className="space-y-2">
+                  <Label htmlFor="demoPassword" className="text-sm">Demo Password</Label>
+                  <Input
+                    id="demoPassword"
+                    type="password"
+                    placeholder="Enter demo password"
+                    value={demoPassword}
+                    onChange={(e) => setDemoPassword(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleDemoLogin()}
+                    className="bg-background/50 border-white/10"
+                    data-testid="input-demo-password"
+                  />
+                </div>
+                <Button 
+                  onClick={handleDemoLogin}
+                  className="w-full"
+                  data-testid="button-demo-login"
+                >
+                  Enter Demo Mode
+                </Button>
+              </div>
+            )}
 
             <div className="p-3 rounded-lg bg-secondary/30 border border-white/5 flex gap-3 items-start mt-4">
                 <Shield className="h-4 w-4 text-primary shrink-0 mt-0.5" />
