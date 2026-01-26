@@ -9,6 +9,7 @@ import {
   type Guild
 } from "@shared/schema";
 import { eq, desc, and, lt, sql, isNull, or, asc } from "drizzle-orm";
+import puppeteer from "puppeteer";
 
 interface TibSpyScraperConfig {
   dailyScrapeLimit: number;
@@ -231,29 +232,72 @@ class TibSpyScraperService {
   }
 
   private async scrapeCharacter(characterName: string): Promise<ScrapeResult> {
+    let browser = null;
     try {
-      const response = await fetch(`https://tibspy.eu/api/character/${encodeURIComponent(characterName)}`, {
-        headers: {
-          'User-Agent': 'TibiaGuildBot/1.0 (Respectful scraping)',
-          'Accept': 'application/json',
-        },
+      console.log(`[TibSpy] Starting Puppeteer scrape for ${characterName}`);
+      
+      browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+      });
+      
+      const page = await browser.newPage();
+      await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+      
+      const url = `https://tibspy.com/character/${encodeURIComponent(characterName)}`;
+      await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+      
+      await page.waitForSelector('body', { timeout: 10000 });
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      const data = await page.evaluate(() => {
+        const result: any = {};
+        
+        const pageText = document.body.innerText;
+        
+        if (pageText.includes('Character not found') || pageText.includes('No results')) {
+          return null;
+        }
+        
+        const tables = document.querySelectorAll('table');
+        const cards = document.querySelectorAll('.card, .panel, [class*="character"]');
+        
+        result.rawText = pageText.substring(0, 5000);
+        
+        const characterNames: string[] = [];
+        const links = document.querySelectorAll('a[href*="/character/"]');
+        links.forEach(link => {
+          const name = link.textContent?.trim();
+          if (name && name.length > 2 && name.length < 50) {
+            characterNames.push(name);
+          }
+        });
+        result.characters = Array.from(new Set(characterNames));
+        
+        const levelMatch = pageText.match(/Level:?\s*(\d+)/i);
+        if (levelMatch) result.level = parseInt(levelMatch[1]);
+        
+        const vocationMatch = pageText.match(/Vocation:?\s*([A-Za-z\s]+)/i);
+        if (vocationMatch) result.vocation = vocationMatch[1].trim();
+        
+        const worldMatch = pageText.match(/World:?\s*([A-Za-z]+)/i);
+        if (worldMatch) result.world = worldMatch[1].trim();
+        
+        const guildMatch = pageText.match(/Guild:?\s*([^\n]+)/i);
+        if (guildMatch) result.guild = guildMatch[1].trim();
+        
+        return result;
       });
 
-      if (response.status === 403 || response.status === 429) {
-        console.log(`[TibSpy] Blocked by server (${response.status})`);
-        return { characterName, success: false, reason: 'blocked' };
+      await browser.close();
+      browser = null;
+
+      if (!data) {
+        console.log(`[TibSpy] Character ${characterName} not found on TibSpy`);
+        return { characterName, success: false, reason: 'not_found' };
       }
 
-      if (!response.ok) {
-        console.log(`[TibSpy] Request failed for ${characterName}: ${response.status}`);
-        return { characterName, success: false, reason: 'failed' };
-      }
-
-      const data = await response.json();
-
-      if (!data || typeof data !== 'object') {
-        return { characterName, success: false, reason: 'invalid_response' };
-      }
+      console.log(`[TibSpy] Successfully scraped ${characterName}, found ${data.characters?.length || 0} linked characters`);
 
       await db.insert(tibspyCharacterData)
         .values({
@@ -276,6 +320,12 @@ class TibSpyScraperService {
     } catch (error: any) {
       console.error(`[TibSpy] Error scraping ${characterName}:`, error.message);
       return { characterName, success: false, reason: 'error' };
+    } finally {
+      if (browser) {
+        try {
+          await browser.close();
+        } catch (e) {}
+      }
     }
   }
 
