@@ -12,6 +12,21 @@ import { eq, desc, and, lt, sql, isNull, or, asc } from "drizzle-orm";
 
 const TIBSPY_API_BASE = "https://api.tibspy.com/api/private/v1";
 
+const BROWSER_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Accept': 'application/json, text/plain, */*',
+  'Accept-Language': 'en-US,en;q=0.9,pl;q=0.8',
+  'Accept-Encoding': 'gzip, deflate, br',
+  'Origin': 'https://tibspy.com',
+  'Referer': 'https://tibspy.com/',
+  'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+  'Sec-Ch-Ua-Mobile': '?0',
+  'Sec-Ch-Ua-Platform': '"Windows"',
+  'Sec-Fetch-Dest': 'empty',
+  'Sec-Fetch-Mode': 'cors',
+  'Sec-Fetch-Site': 'same-site',
+};
+
 interface TibSpyScraperConfig {
   dailyScrapeLimit: number;
   batchSize: number;
@@ -238,7 +253,7 @@ class TibSpyScraperService {
       
       // First, try to get existing data from history (this works without auth)
       const historyResponse = await fetch(`${TIBSPY_API_BASE}/report/history/${encodeURIComponent(characterName.toLowerCase())}`, {
-        headers: { 'User-Agent': 'TibiaGuildBot/1.0' },
+        headers: BROWSER_HEADERS,
       });
 
       if (historyResponse.ok) {
@@ -292,8 +307,8 @@ class TibSpyScraperService {
       const registerResponse = await fetch(`${TIBSPY_API_BASE}/report/register`, {
         method: 'POST',
         headers: {
+          ...BROWSER_HEADERS,
           'Content-Type': 'application/json',
-          'User-Agent': 'TibiaGuildBot/1.0',
         },
         body: JSON.stringify({ characterName: characterName.toLowerCase() }),
       });
@@ -322,7 +337,7 @@ class TibSpyScraperService {
         await new Promise(resolve => setTimeout(resolve, 2000));
         
         const statusResponse = await fetch(`${TIBSPY_API_BASE}/report/${jobId}/status`, {
-          headers: { 'User-Agent': 'TibiaGuildBot/1.0' },
+          headers: BROWSER_HEADERS,
         });
 
         if (statusResponse.ok) {
@@ -342,7 +357,7 @@ class TibSpyScraperService {
 
       // Fetch the newly created report
       const newHistoryResponse = await fetch(`${TIBSPY_API_BASE}/report/history/${encodeURIComponent(characterName.toLowerCase())}`, {
-        headers: { 'User-Agent': 'TibiaGuildBot/1.0' },
+        headers: BROWSER_HEADERS,
       });
 
       if (!newHistoryResponse.ok) {
