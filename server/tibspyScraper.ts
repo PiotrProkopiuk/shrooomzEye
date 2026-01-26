@@ -234,7 +234,60 @@ class TibSpyScraperService {
 
   private async scrapeCharacter(characterName: string): Promise<ScrapeResult> {
     try {
-      console.log(`[TibSpy] Starting API scrape for ${characterName}`);
+      console.log(`[TibSpy] Starting API fetch for ${characterName}`);
+      
+      // First, try to get existing data from history (this works without auth)
+      const historyResponse = await fetch(`${TIBSPY_API_BASE}/report/history/${encodeURIComponent(characterName.toLowerCase())}`, {
+        headers: { 'User-Agent': 'TibiaGuildBot/1.0' },
+      });
+
+      if (historyResponse.ok) {
+        const historyData = await historyResponse.json();
+        
+        if (historyData && Array.isArray(historyData) && historyData.length > 0) {
+          const latestReport = historyData[0];
+          let parsedData: any = {};
+
+          try {
+            if (latestReport.jsonData) {
+              parsedData = JSON.parse(latestReport.jsonData);
+            }
+          } catch (e) {
+            console.log(`[TibSpy] Failed to parse jsonData for ${characterName}`);
+          }
+
+          const data = {
+            scannedCharacter: parsedData.scannedCharacter || characterName,
+            characters: parsedData.characters || [],
+            jobId: latestReport.jobId,
+            createTimestamp: latestReport.createTimestamp,
+          };
+
+          console.log(`[TibSpy] Found existing data for ${characterName}, ${data.characters?.length || 0} linked characters`);
+
+          await db.insert(tibspyCharacterData)
+            .values({
+              characterName,
+              lastScrapedAt: new Date(),
+              scrapeCount: 1,
+              data,
+            })
+            .onConflictDoUpdate({
+              target: tibspyCharacterData.characterName,
+              set: {
+                lastScrapedAt: new Date(),
+                scrapeCount: sql`COALESCE(${tibspyCharacterData.scrapeCount}, 0) + 1`,
+                data,
+                updatedAt: new Date(),
+              }
+            });
+
+          return { characterName, success: true, data };
+        }
+      }
+
+      // No existing data - try to register a new scan
+      console.log(`[TibSpy] No existing data, attempting to register scan for ${characterName}`);
       
       const registerResponse = await fetch(`${TIBSPY_API_BASE}/report/register`, {
         method: 'POST',
@@ -246,8 +299,8 @@ class TibSpyScraperService {
       });
 
       if (!registerResponse.ok) {
-        console.log(`[TibSpy] Register failed for ${characterName}: ${registerResponse.status}`);
-        return { characterName, success: false, reason: 'register_failed' };
+        console.log(`[TibSpy] Register failed for ${characterName}: ${registerResponse.status} - character not yet scanned on TibSpy`);
+        return { characterName, success: false, reason: 'not_scanned_yet' };
       }
 
       const registerData = await registerResponse.json();
@@ -260,6 +313,7 @@ class TibSpyScraperService {
 
       console.log(`[TibSpy] Job registered for ${characterName}: ${jobId}`);
 
+      // Poll for completion
       let attempts = 0;
       const maxAttempts = 30;
       let isReady = false;
@@ -286,23 +340,24 @@ class TibSpyScraperService {
         return { characterName, success: false, reason: 'timeout' };
       }
 
-      const historyResponse = await fetch(`${TIBSPY_API_BASE}/report/history/${encodeURIComponent(characterName.toLowerCase())}`, {
+      // Fetch the newly created report
+      const newHistoryResponse = await fetch(`${TIBSPY_API_BASE}/report/history/${encodeURIComponent(characterName.toLowerCase())}`, {
         headers: { 'User-Agent': 'TibiaGuildBot/1.0' },
       });
 
-      if (!historyResponse.ok) {
-        console.log(`[TibSpy] History fetch failed for ${characterName}: ${historyResponse.status}`);
+      if (!newHistoryResponse.ok) {
+        console.log(`[TibSpy] History fetch failed for ${characterName}: ${newHistoryResponse.status}`);
         return { characterName, success: false, reason: 'history_failed' };
       }
 
-      const historyData = await historyResponse.json();
+      const newHistoryData = await newHistoryResponse.json();
       
-      if (!historyData || !Array.isArray(historyData) || historyData.length === 0) {
-        console.log(`[TibSpy] No history data for ${characterName}`);
+      if (!newHistoryData || !Array.isArray(newHistoryData) || newHistoryData.length === 0) {
+        console.log(`[TibSpy] No history data after scan for ${characterName}`);
         return { characterName, success: false, reason: 'no_data' };
       }
 
-      const latestReport = historyData[0];
+      const latestReport = newHistoryData[0];
       let parsedData: any = {};
 
       try {
