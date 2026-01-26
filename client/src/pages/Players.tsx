@@ -526,21 +526,29 @@ export default function Players() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-3">
-                    <div>
-                      <span className="text-xs text-muted-foreground uppercase tracking-wide">Last Scraped</span>
-                      <p className="text-sm font-medium" data-testid="text-last-scraped">
-                        {tibspyData.lastScrapedAt 
-                          ? new Date(tibspyData.lastScrapedAt).toLocaleString() 
-                          : 'Never'}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-xs text-muted-foreground uppercase tracking-wide">Scrape Count</span>
-                      <p className="text-sm font-medium" data-testid="text-scrape-count">{tibspyData.scrapeCount}</p>
-                    </div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-xs text-muted-foreground">
+                    Last updated: {tibspyData.lastScrapedAt 
+                      ? new Date(tibspyData.lastScrapedAt).toLocaleString() 
+                      : 'Never'}
                   </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => selectedTibspyPlayer && requestScrapeMutation.mutate(selectedTibspyPlayer)}
+                    disabled={requestScrapeMutation.isPending}
+                    className="border-amber-500/30 text-amber-500 hover:bg-amber-500/10"
+                    data-testid="button-refresh-tibspy-data"
+                  >
+                    {requestScrapeMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                    )}
+                    Refresh Data
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
                   
                   {tibspyData.data && (
                     <div className="space-y-3">
