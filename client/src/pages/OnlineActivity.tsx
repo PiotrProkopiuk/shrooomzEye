@@ -100,8 +100,19 @@ export default function OnlineActivity() {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={hourlyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                  <XAxis dataKey="hour" stroke="#888" fontSize={12} />
-                  <YAxis stroke="#888" fontSize={12} />
+                  <XAxis 
+                    dataKey="hour" 
+                    stroke="#888" 
+                    fontSize={11}
+                    interval={2}
+                    tickFormatter={(value) => value}
+                  />
+                  <YAxis 
+                    stroke="#888" 
+                    fontSize={12} 
+                    domain={[0, 1050]}
+                    tickCount={6}
+                  />
                   <Tooltip 
                     contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #333' }}
                     labelStyle={{ color: '#fff' }}
@@ -123,7 +134,15 @@ export default function OnlineActivity() {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={peakHoursData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                  <XAxis dataKey="hour" stroke="#888" fontSize={12} />
+                  <XAxis 
+                    dataKey="hour" 
+                    stroke="#888" 
+                    fontSize={10}
+                    interval={2}
+                    angle={-45}
+                    textAnchor="end"
+                    height={50}
+                  />
                   <YAxis stroke="#888" fontSize={12} />
                   <Tooltip 
                     contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #333' }}
@@ -276,7 +295,8 @@ function generateHourlyData(sessions: OnlineSession[]): { hour: string; count: n
   const now = new Date();
   for (let i = 23; i >= 0; i--) {
     const hour = new Date(now.getTime() - i * 3600000);
-    const hourStr = hour.toLocaleTimeString("en-US", { hour: "2-digit", hour12: false });
+    const hourNum = hour.getHours();
+    const hourStr = `${hourNum.toString().padStart(2, '0')}:00`;
     const count = sessions.filter(s => {
       const start = new Date(s.sessionStart);
       return start.getHours() === hour.getHours() && 
