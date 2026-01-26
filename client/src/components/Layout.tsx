@@ -7,8 +7,6 @@ import {
   Menu,
   Shield,
   Ghost,
-  Trophy,
-  History,
   ChevronDown,
   LayoutGrid,
   ShieldCheck,
@@ -36,16 +34,14 @@ import bgTexture from "@assets/generated_images/dark_stone_rpg_texture_backgroun
 const NAV_ITEMS = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/" },
   { label: "Online Activity", icon: Eye, href: "/online" },
-  { label: "Deaths & PvP", icon: Skull, href: "/deaths" },
-  { label: "Level Progress", icon: TrendingUp, href: "/levels" },
+  { label: "Combat & Activity", icon: Skull, href: "/history" },
+  { label: "Progress & Rankings", icon: TrendingUp, href: "/levels" },
   { label: "Verification", icon: ShieldCheck, href: "/verification" },
   { label: "Guild Stats", icon: BarChart3, href: "/stats" },
   { label: "Guilds", icon: Shield, href: "/guilds" },
   { label: "Players", icon: Users, href: "/players" },
-  { label: "Leaderboards", icon: Trophy, href: "/leaderboards" },
   { label: "Events & Quests", icon: Swords, href: "/events" },
   { label: "Event Templates", icon: LayoutGrid, href: "/templates" },
-  { label: "Audit Log", icon: History, href: "/history" },
   { label: "Bot Settings", icon: Settings, href: "/settings" },
 ];
 

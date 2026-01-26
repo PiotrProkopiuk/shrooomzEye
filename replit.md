@@ -152,6 +152,46 @@ All UI pages now use real API endpoints connected to PostgreSQL:
 - Players: `/api/players`, `/api/tibspy/character/:name`
 - Events: `/api/events/:guildId`, `/api/templates`
 - Templates: `/api/templates`
-- Activity History: `/api/death-tracker/recent`
+- Combat & Activity: `/api/death-tracker/recent`, `/api/death-tracker/stats`
+- Progress & Rankings: `/api/players`, `/api/guilds`
 - Guilds: `/api/guilds`, `/api/tibia/guild/:name`
 - Settings: `/api/death-tracker/config/:guildId`
+
+## Dashboard Consolidation (January 2026)
+
+### Merged Views
+The following redundant dashboard views were consolidated to reduce duplication and improve maintainability:
+
+1. **Combat & Activity** (formerly "Activity History" + "Deaths Dashboard")
+   - Combined death tracking, PvP summary, and system activity logs into one unified page
+   - Tabs: Death Log | PvP Summary | System Log
+   - Removed redundant DeathsDashboard.tsx file
+   - Path: `/history`
+
+2. **Progress & Rankings** (formerly "Level Progress" + "Leaderboards")
+   - Combined level tracking and guild leaderboards into one unified page
+   - Tabs: Overview | Leaderboards | All Players
+   - Removed redundant Leaderboards.tsx file
+   - Path: `/levels`
+
+### Removed Pages
+- `DeathsDashboard.tsx` - Merged into ActivityHistory.tsx
+- `Leaderboards.tsx` - Merged into LevelProgress.tsx
+
+### Updated Navigation
+Navigation reduced from 13 items to 11 items:
+- Removed: "Deaths & PvP" (merged into "Combat & Activity")
+- Removed: "Leaderboards" (merged into "Progress & Rankings")
+- Removed: "Audit Log" (renamed to "Combat & Activity")
+
+### Why These Merges
+- **Deaths data** was displayed in 3 places (Dashboard, DeathsDashboard, ActivityHistory)
+- **Level gains** were displayed in 3 places (Dashboard, LevelProgress, Leaderboards)
+- **Top gainers** table was duplicated between LevelProgress and Leaderboards
+- Consolidation reduces code duplication and provides unified experience
+
+### Maintenance Notes
+- All merged pages use tabs for organization
+- API endpoints remain unchanged (reused existing services)
+- Permissions and visibility rules preserved
+- Data sources consolidated into single source of truth per metric

@@ -1,12 +1,26 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Award, Users, Target } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { TrendingUp, Award, Users, Target, Trophy, BarChart3 } from "lucide-react";
+import { 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  BarChart,
+  Bar 
+} from "recharts";
 import { type Player, type Guild } from "@shared/schema";
+import { useState } from "react";
 
 export default function LevelProgress() {
+  const [activeTab, setActiveTab] = useState("overview");
+
   const { data: players } = useQuery<Player[]>({
     queryKey: ["/api/players"],
   });
@@ -36,6 +50,10 @@ export default function LevelProgress() {
     .sort((a, b) => (b.levelsGained || 0) - (a.levelsGained || 0))
     .slice(0, 10);
 
+  const topLevels = [...(mainGuildPlayers || [])]
+    .sort((a, b) => b.level - a.level)
+    .slice(0, 10);
+
   const avgMainLevel = mainGuildPlayers.length > 0
     ? Math.round(mainGuildPlayers.reduce((sum, p) => sum + p.level, 0) / mainGuildPlayers.length)
     : 0;
@@ -45,12 +63,13 @@ export default function LevelProgress() {
     : 0;
 
   const progressData = generateProgressData(players || []);
+  const levelChartData = topLevels.slice(0, 5).map(p => ({ name: p.name, level: p.level }));
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-display font-bold text-foreground">Level Progress</h1>
-        <p className="text-muted-foreground">Track level gains across tracked guilds</p>
+        <h1 className="text-2xl font-display font-bold text-foreground">Progress & Rankings</h1>
+        <p className="text-muted-foreground">Level tracking, rankings, and leaderboards for {mainGuild?.name || 'your guild'}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -82,139 +101,240 @@ export default function LevelProgress() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-card/50 border-border/50">
-          <CardHeader>
-            <CardTitle>Level Distribution</CardTitle>
-            <CardDescription>Players by level range</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={progressData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                  <XAxis dataKey="range" stroke="#888" fontSize={12} />
-                  <YAxis stroke="#888" fontSize={12} />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #333' }}
-                    labelStyle={{ color: '#fff' }}
-                  />
-                  <Line type="monotone" dataKey="main" name="Guild" stroke="#d4af37" strokeWidth={2} />
-                  <Line type="monotone" dataKey="enemy" name="Enemy" stroke="#ef4444" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="bg-background/50 border border-white/10">
+          <TabsTrigger value="overview" className="data-[state=active]:bg-primary/20" data-testid="tab-overview">
+            <BarChart3 className="h-4 w-4 mr-2" />
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="leaderboards" className="data-[state=active]:bg-primary/20" data-testid="tab-leaderboards">
+            <Trophy className="h-4 w-4 mr-2" />
+            Leaderboards
+          </TabsTrigger>
+          <TabsTrigger value="players" className="data-[state=active]:bg-primary/20" data-testid="tab-players">
+            <Users className="h-4 w-4 mr-2" />
+            All Players
+          </TabsTrigger>
+        </TabsList>
 
-        <Card className="bg-card/50 border-border/50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Award className="h-5 w-5 text-yellow-500" />
-              Top Level Gainers
-            </CardTitle>
-            <CardDescription>Highest level gains since tracking started</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {topGainers.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">No level gains recorded yet</p>
-            ) : (
-              <div className="space-y-3">
-                {topGainers.map((player, index) => {
-                  const guild = guilds?.find(g => g.id === player.guildId);
-                  return (
-                    <div 
-                      key={player.id} 
-                      className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-white/5"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className={`font-bold text-lg ${index < 3 ? 'text-yellow-500' : 'text-muted-foreground'}`}>
-                          #{index + 1}
-                        </span>
-                        <div>
+        <TabsContent value="overview" className="mt-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="bg-card/50 border-border/50">
+              <CardHeader>
+                <CardTitle>Level Distribution</CardTitle>
+                <CardDescription>Players by level range</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={progressData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                      <XAxis dataKey="range" stroke="#888" fontSize={12} />
+                      <YAxis stroke="#888" fontSize={12} />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #333' }}
+                        labelStyle={{ color: '#fff' }}
+                      />
+                      <Line type="monotone" dataKey="main" name="Guild" stroke="#d4af37" strokeWidth={2} />
+                      <Line type="monotone" dataKey="enemy" name="Enemy" stroke="#ef4444" strokeWidth={2} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card/50 border-border/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Award className="h-5 w-5 text-yellow-500" />
+                  Top Level Gainers
+                </CardTitle>
+                <CardDescription>Highest level gains since tracking started</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {topGainers.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8" data-testid="text-no-gainers">No level gains recorded yet</p>
+                ) : (
+                  <div className="space-y-3">
+                    {topGainers.slice(0, 5).map((player, index) => {
+                      const guild = guilds?.find(g => g.id === player.guildId);
+                      return (
+                        <div 
+                          key={player.id} 
+                          className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-white/5"
+                          data-testid={`top-gainer-${index}`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className={`font-bold text-lg ${index < 3 ? 'text-yellow-500' : 'text-muted-foreground'}`}>
+                              #{index + 1}
+                            </span>
+                            <div>
+                              <a 
+                                href={`https://www.tibia.com/community/?name=${encodeURIComponent(player.name)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="font-medium hover:text-primary transition-colors"
+                              >
+                                {player.name}
+                              </a>
+                              <p className="text-xs text-muted-foreground">
+                                Level {player.level} {player.vocation}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-lg font-bold text-emerald-500">+{player.levelsGained}</span>
+                            <Badge 
+                              variant={guild?.isEnemy ? "destructive" : "default"} 
+                              className="ml-2 text-xs"
+                            >
+                              {guild?.isEnemy ? "Enemy" : "Guild"}
+                            </Badge>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="leaderboards" className="mt-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="bg-card/50 border-border/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Trophy className="h-4 w-4 text-primary" />
+                  Highest Levels
+                </CardTitle>
+                <CardDescription>Top 5 players by current level</CardDescription>
+              </CardHeader>
+              <CardContent className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={levelChartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#2a2e39" />
+                    <XAxis dataKey="name" stroke="#64748b" fontSize={12} />
+                    <YAxis stroke="#64748b" fontSize={12} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#1a1d24', border: '1px solid #2a2e39' }}
+                      itemStyle={{ color: '#eab308' }}
+                    />
+                    <Bar dataKey="level" fill="#eab308" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card/50 border-border/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Award className="h-4 w-4 text-emerald-500" />
+                  Top Level Gainers
+                </CardTitle>
+                <CardDescription>Most levels gained since tracking</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-white/5 hover:bg-transparent">
+                      <TableHead>Rank</TableHead>
+                      <TableHead>Player</TableHead>
+                      <TableHead>Level</TableHead>
+                      <TableHead className="text-right">Gained</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {topGainers.map((p, i) => (
+                      <TableRow key={p.id} className="border-white/5 hover:bg-white/5" data-testid={`leaderboard-row-${i}`}>
+                        <TableCell className="font-mono text-muted-foreground">#{i + 1}</TableCell>
+                        <TableCell className="font-medium text-primary">
+                          <a 
+                            href={`https://www.tibia.com/community/?name=${encodeURIComponent(p.name)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:underline"
+                          >
+                            {p.name}
+                          </a>
+                        </TableCell>
+                        <TableCell>{p.level}</TableCell>
+                        <TableCell className="text-right text-emerald-500">+{p.levelsGained || 0}</TableCell>
+                      </TableRow>
+                    ))}
+                    {topGainers.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center text-muted-foreground">No players yet</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="players" className="mt-4">
+          <Card className="bg-card/50 border-border/50">
+            <CardHeader>
+              <CardTitle>All Tracked Players - Level Progress</CardTitle>
+              <CardDescription>Complete list with level tracking data</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Character</TableHead>
+                    <TableHead>Guild</TableHead>
+                    <TableHead>Vocation</TableHead>
+                    <TableHead>Current Level</TableHead>
+                    <TableHead>Start Level</TableHead>
+                    <TableHead>Levels Gained</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {players?.slice(0, 30).map((player) => {
+                    const guild = guilds?.find(g => g.id === player.guildId);
+                    return (
+                      <TableRow key={player.id} data-testid={`row-player-${player.id}`}>
+                        <TableCell className="font-medium">
                           <a 
                             href={`https://www.tibia.com/community/?name=${encodeURIComponent(player.name)}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="font-medium hover:text-primary transition-colors"
+                            className="hover:text-primary transition-colors"
                           >
                             {player.name}
                           </a>
-                          <p className="text-xs text-muted-foreground">
-                            Level {player.level} {player.vocation}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-lg font-bold text-emerald-500">+{player.levelsGained}</span>
-                        <Badge 
-                          variant={guild?.isEnemy ? "destructive" : "default"} 
-                          className="ml-2 text-xs"
-                        >
-                          {guild?.isEnemy ? "Enemy" : "Guild"}
-                        </Badge>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="bg-card/50 border-border/50">
-        <CardHeader>
-          <CardTitle>All Tracked Players - Level Progress</CardTitle>
-          <CardDescription>Complete list with level tracking data</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Character</TableHead>
-                <TableHead>Guild</TableHead>
-                <TableHead>Vocation</TableHead>
-                <TableHead>Current Level</TableHead>
-                <TableHead>Start Level</TableHead>
-                <TableHead>Levels Gained</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {players?.slice(0, 20).map((player) => {
-                const guild = guilds?.find(g => g.id === player.guildId);
-                return (
-                  <TableRow key={player.id} data-testid={`row-player-${player.id}`}>
-                    <TableCell className="font-medium">
-                      <a 
-                        href={`https://www.tibia.com/community/?name=${encodeURIComponent(player.name)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:text-primary transition-colors"
-                      >
-                        {player.name}
-                      </a>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={guild?.isEnemy ? "destructive" : "default"}>
-                        {guild?.name || "Unknown"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{player.vocation}</TableCell>
-                    <TableCell>{player.level}</TableCell>
-                    <TableCell className="text-muted-foreground">{player.startLevel || player.level}</TableCell>
-                    <TableCell>
-                      <span className={`font-bold ${(player.levelsGained || 0) > 0 ? 'text-emerald-500' : 'text-muted-foreground'}`}>
-                        {(player.levelsGained || 0) > 0 ? `+${player.levelsGained}` : '0'}
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={guild?.isEnemy ? "destructive" : "default"}>
+                            {guild?.name || "Unknown"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{player.vocation}</TableCell>
+                        <TableCell>{player.level}</TableCell>
+                        <TableCell className="text-muted-foreground">{player.startLevel || player.level}</TableCell>
+                        <TableCell>
+                          <span className={`font-bold ${(player.levelsGained || 0) > 0 ? 'text-emerald-500' : 'text-muted-foreground'}`}>
+                            {(player.levelsGained || 0) > 0 ? `+${player.levelsGained}` : '0'}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  {(!players || players.length === 0) && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground">No players tracked yet</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

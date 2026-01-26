@@ -1,18 +1,17 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Search, 
   History, 
   Shield, 
-  User, 
   Calendar, 
-  AlertTriangle,
   Bot,
   Skull,
   Swords,
@@ -21,48 +20,12 @@ import {
   Trophy,
   HeartCrack,
   Filter,
-  X
+  X,
+  TrendingDown
 } from "lucide-react";
 import { useState } from "react";
-import { formatDistanceToNow, format, subDays } from "date-fns";
-
-interface Death {
-  id: number;
-  characterName: string;
-  level: number;
-  killerName: string | null;
-  killerGuild: string | null;
-  victimGuildId: number | null;
-  victimGuildType: string | null;
-  vocation: string | null;
-  isPvp: boolean;
-  occurredAt: string | null;
-  createdAt: string | null;
-  notified: boolean;
-  deathHash: string | null;
-}
-
-interface Guild {
-  id: number;
-  name: string;
-}
-
-const STATIC_LOGS = [
-  { id: 1, type: "guild", msg: "Guild 'Red Rose' status changed to Ally", user: "Admin", time: "5 mins ago", color: "text-emerald-500" },
-  { id: 2, type: "player", msg: "Player 'Bubble' reached Level 251", user: "System", time: "12 mins ago", color: "text-primary" },
-  { id: 3, type: "event", msg: "Soul War Service signup closed (Max Participants)", user: "System", time: "25 mins ago", color: "text-orange-500" },
-  { id: 4, type: "bot", msg: "Automated Daily Report generated & sent to Discord", user: "Bot", time: "1 hour ago", color: "text-blue-400" },
-  { id: 5, type: "settings", msg: "PVP Alert role changed to @WarTeam", user: "Admin", time: "5 hours ago", color: "text-muted-foreground" },
-];
-
-function formatTime(dateStr: string | null): string {
-  if (!dateStr) return "Unknown";
-  try {
-    return formatDistanceToNow(new Date(dateStr), { addSuffix: true });
-  } catch {
-    return "Unknown";
-  }
-}
+import { formatDistanceToNow, subDays } from "date-fns";
+import { type Death, type Guild } from "@shared/schema";
 
 interface DeathsResponse {
   deaths: Death[];
@@ -80,6 +43,33 @@ interface DeathStats {
   pveDeaths: number;
 }
 
+const STATIC_LOGS = [
+  { id: 1, type: "guild", msg: "Guild 'Red Rose' status changed to Ally", user: "Admin", time: "5 mins ago", color: "text-emerald-500" },
+  { id: 2, type: "player", msg: "Player 'Bubble' reached Level 251", user: "System", time: "12 mins ago", color: "text-primary" },
+  { id: 3, type: "event", msg: "Soul War Service signup closed (Max Participants)", user: "System", time: "25 mins ago", color: "text-orange-500" },
+  { id: 4, type: "bot", msg: "Automated Daily Report generated & sent to Discord", user: "Bot", time: "1 hour ago", color: "text-blue-400" },
+  { id: 5, type: "settings", msg: "PVP Alert role changed to @WarTeam", user: "Admin", time: "5 hours ago", color: "text-muted-foreground" },
+];
+
+function formatTime(dateStr: string | Date | null): string {
+  if (!dateStr) return "Unknown";
+  try {
+    const date = typeof dateStr === 'string' ? new Date(dateStr) : dateStr;
+    return formatDistanceToNow(date, { addSuffix: true });
+  } catch {
+    return "Unknown";
+  }
+}
+
+function formatDateTime(date: Date): string {
+  return date.toLocaleString("en-US", { 
+    month: "short", 
+    day: "numeric", 
+    hour: "2-digit", 
+    minute: "2-digit" 
+  });
+}
+
 export default function ActivityHistory() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("deaths");
@@ -91,13 +81,11 @@ export default function ActivityHistory() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Build query params for API
   const buildQueryParams = () => {
     const params = new URLSearchParams();
     params.set("page", currentPage.toString());
     params.set("pageSize", pageSize.toString());
     
-    // Date filters
     if (dateRange !== "all") {
       const now = new Date();
       let fromDate: Date;
@@ -117,14 +105,12 @@ export default function ActivityHistory() {
       params.set("dateFrom", fromDate.toISOString());
     }
     
-    // Death type filter (PvP/PvE) - applied via API
     if (deathType === "pvp") {
       params.set("isPvp", "true");
     } else if (deathType === "pve") {
       params.set("isPvp", "false");
     }
     
-    // Guild type filter - applied via API
     if (filterType === "friend") {
       params.set("victimGuildType", "main");
     } else if (filterType === "enemy") {
@@ -143,13 +129,11 @@ export default function ActivityHistory() {
     refetchInterval: 30000,
   });
 
-  // Stats filtered by same criteria as deaths list
   const { data: stats } = useQuery<DeathStats>({
     queryKey: ["/api/death-tracker/stats", filterType, deathType, dateRange],
     queryFn: async () => {
       const params = new URLSearchParams();
       
-      // Date range filter
       if (dateRange !== "all") {
         const now = new Date();
         let dateFrom: Date;
@@ -169,14 +153,12 @@ export default function ActivityHistory() {
         params.set("dateFrom", dateFrom.toISOString());
       }
       
-      // Death type filter (PvP/PvE)
       if (deathType === "pvp") {
         params.set("isPvp", "true");
       } else if (deathType === "pve") {
         params.set("isPvp", "false");
       }
       
-      // Guild type filter
       if (filterType === "friend") {
         params.set("victimGuildType", "main");
       } else if (filterType === "enemy") {
@@ -197,6 +179,9 @@ export default function ActivityHistory() {
   const { data: guilds = [] } = useQuery<Guild[]>({
     queryKey: ["/api/guilds"],
   });
+
+  const mainGuild = guilds?.find(g => !g.isEnemy);
+  const enemyGuild = guilds?.find(g => g.isEnemy);
 
   const scanMutation = useMutation({
     mutationFn: async () => {
@@ -230,13 +215,11 @@ export default function ActivityHistory() {
     return acc;
   }, {} as Record<number, string>);
 
-  // Only local filter by search term (API handles other filters)
   const filteredDeaths = deaths.filter(death => 
     death.characterName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (death.killerName && death.killerName.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  // Reset page when filters change
   const handleFilterChange = (type: "all" | "friend" | "enemy") => {
     setFilterType(type);
     setCurrentPage(1);
@@ -271,8 +254,8 @@ export default function ActivityHistory() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-display font-bold text-foreground">Activity History</h1>
-          <p className="text-muted-foreground">Audit log of deaths, guild events, and bot actions.</p>
+          <h1 className="text-3xl font-display font-bold text-foreground">Combat & Activity</h1>
+          <p className="text-muted-foreground">Deaths, PvP statistics, and system activity logs.</p>
         </div>
       </div>
 
@@ -283,7 +266,7 @@ export default function ActivityHistory() {
               <Skull className="h-6 w-6 text-muted-foreground" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{stats?.total || 0}</p>
+              <p className="text-2xl font-bold" data-testid="stat-total-deaths">{stats?.total || 0}</p>
               <p className="text-sm text-muted-foreground">All Deaths</p>
             </div>
           </CardContent>
@@ -294,7 +277,7 @@ export default function ActivityHistory() {
               <Trophy className="h-6 w-6 text-emerald-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-emerald-400">{stats?.enemyGuildDeaths || 0}</p>
+              <p className="text-2xl font-bold text-emerald-400" data-testid="stat-enemy-deaths">{stats?.enemyGuildDeaths || 0}</p>
               <p className="text-sm text-emerald-400/70">Frags (Enemy)</p>
             </div>
           </CardContent>
@@ -305,7 +288,7 @@ export default function ActivityHistory() {
               <HeartCrack className="h-6 w-6 text-red-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-red-400">{stats?.mainGuildDeaths || 0}</p>
+              <p className="text-2xl font-bold text-red-400" data-testid="stat-guild-deaths">{stats?.mainGuildDeaths || 0}</p>
               <p className="text-sm text-red-400/70">Losses (Guild)</p>
             </div>
           </CardContent>
@@ -316,7 +299,7 @@ export default function ActivityHistory() {
               <Swords className="h-6 w-6 text-orange-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-orange-400">{stats?.pvpDeaths || 0}</p>
+              <p className="text-2xl font-bold text-orange-400" data-testid="stat-pvp-deaths">{stats?.pvpDeaths || 0}</p>
               <p className="text-sm text-orange-400/70">PvP</p>
             </div>
           </CardContent>
@@ -324,10 +307,10 @@ export default function ActivityHistory() {
         <Card className="bg-blue-500/10 border-blue-500/30">
           <CardContent className="p-4 flex items-center gap-4">
             <div className="h-12 w-12 rounded-lg bg-blue-500/20 flex items-center justify-center">
-              <Skull className="h-6 w-6 text-blue-500" />
+              <TrendingDown className="h-6 w-6 text-blue-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-blue-400">{stats?.pveDeaths || 0}</p>
+              <p className="text-2xl font-bold text-blue-400" data-testid="stat-pve-deaths">{stats?.pveDeaths || 0}</p>
               <p className="text-sm text-blue-400/70">PvE</p>
             </div>
           </CardContent>
@@ -336,13 +319,17 @@ export default function ActivityHistory() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="bg-background/50 border border-white/10">
-          <TabsTrigger value="deaths" className="data-[state=active]:bg-primary/20">
+          <TabsTrigger value="deaths" className="data-[state=active]:bg-primary/20" data-testid="tab-deaths">
             <Skull className="h-4 w-4 mr-2" />
             Death Log
           </TabsTrigger>
-          <TabsTrigger value="activity" className="data-[state=active]:bg-primary/20">
+          <TabsTrigger value="pvp" className="data-[state=active]:bg-primary/20" data-testid="tab-pvp">
+            <Swords className="h-4 w-4 mr-2" />
+            PvP Summary
+          </TabsTrigger>
+          <TabsTrigger value="activity" className="data-[state=active]:bg-primary/20" data-testid="tab-activity">
             <History className="h-4 w-4 mr-2" />
-            Activity Log
+            System Log
           </TabsTrigger>
         </TabsList>
 
@@ -350,7 +337,6 @@ export default function ActivityHistory() {
           <Card className="bg-card/50 border-border/50">
             <CardHeader className="pb-3 border-b border-white/5">
               <div className="flex flex-col gap-4">
-                {/* First row: Search and Scan */}
                 <div className="flex items-center gap-4 flex-wrap">
                   <div className="relative flex-1 min-w-[200px]">
                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -374,14 +360,12 @@ export default function ActivityHistory() {
                   </Button>
                 </div>
                 
-                {/* Second row: Filters */}
                 <div className="flex items-center gap-4 flex-wrap">
                   <div className="flex items-center gap-2">
                     <Filter className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">Filters:</span>
                   </div>
                   
-                  {/* Guild type filter */}
                   <div className="flex gap-1">
                     <Button
                       variant={filterType === "all" ? "default" : "outline"}
@@ -413,7 +397,6 @@ export default function ActivityHistory() {
                     </Button>
                   </div>
                   
-                  {/* Death type filter (PvP/PvE) */}
                   <Select value={deathType} onValueChange={(v) => handleDeathTypeChange(v as "all" | "pvp" | "pve")}>
                     <SelectTrigger className="w-[130px] bg-background/50 border-white/10" data-testid="filter-death-type">
                       <SelectValue placeholder="Type" />
@@ -425,7 +408,6 @@ export default function ActivityHistory() {
                     </SelectContent>
                   </Select>
                   
-                  {/* Date range filter */}
                   <Select value={dateRange} onValueChange={(v) => handleDateRangeChange(v as "all" | "today" | "week" | "month")}>
                     <SelectTrigger className="w-[150px] bg-background/50 border-white/10" data-testid="filter-date-range">
                       <Calendar className="h-4 w-4 mr-2" />
@@ -439,7 +421,6 @@ export default function ActivityHistory() {
                     </SelectContent>
                   </Select>
                   
-                  {/* Clear filters button */}
                   {hasActiveFilters && (
                     <Button
                       variant="ghost"
@@ -454,7 +435,6 @@ export default function ActivityHistory() {
                   )}
                 </div>
                 
-                {/* Active filters indicator */}
                 {hasActiveFilters && (
                   <div className="text-sm text-muted-foreground">
                     Showing {totalDeaths} results with active filters
@@ -464,9 +444,9 @@ export default function ActivityHistory() {
             </CardHeader>
             <CardContent className="p-0">
               {deathsLoading ? (
-                <div className="p-8 text-center text-muted-foreground">Loading deaths...</div>
+                <div className="p-8 text-center text-muted-foreground" data-testid="text-deaths-loading">Loading deaths...</div>
               ) : filteredDeaths.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground">
+                <div className="p-8 text-center text-muted-foreground" data-testid="text-deaths-empty">
                   <Skull className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No deaths recorded yet.</p>
                   <p className="text-sm mt-2">Deaths will appear here as they are detected.</p>
@@ -566,21 +546,20 @@ export default function ActivityHistory() {
                 </div>
               )}
               
-              {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between p-4 border-t border-white/5">
-                  <span className="text-sm text-muted-foreground">
-                    Strona {currentPage} z {totalPages} ({totalDeaths} śmierci)
-                  </span>
+                <div className="p-4 border-t border-white/5 flex items-center justify-between">
+                  <div className="text-sm text-muted-foreground">
+                    Page {currentPage} of {totalPages} ({totalDeaths} total)
+                  </div>
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      disabled={currentPage <= 1}
+                      disabled={currentPage === 1}
                       data-testid="button-prev-page"
                     >
-                      Poprzednia
+                      Previous
                     </Button>
                     <Button
                       variant="outline"
@@ -589,7 +568,7 @@ export default function ActivityHistory() {
                       disabled={currentPage >= totalPages}
                       data-testid="button-next-page"
                     >
-                      Następna
+                      Next
                     </Button>
                   </div>
                 </div>
@@ -598,54 +577,139 @@ export default function ActivityHistory() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="pvp" className="mt-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="bg-card/50 border-border/50">
+              <CardHeader>
+                <CardTitle>PvP Summary</CardTitle>
+                <CardDescription>Guild vs Enemy combat statistics</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="p-4 rounded-lg bg-background/50 border border-white/5">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-medium text-primary">{mainGuild?.name || "Main Guild"}</span>
+                    <span className="text-2xl font-bold text-destructive">{stats?.mainGuildDeaths || 0}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Deaths suffered</p>
+                </div>
+
+                <div className="text-center text-muted-foreground font-bold text-lg">VS</div>
+
+                <div className="p-4 rounded-lg bg-background/50 border border-white/5">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-medium text-orange-500">{enemyGuild?.name || "Enemy Guild"}</span>
+                    <span className="text-2xl font-bold text-emerald-500">{stats?.enemyGuildDeaths || 0}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Deaths suffered</p>
+                </div>
+
+                <div className="pt-4 border-t border-white/5">
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">PvP Deaths</span>
+                    <span className="font-bold">{stats?.pvpDeaths || 0}</span>
+                  </div>
+                  <div className="flex justify-between items-center mt-2">
+                    <span className="text-muted-foreground">PvE Deaths</span>
+                    <span className="font-bold">{stats?.pveDeaths || 0}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card/50 border-border/50">
+              <CardHeader>
+                <CardTitle>Recent PvP Deaths</CardTitle>
+                <CardDescription>Latest player kills</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Time</TableHead>
+                      <TableHead>Victim</TableHead>
+                      <TableHead>Level</TableHead>
+                      <TableHead>Killer</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {deaths.filter(d => d.isPvp).slice(0, 10).map((death) => (
+                      <TableRow key={death.id} data-testid={`row-pvp-death-${death.id}`}>
+                        <TableCell className="text-muted-foreground text-sm">
+                          {death.occurredAt ? formatDateTime(new Date(death.occurredAt)) : "Unknown"}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          <a 
+                            href={`https://www.tibia.com/community/?name=${encodeURIComponent(death.characterName)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:text-primary transition-colors"
+                          >
+                            {death.characterName}
+                          </a>
+                        </TableCell>
+                        <TableCell>{death.level}</TableCell>
+                        <TableCell>
+                          {death.killerName}
+                          {death.killerGuild && (
+                            <span className="text-muted-foreground text-xs ml-1">({death.killerGuild})</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {deaths.filter(d => d.isPvp).length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center text-muted-foreground">
+                          No PvP deaths recorded
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
         <TabsContent value="activity" className="mt-4">
           <Card className="bg-card/50 border-border/50">
-            <CardHeader className="pb-3 border-b border-white/5">
+            <CardHeader className="border-b border-white/5">
               <div className="flex items-center gap-4">
-                <div className="relative flex-1">
+                <div className="relative flex-1 max-w-md">
                   <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input 
-                    placeholder="Filter audit logs..." 
+                    placeholder="Search activity logs..." 
                     className="pl-10 bg-background/50 border-white/10"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     data-testid="input-search-activity"
                   />
                 </div>
-                <div className="flex gap-2">
-                  <Badge variant="outline" className="cursor-pointer hover:bg-white/5">Guilds</Badge>
-                  <Badge variant="outline" className="cursor-pointer hover:bg-white/5">Players</Badge>
-                  <Badge variant="outline" className="cursor-pointer hover:bg-white/5">Bot</Badge>
-                </div>
               </div>
             </CardHeader>
             <CardContent className="p-0">
               <div className="divide-y divide-white/5">
                 {filteredLogs.map((log) => (
-                  <div key={log.id} className="p-4 flex items-center justify-between hover:bg-white/5 transition-colors group">
-                    <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-lg bg-background border border-white/10 flex items-center justify-center">
-                        {log.type === 'guild' && <Shield className="h-5 w-5 text-emerald-500" />}
-                        {log.type === 'player' && <User className="h-5 w-5 text-primary" />}
-                        {log.type === 'event' && <Calendar className="h-5 w-5 text-orange-500" />}
-                        {log.type === 'bot' && <Bot className="h-5 w-5 text-blue-400" />}
-                        {log.type === 'death' && <AlertTriangle className="h-5 w-5 text-destructive" />}
-                        {log.type === 'settings' && <History className="h-5 w-5 text-muted-foreground" />}
-                      </div>
-                      <div>
-                        <p className={`text-sm font-medium ${log.color}`}>{log.msg}</p>
-                        <div className="flex items-center gap-3 mt-1">
-                          <span className="text-xs text-muted-foreground">User: {log.user}</span>
-                          <span className="text-xs text-muted-foreground">•</span>
-                          <span className="text-xs text-muted-foreground">{log.time}</span>
-                        </div>
-                      </div>
+                  <div key={log.id} className="p-4 flex items-center gap-4 hover:bg-white/5 transition-colors" data-testid={`activity-log-${log.id}`}>
+                    <div className={`h-10 w-10 rounded-lg bg-background/50 border border-white/10 flex items-center justify-center`}>
+                      {log.type === "guild" && <Shield className="h-5 w-5 text-emerald-500" />}
+                      {log.type === "player" && <Trophy className="h-5 w-5 text-primary" />}
+                      {log.type === "event" && <Calendar className="h-5 w-5 text-orange-500" />}
+                      {log.type === "bot" && <Bot className="h-5 w-5 text-blue-400" />}
+                      {log.type === "settings" && <History className="h-5 w-5 text-muted-foreground" />}
                     </div>
-                    <Badge variant="outline" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                      View Details
-                    </Badge>
+                    <div className="flex-1">
+                      <p className={`text-sm font-medium ${log.color}`}>{log.msg}</p>
+                      <p className="text-xs text-muted-foreground">by {log.user}</p>
+                    </div>
+                    <span className="text-xs text-muted-foreground">{log.time}</span>
                   </div>
                 ))}
+                {filteredLogs.length === 0 && (
+                  <div className="p-8 text-center text-muted-foreground">
+                    <History className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No activity logs found</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

@@ -10,14 +10,12 @@ import Guilds from "@/pages/Guilds";
 import Players from "@/pages/Players";
 import Events from "@/pages/Events";
 import Settings from "@/pages/Settings";
-import Leaderboards from "@/pages/Leaderboards";
 import ActivityHistory from "@/pages/ActivityHistory";
 import Templates from "@/pages/Templates";
 import Verification from "@/pages/Verification";
 import GuildStats from "@/pages/GuildStats";
 import Login from "@/pages/Login";
 import OnlineActivity from "@/pages/OnlineActivity";
-import DeathsDashboard from "@/pages/DeathsDashboard";
 import LevelProgress from "@/pages/LevelProgress";
 import CharacterProfile from "@/pages/CharacterProfile";
 import { useEffect, useState } from "react";
@@ -66,13 +64,11 @@ function Router() {
         <Route path="/stats" component={GuildStats} />
         <Route path="/guilds" component={Guilds} />
         <Route path="/players" component={Players} />
-        <Route path="/leaderboards" component={Leaderboards} />
         <Route path="/events" component={Events} />
         <Route path="/templates" component={Templates} />
         <Route path="/history" component={ActivityHistory} />
         <Route path="/settings" component={Settings} />
         <Route path="/online" component={OnlineActivity} />
-        <Route path="/deaths" component={DeathsDashboard} />
         <Route path="/levels" component={LevelProgress} />
         <Route path="/character/:name" component={CharacterProfile} />
         <Route component={NotFound} />
