@@ -42,6 +42,7 @@ export interface IStorage {
   createGuild(guild: InsertGuild): Promise<Guild>;
   updateGuild(id: number, guild: Partial<InsertGuild>): Promise<Guild>;
   verifyGuild(id: number, verificationCode: string): Promise<Guild>;
+  deleteGuild(id: number): Promise<void>;
 
   // Players
   getPlayers(guildId?: number): Promise<Player[]>;
@@ -138,6 +139,10 @@ export class DatabaseStorage implements IStorage {
       .where(eq(guilds.id, id))
       .returning();
     return guild;
+  }
+
+  async deleteGuild(id: number): Promise<void> {
+    await db.delete(guilds).where(eq(guilds.id, id));
   }
 
   // Players

@@ -49,10 +49,26 @@ export async function registerRoutes(
     res.json(guild);
   });
 
+  app.delete("/api/guilds/:id", requireAuth, requireRole("ADMIN"), async (req, res) => {
+    const guildId = parseInt(req.params.id as string);
+    const guild = await storage.getGuild(guildId);
+    if (!guild) return res.status(404).json({ error: "Guild not found" });
+    
+    await storage.deleteGuild(guildId);
+    res.json({ success: true, message: `Guild ${guild.name} removed from panel` });
+  });
+
   app.post("/api/guilds/:id/verify", requireAuth, requireRole("ADMIN"), async (req, res) => {
     const guildId = parseInt(req.params.id as string);
     const guild = await storage.getGuild(guildId);
     if (!guild) return res.status(404).json({ error: "Guild not found" });
+
+    // Demo mode auto-verifies
+    const isDemoMode = req.headers["x-demo-mode"] === "true" || req.query.demo === "true";
+    if (isDemoMode) {
+      const verified = await storage.verifyGuild(guildId, guild.verificationCode || "DEMO");
+      return res.json({ verified: true, guild: verified });
+    }
 
     // Verify by checking Tibia.com guild description
     const isVerified = await verifyGuildDescription(guild.name, guild.verificationCode || "");

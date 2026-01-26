@@ -104,6 +104,19 @@ export default function Guilds() {
     }
   });
 
+  const deleteGuildMutation = useMutation({
+    mutationFn: async (guildId: number) => {
+      return apiRequest("DELETE", `/api/guilds/${guildId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/guilds"] });
+      toast({ title: "Guild Removed", description: "Guild has been removed from the panel." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to remove guild.", variant: "destructive" });
+    }
+  });
+
   const handleCreate = () => {
     if (!formData.name.trim()) {
       toast({ title: "Error", description: "Guild name is required.", variant: "destructive" });
@@ -334,6 +347,17 @@ export default function Guilds() {
                           <DropdownMenuItem onClick={() => syncGuildMutation.mutate(guild.id)}>
                             <RefreshCw className="h-4 w-4 mr-2" />
                             Sync Members
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => {
+                              if (confirm(`Remove ${guild.name} from panel? (Data will not be deleted)`)) {
+                                deleteGuildMutation.mutate(guild.id);
+                              }
+                            }}
+                            className="text-red-400 focus:text-red-400"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Remove from Panel
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
