@@ -67,16 +67,25 @@ export default function Players() {
       return res.json();
     },
     onSuccess: (data, characterName) => {
-      setScrapeRequested(characterName);
-      toast({
-        title: "Scrape Queued",
-        description: `${characterName} has been queued for TibSpy data collection. Check back in a few minutes.`,
-      });
+      if (data.success) {
+        queryClient.invalidateQueries({ queryKey: ["/api/tibspy/character", characterName] });
+        toast({
+          title: "Data Retrieved",
+          description: `Successfully fetched TibSpy data for ${characterName}`,
+        });
+      } else {
+        setScrapeRequested(characterName);
+        toast({
+          title: "Scrape Failed",
+          description: data.message || "Could not fetch data from TibSpy",
+          variant: "destructive",
+        });
+      }
     },
     onError: () => {
       toast({
-        title: "Queue Failed",
-        description: "Could not queue character for scraping. Please try again later.",
+        title: "Request Failed",
+        description: "Could not connect to TibSpy. Please try again later.",
         variant: "destructive",
       });
     }

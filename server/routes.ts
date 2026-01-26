@@ -497,17 +497,21 @@ export async function registerRoutes(
     res.json(data);
   });
 
-  // Request scrape for a character (public endpoint for on-demand scraping)
+  // Request immediate scrape for a character (public endpoint for on-demand scraping)
   app.post("/api/tibspy/request-scrape/:name", async (req, res) => {
     const characterName = req.params.name;
     if (!characterName) {
       return res.status(400).json({ error: "Character name is required" });
     }
     try {
-      await tibspyScraper.queueCharacter(characterName, 'normal');
-      res.json({ success: true, message: `Queued ${characterName} for scraping`, queued: true });
+      const result = await tibspyScraper.scrapeCharacterNow(characterName);
+      if (result.success) {
+        res.json({ success: true, message: `Scraped ${characterName} successfully`, data: result.data });
+      } else {
+        res.json({ success: false, message: `Could not scrape ${characterName}: ${result.reason}`, queued: false });
+      }
     } catch (error) {
-      res.status(500).json({ error: "Failed to queue character" });
+      res.status(500).json({ error: "Failed to scrape character" });
     }
   });
 

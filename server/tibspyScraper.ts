@@ -279,6 +279,11 @@ class TibSpyScraperService {
     }
   }
 
+  async scrapeCharacterNow(characterName: string): Promise<ScrapeResult> {
+    console.log(`[TibSpy] Immediate scrape requested for ${characterName}`);
+    return this.scrapeCharacter(characterName);
+  }
+
   async runBatchScrape(): Promise<{ processed: number; results: ScrapeResult[] }> {
     const config = await this.getConfig();
     
