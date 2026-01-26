@@ -8,6 +8,19 @@ interface OnlinePlayer {
   vocation: string;
 }
 
+interface TibiaDataWorldResponse {
+  world: {
+    name: string;
+    status: string;
+    players_online: number;
+    online_players: Array<{
+      name: string;
+      level: number;
+      vocation: string;
+    }>;
+  };
+}
+
 interface ScraperConfig {
   world: string;
   scrapeIntervalMs: number;
@@ -24,16 +37,15 @@ let lastScrapeTime: Date | null = null;
 let lastScrapePlayerCount = 0;
 
 export async function scrapeOnlinePlayers(world: string = "Antica"): Promise<OnlinePlayer[]> {
-  const url = `https://www.tibia.com/community/?subtopic=worlds&world=${world}`;
+  const url = `https://api.tibiadata.com/v4/world/${world}`;
   
   try {
-    console.log(`[OnlineScraper] Fetching online players from ${url}`);
+    console.log(`[OnlineScraper] Fetching online players from TibiaData API for ${world}`);
     
     const response = await fetch(url, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
+        "User-Agent": "TibiaGuildBot/1.0",
+        "Accept": "application/json",
       },
     });
 
@@ -41,57 +53,25 @@ export async function scrapeOnlinePlayers(world: string = "Antica"): Promise<Onl
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
-    const html = await response.text();
-    return parseOnlinePlayers(html);
+    const data: TibiaDataWorldResponse = await response.json();
+    
+    if (!data.world || !data.world.online_players) {
+      console.log("[OnlineScraper] No online players in response");
+      return [];
+    }
+
+    const players = data.world.online_players.map(p => ({
+      name: p.name,
+      level: p.level,
+      vocation: p.vocation,
+    }));
+
+    console.log(`[OnlineScraper] Fetched ${players.length} online players from TibiaData`);
+    return players;
   } catch (error) {
-    console.error(`[OnlineScraper] Error scraping ${world}:`, error);
+    console.error(`[OnlineScraper] Error fetching ${world}:`, error);
     throw error;
   }
-}
-
-function parseOnlinePlayers(html: string): OnlinePlayer[] {
-  const players: OnlinePlayer[] = [];
-  
-  const tableMatch = html.match(/<table[^>]*class="[^"]*TableContent[^"]*"[^>]*>[\s\S]*?<\/table>/gi);
-  if (!tableMatch) {
-    console.log("[OnlineScraper] No player table found in HTML");
-    return players;
-  }
-
-  for (const table of tableMatch) {
-    if (!table.includes("Name") || !table.includes("Level") || !table.includes("Vocation")) {
-      continue;
-    }
-
-    const rowRegex = /<tr[^>]*class="[^"]*(?:Odd|Even)[^"]*"[^>]*>([\s\S]*?)<\/tr>/gi;
-    let rowMatch;
-    
-    while ((rowMatch = rowRegex.exec(table)) !== null) {
-      const row = rowMatch[1];
-      
-      const nameMatch = row.match(/<a[^>]*href="[^"]*name=([^&"]+)[^"]*"[^>]*>([^<]+)<\/a>/i);
-      const cellRegex = /<td[^>]*>([\s\S]*?)<\/td>/gi;
-      const cells: string[] = [];
-      let cellMatch;
-      
-      while ((cellMatch = cellRegex.exec(row)) !== null) {
-        cells.push(cellMatch[1].replace(/<[^>]+>/g, '').trim());
-      }
-
-      if (cells.length >= 3) {
-        const name = nameMatch ? decodeURIComponent(nameMatch[1]).replace(/\+/g, ' ') : cells[0];
-        const level = parseInt(cells[1], 10) || 0;
-        const vocation = cells[2] || "Unknown";
-
-        if (name && level > 0) {
-          players.push({ name, level, vocation });
-        }
-      }
-    }
-  }
-
-  console.log(`[OnlineScraper] Parsed ${players.length} online players`);
-  return players;
 }
 
 export async function processOnlineSnapshot(world: string = "Antica"): Promise<{

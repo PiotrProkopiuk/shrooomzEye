@@ -1,11 +1,13 @@
 // Death Tracker Service - Fetches deaths from TibiaData and sends Discord notifications
 import { storage } from "./storage";
 import { db } from "./db";
-import { deaths, deathTrackerConfig, players, guilds } from "@shared/schema";
+import { deaths, deathTrackerConfig, players, guilds, onlineCharacters } from "@shared/schema";
 import { eq, and, desc } from "drizzle-orm";
 import crypto from "crypto";
 
 const TIBIADATA_BASE = "https://api.tibiadata.com/v4";
+const MAX_RETRIES = 3;
+const RETRY_DELAYS = [2000, 4000, 6000]; // Exponential backoff
 
 interface TibiaDeathEntry {
   time: string;
@@ -220,6 +222,91 @@ export async function saveDeathTrackerConfig(config: any) {
 
 // Background job to run periodically
 let deathTrackerInterval: NodeJS.Timeout | null = null;
+let onlineDeathCheckInterval: NodeJS.Timeout | null = null;
+
+// Get list of currently online tracked players (from main + enemy guilds)
+async function getOnlineTrackedPlayers(): Promise<string[]> {
+  const allPlayers = await db.select({ name: players.name }).from(players);
+  const trackedNames = new Set(allPlayers.map(p => p.name));
+  
+  const onlineChars = await db.select()
+    .from(onlineCharacters)
+    .where(eq(onlineCharacters.isCurrentlyOnline, true));
+  
+  return onlineChars
+    .filter(c => trackedNames.has(c.characterName))
+    .map(c => c.characterName);
+}
+
+// Check deaths for a single character (priority check for online players)
+async function checkDeathsForCharacter(characterName: string): Promise<number> {
+  const player = await storage.getPlayerByName(characterName);
+  if (!player || !player.guildId) return 0;
+  
+  const guild = await storage.getGuild(player.guildId);
+  if (!guild) return 0;
+  
+  const victimGuildType = guild.isEnemy ? "enemy" : "main";
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - 1); // Only last 24 hours for online checks
+  
+  let newDeathsCount = 0;
+  
+  try {
+    const characterDeaths = await fetchCharacterDeaths(characterName);
+    if (!characterDeaths || !characterDeaths.deaths.length) return 0;
+    
+    for (const death of characterDeaths.deaths) {
+      const deathDate = new Date(death.time);
+      if (deathDate < cutoffDate) continue;
+      
+      const deathHash = generateDeathHash(characterName, death.time, death.level);
+      const [existing] = await db.select().from(deaths).where(eq(deaths.deathHash, deathHash));
+      if (existing) continue;
+      
+      const deathData = parseDeathEntry(
+        characterName,
+        player.level,
+        player.vocation,
+        death,
+        victimGuildType,
+        player.guildId
+      );
+      
+      await db.insert(deaths).values(deathData);
+      newDeathsCount++;
+      console.log(`[DeathTracker] Priority check: ${characterName} killed by ${deathData.killerName}`);
+    }
+  } catch (error) {
+    console.error(`[DeathTracker] Error in priority check for ${characterName}:`, error);
+  }
+  
+  return newDeathsCount;
+}
+
+// Priority death check for online players (runs every 1 minute)
+export async function runOnlinePlayerDeathCheck(): Promise<number> {
+  const onlinePlayers = await getOnlineTrackedPlayers();
+  if (onlinePlayers.length === 0) return 0;
+  
+  console.log(`[DeathTracker] Priority check: ${onlinePlayers.length} online tracked players`);
+  
+  let totalNewDeaths = 0;
+  for (const playerName of onlinePlayers) {
+    const newDeaths = await checkDeathsForCharacter(playerName);
+    totalNewDeaths += newDeaths;
+    
+    // Small delay to avoid rate limiting
+    await new Promise(resolve => setTimeout(resolve, 200));
+  }
+  
+  if (totalNewDeaths > 0) {
+    console.log(`[DeathTracker] Priority check found ${totalNewDeaths} new deaths`);
+    await processNotifications();
+  }
+  
+  return totalNewDeaths;
+}
 
 // Process and send notifications for unnotified deaths
 export async function processNotifications(): Promise<number> {
@@ -289,16 +376,20 @@ export async function getAllDeathTrackerConfigs() {
   return await db.select().from(deathTrackerConfig);
 }
 
-export function startDeathTrackerJob(intervalMinutes: number = 5) {
+export function startDeathTrackerJob(intervalMinutes: number = 5, onlineCheckIntervalMinutes: number = 1) {
   if (deathTrackerInterval) {
     clearInterval(deathTrackerInterval);
   }
+  if (onlineDeathCheckInterval) {
+    clearInterval(onlineDeathCheckInterval);
+  }
 
-  console.log(`[DeathTracker] Starting background job (every ${intervalMinutes} minutes)`);
+  console.log(`[DeathTracker] Starting background job (offline: every ${intervalMinutes}min, online: every ${onlineCheckIntervalMinutes}min)`);
   
-  const runCheck = async () => {
+  // Full guild scan for offline players
+  const runFullCheck = async () => {
     try {
-      console.log("[DeathTracker] Running death check...");
+      console.log("[DeathTracker] Running full death check (all guild players)...");
       const allGuilds = await storage.getGuilds();
       
       for (const guild of allGuilds) {
@@ -317,19 +408,38 @@ export function startDeathTrackerJob(intervalMinutes: number = 5) {
       }
       
     } catch (error) {
-      console.error("[DeathTracker] Error in background job:", error);
+      console.error("[DeathTracker] Error in full check:", error);
     }
   };
 
-  // Run immediately, then on interval
-  runCheck();
-  deathTrackerInterval = setInterval(runCheck, intervalMinutes * 60 * 1000);
+  // Priority check for online players only
+  const runOnlineCheck = async () => {
+    try {
+      await runOnlinePlayerDeathCheck();
+    } catch (error) {
+      console.error("[DeathTracker] Error in online check:", error);
+    }
+  };
+
+  // Run full check immediately, then on interval
+  runFullCheck();
+  deathTrackerInterval = setInterval(runFullCheck, intervalMinutes * 60 * 1000);
+  
+  // Run online check after 30 seconds delay, then every minute
+  setTimeout(() => {
+    runOnlineCheck();
+    onlineDeathCheckInterval = setInterval(runOnlineCheck, onlineCheckIntervalMinutes * 60 * 1000);
+  }, 30000);
 }
 
 export function stopDeathTrackerJob() {
   if (deathTrackerInterval) {
     clearInterval(deathTrackerInterval);
     deathTrackerInterval = null;
-    console.log("[DeathTracker] Background job stopped");
   }
+  if (onlineDeathCheckInterval) {
+    clearInterval(onlineDeathCheckInterval);
+    onlineDeathCheckInterval = null;
+  }
+  console.log("[DeathTracker] Background jobs stopped");
 }
