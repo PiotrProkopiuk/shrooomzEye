@@ -28,7 +28,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import bgTexture from "@assets/generated_images/dark_stone_rpg_texture_background.png";
 
 const NAV_ITEMS = [
@@ -45,11 +46,13 @@ const NAV_ITEMS = [
   { label: "Bot Settings", icon: Settings, href: "/settings" },
 ];
 
-const SERVERS = [
-  { id: "1", name: "Dark Alliance (Antica)", verified: true },
-  { id: "2", name: "Red Rose (Antica)", verified: false },
-  { id: "3", name: "Hill (Vunira)", verified: false },
-];
+interface Guild {
+  id: number;
+  name: string;
+  server: string;
+  isEnemy: boolean;
+  verified: boolean;
+}
 
 function Sidebar({ location }: { location: string }) {
   return (
@@ -130,7 +133,26 @@ function Sidebar({ location }: { location: string }) {
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
-  const [activeServer, setActiveServer] = useState(SERVERS[0]);
+  
+  const { data: guilds = [] } = useQuery<Guild[]>({
+    queryKey: ["/api/guilds"],
+    queryFn: async () => {
+      const response = await fetch("/api/guilds");
+      if (!response.ok) throw new Error("Failed to fetch guilds");
+      return response.json();
+    },
+  });
+
+  const mainGuild = guilds.find(g => !g.isEnemy) || guilds[0];
+  const [activeGuild, setActiveGuild] = useState<Guild | null>(null);
+  
+  useEffect(() => {
+    if (guilds.length > 0 && !activeGuild) {
+      setActiveGuild(mainGuild || guilds[0]);
+    }
+  }, [guilds, activeGuild, mainGuild]);
+
+  const currentGuild = activeGuild || mainGuild;
 
   return (
     <div className="min-h-screen bg-background flex text-foreground font-sans">
@@ -160,24 +182,46 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     <DropdownMenuTrigger asChild>
                         <Button variant="outline" className="h-10 px-4 py-2 border-white/10 hover:bg-white/5 gap-2 text-foreground font-display font-semibold">
                             <Shield className="h-4 w-4 text-primary" />
-                            {activeServer.name}
-                            {!activeServer.verified && <Badge variant="destructive" className="h-4 text-[8px] px-1 uppercase ml-1 animate-pulse">Unverified</Badge>}
+                            {currentGuild ? `${currentGuild.name} (${currentGuild.server})` : "Select Guild"}
+                            {currentGuild && !currentGuild.verified && <Badge variant="destructive" className="h-4 text-[8px] px-1 uppercase ml-1 animate-pulse">Unverified</Badge>}
+                            {currentGuild?.isEnemy && <Badge variant="outline" className="h-4 text-[8px] px-1 uppercase ml-1 border-red-500 text-red-400">Enemy</Badge>}
                             <ChevronDown className="h-4 w-4 text-muted-foreground" />
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-64 bg-[hsl(var(--sidebar-background))] border-sidebar-border text-foreground shadow-xl z-50">
+                    <DropdownMenuContent className="w-72 bg-[hsl(var(--sidebar-background))] border-sidebar-border text-foreground shadow-xl z-50">
                         <DropdownMenuLabel>Switch Guild Context</DropdownMenuLabel>
                         <DropdownMenuSeparator className="bg-white/5" />
-                        {SERVERS.map(server => (
-                            <DropdownMenuItem 
-                                key={server.id} 
-                                onClick={() => setActiveServer(server)}
+                        {guilds.filter(g => !g.isEnemy).length > 0 && (
+                          <>
+                            <DropdownMenuLabel className="text-xs text-muted-foreground">Your Guilds</DropdownMenuLabel>
+                            {guilds.filter(g => !g.isEnemy).map(guild => (
+                              <DropdownMenuItem 
+                                key={guild.id} 
+                                onClick={() => setActiveGuild(guild)}
                                 className="hover:bg-sidebar-accent cursor-pointer flex justify-between items-center"
-                            >
-                                <span>{server.name}</span>
-                                {server.verified ? <ShieldCheck className="h-3 w-3 text-emerald-500" /> : <ShieldAlert className="h-3 w-3 text-destructive" />}
-                            </DropdownMenuItem>
-                        ))}
+                              >
+                                <span>{guild.name} ({guild.server})</span>
+                                {guild.verified ? <ShieldCheck className="h-3 w-3 text-emerald-500" /> : <ShieldAlert className="h-3 w-3 text-amber-500" />}
+                              </DropdownMenuItem>
+                            ))}
+                          </>
+                        )}
+                        {guilds.filter(g => g.isEnemy).length > 0 && (
+                          <>
+                            <DropdownMenuSeparator className="bg-white/5" />
+                            <DropdownMenuLabel className="text-xs text-red-400">Enemy Guilds</DropdownMenuLabel>
+                            {guilds.filter(g => g.isEnemy).map(guild => (
+                              <DropdownMenuItem 
+                                key={guild.id} 
+                                onClick={() => setActiveGuild(guild)}
+                                className="hover:bg-sidebar-accent cursor-pointer flex justify-between items-center"
+                              >
+                                <span className="text-red-400/80">{guild.name} ({guild.server})</span>
+                                <Skull className="h-3 w-3 text-red-500" />
+                              </DropdownMenuItem>
+                            ))}
+                          </>
+                        )}
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
