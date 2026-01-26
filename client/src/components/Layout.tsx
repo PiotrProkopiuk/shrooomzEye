@@ -165,7 +165,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                             <ChevronDown className="h-4 w-4 text-muted-foreground" />
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-64 bg-sidebar border-sidebar-border text-foreground">
+                    <DropdownMenuContent className="w-64 bg-[hsl(var(--sidebar-background))] border-sidebar-border text-foreground shadow-xl z-50">
                         <DropdownMenuLabel>Switch Guild Context</DropdownMenuLabel>
                         <DropdownMenuSeparator className="bg-white/5" />
                         {SERVERS.map(server => (
