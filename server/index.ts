@@ -103,9 +103,9 @@ app.use((req, res, next) => {
     () => {
       log(`serving on port ${port}`);
       
-      // Start the death tracker background job (every 5 minutes)
-      startDeathTrackerJob(5);
-      log(`Death tracker cron started (every 5 minutes)`);
+      // Start the death tracker background job (online: 1min, offline: 60min)
+      startDeathTrackerJob(60, 1);
+      log(`Death tracker cron started (online: 1min, offline: 60min)`);
       
       // Start the online players scraper (every 60 seconds)
       startOnlineScraper({ world: "Antica", scrapeIntervalMs: 60000 });
