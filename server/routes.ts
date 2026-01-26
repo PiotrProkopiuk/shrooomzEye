@@ -4,7 +4,10 @@ import { storage } from "./storage";
 import { setupAuth, requireAuth, requireRole } from "./auth";
 import { fetchCharacter, fetchGuildMembers, fetchGuildInfo, verifyGuildDescription, scanCharacter } from "./tibiadata";
 import * as deathTracker from "./deathTracker";
-import { insertGuildSchema, insertPlayerSchema, insertEventSchema, insertTemplateSchema } from "@shared/schema";
+import * as onlineScraper from "./onlineScraper";
+import { insertGuildSchema, insertPlayerSchema, insertEventSchema, insertTemplateSchema, onlineCharacters, onlineSessions, onlineSnapshots } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc, sql, and, gte } from "drizzle-orm";
 import crypto from "crypto";
 
 export async function registerRoutes(
@@ -387,6 +390,74 @@ export async function registerRoutes(
   app.get("/api/tibia/guild/:name/members", async (req, res) => {
     const members = await fetchGuildMembers(req.params.name);
     res.json(members);
+  });
+
+  // ============ ONLINE SCRAPER ============
+  app.get("/api/online/status", async (req, res) => {
+    const status = onlineScraper.getScraperStatus();
+    res.json(status);
+  });
+
+  app.get("/api/online/players", async (req, res) => {
+    const world = (req.query.world as string) || "Antica";
+    const onlinePlayers = await db.select()
+      .from(onlineCharacters)
+      .where(eq(onlineCharacters.isCurrentlyOnline, true))
+      .orderBy(desc(onlineCharacters.level));
+    res.json(onlinePlayers);
+  });
+
+  app.get("/api/online/players/count", async (req, res) => {
+    const [result] = await db.select({ count: sql<number>`count(*)` })
+      .from(onlineCharacters)
+      .where(eq(onlineCharacters.isCurrentlyOnline, true));
+    res.json({ count: Number(result.count) });
+  });
+
+  app.get("/api/online/sessions", async (req, res) => {
+    const characterName = req.query.character as string;
+    const limit = parseInt(req.query.limit as string) || 50;
+    
+    let query = db.select().from(onlineSessions).orderBy(desc(onlineSessions.sessionStart)).limit(limit);
+    
+    if (characterName) {
+      const sessions = await db.select()
+        .from(onlineSessions)
+        .where(eq(onlineSessions.characterName, characterName))
+        .orderBy(desc(onlineSessions.sessionStart))
+        .limit(limit);
+      return res.json(sessions);
+    }
+    
+    const sessions = await query;
+    res.json(sessions);
+  });
+
+  app.get("/api/online/snapshots/recent", async (req, res) => {
+    const minutes = parseInt(req.query.minutes as string) || 60;
+    const since = new Date(Date.now() - minutes * 60 * 1000);
+    
+    const snapshots = await db.select()
+      .from(onlineSnapshots)
+      .where(gte(onlineSnapshots.checkedAt, since))
+      .orderBy(desc(onlineSnapshots.checkedAt))
+      .limit(1000);
+    res.json(snapshots);
+  });
+
+  app.post("/api/online/scrape", requireAuth, requireRole("ADMIN"), async (req, res) => {
+    try {
+      const result = await onlineScraper.processOnlineSnapshot("Antica");
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get online players from tracked guilds (main + enemy)
+  app.get("/api/online/tracked", async (req, res) => {
+    const trackedOnline = await onlineScraper.getOnlineCharactersFromTrackedGuilds();
+    res.json(trackedOnline);
   });
 
   return httpServer;

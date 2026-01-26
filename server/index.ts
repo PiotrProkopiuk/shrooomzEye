@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import { startDeathTrackerJob } from "./deathTracker";
+import { startOnlineScraper } from "./onlineScraper";
 
 const app = express();
 const httpServer = createServer(app);
@@ -103,6 +104,10 @@ app.use((req, res, next) => {
       // Start the death tracker background job (every 5 minutes)
       startDeathTrackerJob(5);
       log(`Death tracker cron started (every 5 minutes)`);
+      
+      // Start the online players scraper (every 60 seconds)
+      startOnlineScraper({ world: "Antica", scrapeIntervalMs: 60000 });
+      log(`Online scraper cron started (every 60 seconds)`);
     },
   );
 })();
