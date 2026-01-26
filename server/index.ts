@@ -5,6 +5,7 @@ import { createServer } from "http";
 import { startDeathTrackerJob } from "./deathTracker";
 import { startOnlineScraper } from "./onlineScraper";
 import { storage } from "./storage";
+import { fetchGuildMembers } from "./tibiadata";
 
 const app = express();
 const httpServer = createServer(app);
@@ -110,25 +111,83 @@ app.use((req, res, next) => {
       startOnlineScraper({ world: "Antica", scrapeIntervalMs: 60000 });
       log(`Online scraper cron started (every 60 seconds)`);
       
-      // Server save level reset scheduler (10:00 CET daily)
+      // Server save scheduler (10:00 CET daily)
       let lastResetDate = "";
+      let lastFullSyncDate = "";
+      
       setInterval(async () => {
         const now = new Date();
         const hour = now.getUTCHours() + 1; // CET = UTC+1
+        const minute = now.getUTCMinutes();
         const todayDate = now.toISOString().split('T')[0];
         
-        // Reset at 10:00 CET (09:00 UTC) if not already reset today
-        if (hour === 10 && now.getUTCMinutes() < 5 && lastResetDate !== todayDate) {
+        // 10:00 CET - Reset all player start levels
+        if (hour === 10 && minute < 5 && lastResetDate !== todayDate) {
           try {
             const count = await storage.resetAllPlayersStartLevel();
-            log(`Server save reset: ${count} players start levels reset`);
+            log(`Server save: ${count} players start levels reset`);
             lastResetDate = todayDate;
           } catch (err) {
             log(`Server save reset error: ${err}`);
           }
         }
+        
+        // 10:15 CET - Full guild sync (all guilds from TibiaData)
+        if (hour === 10 && minute >= 15 && minute < 20 && lastFullSyncDate !== todayDate) {
+          try {
+            log(`Post-save sync: Starting full guild sync...`);
+            const guilds = await storage.getGuilds();
+            let totalUpdated = 0;
+            let totalCreated = 0;
+            
+            for (const guild of guilds) {
+              try {
+                const members = await fetchGuildMembers(guild.name);
+                if (!members.length) continue;
+                
+                for (const member of members) {
+                  const existing = await storage.getPlayerByName(member.name);
+                  if (existing) {
+                    const startLevel = existing.startLevel || existing.level;
+                    const levelsGained = member.level - startLevel;
+                    await storage.updatePlayer(existing.id, {
+                      level: member.level,
+                      vocation: member.vocation,
+                      rank: member.rank,
+                      online: member.status === "online",
+                      lastScan: new Date(),
+                      levelsGained: levelsGained > 0 ? levelsGained : 0,
+                    });
+                    totalUpdated++;
+                  } else {
+                    await storage.createPlayer({
+                      name: member.name,
+                      guildId: guild.id,
+                      level: member.level,
+                      vocation: member.vocation,
+                      rank: member.rank,
+                      online: member.status === "online",
+                      startLevel: member.level,
+                      levelsGained: 0,
+                    });
+                    totalCreated++;
+                  }
+                }
+                // Small delay between guilds to avoid API rate limiting
+                await new Promise(r => setTimeout(r, 2000));
+              } catch (guildErr) {
+                log(`Post-save sync: Error syncing ${guild.name}: ${guildErr}`);
+              }
+            }
+            
+            log(`Post-save sync: Complete - ${totalUpdated} updated, ${totalCreated} created`);
+            lastFullSyncDate = todayDate;
+          } catch (err) {
+            log(`Post-save sync error: ${err}`);
+          }
+        }
       }, 60000); // Check every minute
-      log(`Server save scheduler started (resets at 10:00 CET)`);
+      log(`Server save scheduler started (reset 10:00, full sync 10:15 CET)`);
     },
   );
 })();

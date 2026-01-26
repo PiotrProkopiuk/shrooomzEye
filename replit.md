@@ -102,6 +102,28 @@ Core entities:
 - TypeScript with bundler module resolution
 - Custom Vite plugins for Replit-specific features (cartographer, dev banner, meta images)
 
+## Server Save Scheduler
+
+Tibia performs a daily server save at 10:00 CET. The application schedules key operations around this time.
+
+### Scheduled Jobs (CET)
+- **10:00** - Reset all players' `startLevel` to current level (levelsGained = 0)
+- **10:15** - Full guild sync from TibiaData API for all tracked guilds
+
+### Level Tracking
+- `startLevel`: Baseline level set at server save (10:00 CET)
+- `levelsGained`: Calculated as `currentLevel - startLevel`
+- Shows daily progress since last server save, not since last scan
+
+### Manual Endpoints
+- `POST /api/reset-all-levels` - Admin can manually trigger server save reset
+- `POST /api/guilds/:id/reset-tracking` - Reset single guild's level tracking
+
+### Implementation
+- Scheduler runs every minute, checking current CET time
+- Prevents duplicate runs using date tracking (`lastResetDate`, `lastFullSyncDate`)
+- 2-second delay between guild syncs to avoid API rate limiting
+
 ## TibSpy Scraper (Experimental)
 
 The TibSpy scraper is an optional, secondary enrichment source for character data. It operates with strict limits and safety measures.
