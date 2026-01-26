@@ -582,29 +582,46 @@ export default function Players() {
 
                 {tibspyData.data?.characters && tibspyData.data.characters.length > 0 && (
                   <div className="mt-4" data-testid="section-other-characters">
-                    <h4 className="text-sm font-medium text-amber-500 mb-2 flex items-center gap-2">
+                    <h4 className="text-sm font-medium text-amber-500 mb-3 flex items-center gap-2">
                       <Users className="h-4 w-4" />
                       Linked Characters ({tibspyData.data.characters.length})
                     </h4>
-                    <div className="bg-background/50 rounded-lg p-3 max-h-64 overflow-y-auto">
-                      <div className="space-y-1">
-                        {tibspyData.data.characters.slice(0, 30).map((char: any, idx: number) => (
-                          <div key={idx} className="flex items-center justify-between text-sm py-1.5 px-2 rounded hover:bg-white/5 border-b border-white/5 last:border-0">
-                            <span className="truncate font-medium">{char.name || char}</span>
+                    <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
+                      {tibspyData.data.characters.slice(0, 30).map((char: any, idx: number) => {
+                        const rawName = char.name || char;
+                        const formattedName = rawName.split(' ').map((word: string) => 
+                          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                        ).join(' ');
+                        const tibiaUrl = `https://www.tibia.com/community/?name=${encodeURIComponent(rawName)}`;
+                        
+                        return (
+                          <div 
+                            key={idx} 
+                            className="flex items-center justify-between bg-card/50 border border-border/50 rounded-lg px-3 py-2 hover:border-amber-500/30 transition-colors"
+                          >
+                            <a 
+                              href={tibiaUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm font-medium text-foreground hover:text-amber-400 transition-colors flex items-center gap-1.5"
+                            >
+                              {formattedName}
+                              <ExternalLink className="h-3 w-3 opacity-50" />
+                            </a>
                             <div className="flex items-center gap-2">
                               {char.visibleCounter && (
                                 <span className="text-xs text-muted-foreground">
-                                  {char.visibleCounter}x seen
+                                  {char.visibleCounter}x
                                 </span>
                               )}
                               {char.label && (
                                 <Badge 
                                   variant="outline" 
-                                  className={`text-xs ${
-                                    char.label === 'VERY HIGH' ? 'border-red-500 text-red-400' :
-                                    char.label === 'HIGH' ? 'border-orange-500 text-orange-400' :
-                                    char.label === 'MEDIUM' ? 'border-yellow-500 text-yellow-400' :
-                                    'border-gray-500 text-gray-400'
+                                  className={`text-xs px-1.5 py-0 ${
+                                    char.label === 'VERY HIGH' ? 'border-red-500/50 bg-red-500/10 text-red-400' :
+                                    char.label === 'HIGH' ? 'border-orange-500/50 bg-orange-500/10 text-orange-400' :
+                                    char.label === 'MEDIUM' ? 'border-yellow-500/50 bg-yellow-500/10 text-yellow-400' :
+                                    'border-muted bg-muted/20 text-muted-foreground'
                                   }`}
                                 >
                                   {char.label}
@@ -612,14 +629,14 @@ export default function Players() {
                               )}
                             </div>
                           </div>
-                        ))}
-                      </div>
-                      {tibspyData.data.characters.length > 30 && (
-                        <p className="text-xs text-muted-foreground mt-2 text-center">
-                          +{tibspyData.data.characters.length - 30} more characters
-                        </p>
-                      )}
+                        );
+                      })}
                     </div>
+                    {tibspyData.data.characters.length > 30 && (
+                      <p className="text-xs text-muted-foreground mt-2 text-center">
+                        +{tibspyData.data.characters.length - 30} more characters
+                      </p>
+                    )}
                   </div>
                 )}
 
