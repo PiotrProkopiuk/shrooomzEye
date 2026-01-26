@@ -1,0 +1,106 @@
+Extend the existing backend with an Online Players Scraper and enhanced death tracking logic.
+
+Context:
+- Symfony backend
+- Discord bot
+- TibiaData API integration
+- Death Tracker already exists
+- Project currently focuses on Antica world
+
+This task introduces continuous online player monitoring and smarter death checks.
+
+---
+
+### Online Players Scraper
+
+1. **World Online Scraping**
+- Scrape the official Tibia page:
+  https://www.tibia.com/community/?subtopic=worlds&world=Antica
+- Fetch the list of currently online characters.
+- Run every 60 seconds (configurable).
+- Parse:
+  - character name
+  - vocation
+  - level
+
+2. **Online Snapshot Storage**
+- Entity: OnlineSnapshot
+  - characterName
+  - world
+  - level
+  - vocation
+  - isOnline
+  - checkedAt
+- Store every scrape result (do NOT overwrite).
+- This data will be used later for analytics and correlations.
+
+3. **Online Session Detection**
+- Detect login / logout moments based on snapshots.
+- Create derived data:
+  - onlineSessionStart
+  - onlineSessionEnd
+- Store sessions for future analysis.
+
+---
+
+### Enhanced Death Checking Logic
+
+4. **Priority Death Checks**
+- Characters currently online:
+  - Check deaths every 1 minute.
+- Characters offline:
+  - Check deaths less frequently (existing logic).
+- Fetch deaths for ALL online characters, regardless of guild.
+
+5. **Death Filtering & Display Rules**
+- Store ALL detected deaths in database.
+- Only send Discord notifications when:
+  - Killer belongs to main guild OR enemy guild
+  - OR victim belongs to main guild OR enemy guild
+- Deaths outside these conditions are stored silently.
+
+---
+
+### Anti-Abuse & Performance
+
+6. **Rate Limiting**
+- Avoid re-fetching deaths already processed.
+- Cache TibiaData responses.
+- Gracefully handle Tibia.com downtime or HTML changes.
+
+7. **Data Integrity**
+- Ensure scraper failures do not block other jobs.
+- Log HTML parsing errors separately.
+
+---
+
+### Future Analytics Preparation
+
+8. **Character Correlation (Future Use)**
+- Prepare data model to support:
+  - Detecting potential alternate characters
+  - Correlating characters by overlapping online sessions
+- Do NOT implement detection logic yet.
+- Ensure stored data allows future heuristics based on:
+  - repeated overlapping online times
+  - consistent login/logout patterns
+
+---
+
+### Output Requirements
+
+- Symfony command or scheduled job for scraping.
+- HTML scraper service (DOM crawler).
+- OnlineSnapshot entity and repository.
+- Updated death checking service with priority logic.
+- Clear separation between:
+  - data collection
+  - notification logic
+- README update explaining:
+  - scraping frequency
+  - performance considerations
+  - future analytics potential
+
+Do NOT implement frontend changes.
+Do NOT implement alt-detection logic yet.
+Focus on reliable data collection and clean architecture.

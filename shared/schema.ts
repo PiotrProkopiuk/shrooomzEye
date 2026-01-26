@@ -145,6 +145,41 @@ export const scanCache = pgTable("scan_cache", {
   expiresAt: timestamp("expires_at"),
 });
 
+// Online Snapshots - stores every scrape result for analytics
+export const onlineSnapshots = pgTable("online_snapshots", {
+  id: serial("id").primaryKey(),
+  characterName: text("character_name").notNull(),
+  world: text("world").notNull().default("Antica"),
+  level: integer("level"),
+  vocation: text("vocation"),
+  isOnline: boolean("is_online").default(true),
+  checkedAt: timestamp("checked_at").defaultNow(),
+});
+
+// Online Sessions - derived from snapshots (login/logout detection)
+export const onlineSessions = pgTable("online_sessions", {
+  id: serial("id").primaryKey(),
+  characterName: text("character_name").notNull(),
+  world: text("world").notNull().default("Antica"),
+  sessionStart: timestamp("session_start").notNull(),
+  sessionEnd: timestamp("session_end"),
+  durationMinutes: integer("duration_minutes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Online Characters Cache - current online status (updated each scrape)
+export const onlineCharacters = pgTable("online_characters", {
+  id: serial("id").primaryKey(),
+  characterName: text("character_name").notNull().unique(),
+  world: text("world").notNull().default("Antica"),
+  level: integer("level"),
+  vocation: text("vocation"),
+  lastSeen: timestamp("last_seen").defaultNow(),
+  isCurrentlyOnline: boolean("is_currently_online").default(true),
+  guildName: text("guild_name"),
+  isTrackedGuild: boolean("is_tracked_guild").default(false), // main or enemy guild
+});
+
 // Insert Schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
 export const insertGuildSchema = createInsertSchema(guilds).omit({ id: true });
@@ -156,6 +191,9 @@ export const insertEventParticipantSchema = createInsertSchema(eventParticipants
 export const insertTemplateSchema = createInsertSchema(templates).omit({ id: true });
 export const insertPvpActionConfigSchema = createInsertSchema(pvpActionConfig).omit({ id: true });
 export const insertDeathTrackerConfigSchema = createInsertSchema(deathTrackerConfig).omit({ id: true, createdAt: true });
+export const insertOnlineSnapshotSchema = createInsertSchema(onlineSnapshots).omit({ id: true, checkedAt: true });
+export const insertOnlineSessionSchema = createInsertSchema(onlineSessions).omit({ id: true, createdAt: true });
+export const insertOnlineCharacterSchema = createInsertSchema(onlineCharacters).omit({ id: true });
 
 // Types
 export type User = typeof users.$inferSelect;
@@ -178,3 +216,9 @@ export type PvpActionConfig = typeof pvpActionConfig.$inferSelect;
 export type InsertPvpActionConfig = z.infer<typeof insertPvpActionConfigSchema>;
 export type DeathTrackerConfig = typeof deathTrackerConfig.$inferSelect;
 export type InsertDeathTrackerConfig = z.infer<typeof insertDeathTrackerConfigSchema>;
+export type OnlineSnapshot = typeof onlineSnapshots.$inferSelect;
+export type InsertOnlineSnapshot = z.infer<typeof insertOnlineSnapshotSchema>;
+export type OnlineSession = typeof onlineSessions.$inferSelect;
+export type InsertOnlineSession = z.infer<typeof insertOnlineSessionSchema>;
+export type OnlineCharacter = typeof onlineCharacters.$inferSelect;
+export type InsertOnlineCharacter = z.infer<typeof insertOnlineCharacterSchema>;

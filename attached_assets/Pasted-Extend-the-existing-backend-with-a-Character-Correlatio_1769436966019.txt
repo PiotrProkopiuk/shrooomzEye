@@ -1,0 +1,126 @@
+Extend the existing backend with a Character Correlation and Alt Detection system.
+
+Context:
+- Symfony backend
+- OnlineSnapshot and OnlineSession data already collected
+- Deaths and PvP events stored
+- Focused on Tibia (Antica initially)
+- Goal: detect potential alternate characters (alts) probabilistically
+
+This system must NOT make hard accusations.
+It should generate correlation scores and explanations.
+
+---
+
+### Core Concepts
+
+1. **Correlation, Not Certainty**
+- Never label characters as confirmed alts.
+- Assign a correlation score (0–100).
+- Store reasons contributing to the score.
+
+2. **CharacterCorrelation Entity**
+Fields:
+- characterA
+- characterB
+- correlationScore
+- reasons (JSON)
+- firstDetectedAt
+- lastUpdatedAt
+
+---
+
+### Data Signals to Use
+
+3. **Overlapping Online Sessions**
+- Detect repeated overlapping online time windows.
+- Weight increases when:
+  - overlaps happen daily
+  - overlaps exceed configurable durations (e.g. >30 min)
+- Ignore overlaps shorter than a threshold (noise).
+
+4. **Synchronized Logins**
+- Detect characters logging in or out within short time windows (e.g. 1–3 minutes).
+- Repeated patterns increase correlation score.
+
+5. **Shared Activity Patterns**
+- Similar playtime hours across multiple days.
+- Similar weekday vs weekend behavior.
+- Similar average session length.
+
+6. **PvP & Death Context**
+- Characters never killing each other.
+- Characters frequently appearing in the same PvP contexts.
+- Characters logging out shortly after the other dies (optional, low weight).
+
+7. **Guild Movement History**
+- Characters switching between:
+  - main guild
+  - enemy guild
+  - neutral
+- Temporal proximity of guild changes increases correlation score.
+
+---
+
+### Scoring Model
+
+8. **Weighted Scoring**
+- Each signal contributes points.
+- Total score capped at 100.
+- Example:
+  - overlapping sessions: +30
+  - synchronized logins: +25
+  - similar playtime patterns: +20
+  - PvP avoidance: +10
+  - guild movement correlation: +15
+
+Weights must be configurable.
+
+9. **Decay Over Time**
+- Correlation score slowly decreases if no new signals appear.
+- Prevents permanent suspicion from old data.
+
+---
+
+### Storage & Performance
+
+10. **Batch Processing**
+- Run correlation analysis as a scheduled job (e.g. once per day).
+- Analyze only characters with sufficient data history.
+- Avoid O(n²) on all characters:
+  - pre-filter by overlapping sessions first.
+
+---
+
+### Dashboard & API Output
+
+11. **API Endpoints**
+- List potential correlations for a character.
+- Show:
+  - correlation score
+  - contributing factors
+  - last activity overlap
+
+12. **Admin Visibility Only**
+- Only guild leaders / vice leaders can access correlation data.
+- Regular users never see alt detection data.
+
+---
+
+### Output Requirements
+
+- Correlation service and scoring engine.
+- Doctrine entities and repositories.
+- Scheduled analysis command.
+- Configurable weights and thresholds.
+- Clear documentation explaining:
+  - probabilistic nature
+  - limitations
+  - false positives
+
+Do NOT:
+- Accuse players
+- Auto-ban or flag publicly
+- Expose this data to Discord users
+
+This system is for internal analysis and strategic awareness only.
