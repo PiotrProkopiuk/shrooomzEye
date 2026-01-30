@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -104,11 +105,7 @@ export default function Settings() {
   
   const testWebhookMutation = useMutation({
     mutationFn: async (webhookUrl: string) => {
-      const res = await fetch("/api/death-tracker/test-webhook", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ webhookUrl }),
-      });
+      const res = await apiRequest("POST", "/api/death-tracker/test-webhook", { webhookUrl });
       return res.json();
     },
     onSuccess: (data) => {
