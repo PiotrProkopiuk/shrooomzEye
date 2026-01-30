@@ -179,27 +179,106 @@ export async function markDeathAsNotified(deathId: number): Promise<void> {
   await db.update(deaths).set({ notified: true }).where(eq(deaths.id, deathId));
 }
 
-export function formatDeathEmbed(death: any, isEnemy: boolean) {
-  const color = isEnemy ? 0x22c55e : 0xef4444; // Green for enemy deaths, red for guild deaths
-  const title = isEnemy ? "☠️ Enemy Death Detected!" : "💀 Guild Member Died!";
+const VOCATION_ICONS: Record<string, string> = {
+  "Knight": "🛡️",
+  "Elite Knight": "🛡️",
+  "Paladin": "🏹",
+  "Royal Paladin": "🏹",
+  "Sorcerer": "🔮",
+  "Master Sorcerer": "🔮",
+  "Druid": "🌿",
+  "Elder Druid": "🌿",
+  "Monk": "👊",
+  "Exalted Monk": "👊",
+  "None": "⚪",
+  "Unknown": "❓",
+};
+
+function getVocationIcon(vocation: string): string {
+  return VOCATION_ICONS[vocation] || "❓";
+}
+
+function getTibiaCharacterUrl(name: string): string {
+  return `https://www.tibia.com/community/?name=${encodeURIComponent(name)}`;
+}
+
+function getTimeAgo(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMins < 1) return "just now";
+  if (diffMins < 60) return `${diffMins} min ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  return `${diffDays}d ago`;
+}
+
+function parseKillers(description: string): { name: string; isPlayer: boolean }[] {
+  const killers: { name: string; isPlayer: boolean }[] = [];
   
-  const isPvpText = death.isPvp ? "⚔️ PvP Kill" : "🐉 PvE Death";
-  const timestamp = death.occurredAt ? new Date(death.occurredAt).toISOString() : new Date().toISOString();
+  const byMatch = description.match(/by (.+?)(?:\. Assisted by|$)/i);
+  if (byMatch) {
+    const killersPart = byMatch[1];
+    const names = killersPart.split(/,\s*|\s+and\s+/).map(n => n.trim()).filter(n => n.length > 0);
+    names.forEach(name => {
+      const isPlayer = /^[A-Z][a-z]+/.test(name) && !name.includes(" ") || name.split(" ").length <= 3;
+      killers.push({ name, isPlayer: true });
+    });
+  }
+  
+  return killers;
+}
+
+export function formatDeathEmbed(death: any, isEnemy: boolean) {
+  const color = isEnemy ? 0x22c55e : 0xef4444;
+  const icon = isEnemy ? "☠️" : "🔥";
+  const vocationIcon = getVocationIcon(death.vocation || "Unknown");
+  
+  const occurredAt = death.occurredAt ? new Date(death.occurredAt) : new Date();
+  const timeAgo = getTimeAgo(occurredAt);
+  
+  const charUrl = getTibiaCharacterUrl(death.characterName);
+  const charLink = `[${death.characterName}](${charUrl})`;
+  
+  const killers = parseKillers(death.description || `by ${death.killerName}`);
+  const killerCount = killers.length;
+  
+  let killersText = "";
+  if (killers.length > 0) {
+    const killerLinks = killers.slice(0, 20).map(k => 
+      k.isPlayer ? `[${k.name}](${getTibiaCharacterUrl(k.name)})` : k.name
+    );
+    killersText = killerLinks.join(", ");
+    if (killers.length > 20) {
+      killersText += ` and ${killers.length - 20} more`;
+    }
+  } else {
+    killersText = death.killerName || "Unknown";
+  }
+  
+  const guildText = death.killerGuild ? `Member of **${death.killerGuild}**` : "";
+  const victimGuildText = isEnemy ? `Enemy from **${death.victimGuild || "Unknown Guild"}**` : `Member of your guild`;
+  
+  const description = [
+    `${icon} **${death.level}** - ${charLink}`,
+    victimGuildText,
+    ``,
+    `⏰ Killed **${timeAgo}** at level ${death.level}`,
+    `${vocationIcon} ${death.vocation || "Unknown"}`,
+    ``,
+    death.isPvp ? `⚔️ **${killerCount} Killer${killerCount !== 1 ? "s" : ""}:**` : `🐉 **PvE Death:**`,
+    killersText,
+    guildText ? `\n🏰 ${guildText}` : "",
+  ].filter(line => line !== undefined).join("\n");
 
   return {
     embeds: [{
-      title,
       color,
-      fields: [
-        { name: "Character", value: death.characterName, inline: true },
-        { name: "Level", value: death.level?.toString() || "?", inline: true },
-        { name: "Vocation", value: death.vocation || "Unknown", inline: true },
-        { name: "Killed By", value: death.killerName || "Unknown", inline: true },
-        { name: "Killer Guild", value: death.killerGuild || "None", inline: true },
-        { name: "Type", value: isPvpText, inline: true },
-      ],
-      footer: { text: "TibiaData Death Tracker" },
-      timestamp,
+      description,
+      footer: { text: "ShrooomzEye • Guild Intelligence" },
+      timestamp: occurredAt.toISOString(),
     }],
   };
 }
