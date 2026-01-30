@@ -80,6 +80,7 @@ export const deathTrackerConfig = pgTable("death_tracker_config", {
   notifyEnemyGuildDeaths: boolean("notify_enemy_guild_deaths").default(true),
   checkIntervalMinutes: integer("check_interval_minutes").default(5),
   lastCheckedAt: timestamp("last_checked_at"),
+  lastNotificationSentAt: timestamp("last_notification_sent_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

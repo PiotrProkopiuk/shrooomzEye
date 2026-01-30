@@ -202,6 +202,14 @@ function getTibiaCharacterUrl(name: string): string {
   return `https://www.tibia.com/community/?name=${encodeURIComponent(name)}`;
 }
 
+function getTibiaGuildUrl(guildName: string): string {
+  return `https://www.tibia.com/community/?subtopic=guilds&page=view&GuildName=${encodeURIComponent(guildName)}`;
+}
+
+function getGuildLink(guildName: string): string {
+  return `[${guildName}](${getTibiaGuildUrl(guildName)})`;
+}
+
 function getTimeAgo(date: Date): string {
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -258,8 +266,9 @@ export function formatDeathEmbed(death: any, isEnemy: boolean) {
     killersText = death.killerName || "Unknown";
   }
   
-  const guildText = death.killerGuild ? `Member of **${death.killerGuild}**` : "";
-  const victimGuildText = isEnemy ? `Enemy from **${death.victimGuild || "Unknown Guild"}**` : `Member of your guild`;
+  const killerGuildLink = death.killerGuild ? getGuildLink(death.killerGuild) : "";
+  const victimGuildLink = death.victimGuild ? getGuildLink(death.victimGuild) : "Unknown Guild";
+  const victimGuildText = isEnemy ? `Enemy from ${victimGuildLink}` : `Member of your guild`;
   
   const description = [
     `${icon} **${death.level}** - ${charLink}`,
@@ -270,7 +279,7 @@ export function formatDeathEmbed(death: any, isEnemy: boolean) {
     ``,
     death.isPvp ? `⚔️ **${killerCount} Killer${killerCount !== 1 ? "s" : ""}:**` : `🐉 **PvE Death:**`,
     killersText,
-    guildText ? `\n🏰 ${guildText}` : "",
+    killerGuildLink ? `\n🏰 Killers from ${killerGuildLink}` : "",
   ].filter(line => line !== undefined).join("\n");
 
   return {
@@ -539,6 +548,11 @@ export async function processNotifications(): Promise<number> {
       if (success) {
         console.log(`[DeathTracker] Sent notification for ${death.characterName} to Discord`);
         notificationSent = true;
+        
+        // Update lastNotificationSentAt timestamp
+        await db.update(deathTrackerConfig)
+          .set({ lastNotificationSentAt: new Date() })
+          .where(eq(deathTrackerConfig.id, config.id));
       } else {
         console.error(`[DeathTracker] Failed to notify for ${death.characterName}`);
       }
