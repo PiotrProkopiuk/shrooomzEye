@@ -100,15 +100,25 @@ export default function Settings() {
   });
   
   const testWebhookMutation = useMutation({
-    mutationFn: async (webhookUrl: string) => {
+    mutationFn: async ({ webhookUrl, isMain }: { webhookUrl: string; isMain: boolean }) => {
       const res = await apiRequest("POST", "/api/death-tracker/test-webhook", { webhookUrl });
-      return res.json();
+      return { ...(await res.json()), isMain };
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       if (data.success) {
+        // Auto-save config after successful test
+        await apiRequest("POST", `/api/death-tracker/config/${selectedGuildId}`, {
+          mainGuildWebhookUrl: data.isMain ? (data.isMain ? mainWebhookUrl : mainWebhookUrl) : mainWebhookUrl,
+          enemyGuildWebhookUrl: data.isMain ? enemyWebhookUrl : enemyWebhookUrl,
+          notifyMainGuildDeaths: notifyMainDeaths,
+          notifyEnemyGuildDeaths: notifyEnemyDeaths,
+          enabled,
+          discordServerId: "default",
+        });
+        queryClient.invalidateQueries({ queryKey: ["/api/death-tracker/config"] });
         toast({
           title: "Test successful",
-          description: "Test message was sent to Discord.",
+          description: "Webhook tested and configuration saved.",
         });
       } else {
         toast({
@@ -205,7 +215,7 @@ export default function Settings() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => mainWebhookUrl && testWebhookMutation.mutate(mainWebhookUrl)}
+                      onClick={() => mainWebhookUrl && testWebhookMutation.mutate({ webhookUrl: mainWebhookUrl, isMain: true })}
                       disabled={!mainWebhookUrl || testWebhookMutation.isPending}
                       data-testid="button-test-main-webhook"
                     >
@@ -252,7 +262,7 @@ export default function Settings() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => enemyWebhookUrl && testWebhookMutation.mutate(enemyWebhookUrl)}
+                      onClick={() => enemyWebhookUrl && testWebhookMutation.mutate({ webhookUrl: enemyWebhookUrl, isMain: false })}
                       disabled={!enemyWebhookUrl || testWebhookMutation.isPending}
                       data-testid="button-test-enemy-webhook"
                     >
