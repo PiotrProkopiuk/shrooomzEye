@@ -113,7 +113,7 @@ export default function Settings() {
       } else {
         toast({
           title: "Test failed",
-          description: "Failed to send message. Check the webhook URL.",
+          description: data.message || "Failed to send message. Check the webhook URL.",
           variant: "destructive",
         });
       }

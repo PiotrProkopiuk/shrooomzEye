@@ -332,6 +332,16 @@ export async function registerRoutes(
       return res.status(400).json({ error: "webhookUrl is required" });
     }
     
+    // Validate webhook URL format
+    const webhookPattern = /^https:\/\/discord\.com\/api\/webhooks\/\d+\/.+$/;
+    if (!webhookPattern.test(webhookUrl)) {
+      return res.status(400).json({ 
+        error: "Invalid webhook URL", 
+        message: "Webhook URL must start with https://discord.com/api/webhooks/",
+        success: false
+      });
+    }
+    
     const testEmbed = {
       embeds: [{
         title: "🧪 Test Notification",
