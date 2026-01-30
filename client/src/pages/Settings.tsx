@@ -271,13 +271,20 @@ export default function Settings() {
               </div>
               
               <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-4 mt-4">
-                <h4 className="text-sm font-medium text-indigo-400 mb-2">How to get a webhook URL?</h4>
-                <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
-                  <li>Open Discord channel settings</li>
-                  <li>Go to the "Integrations" tab</li>
-                  <li>Click "Create Webhook"</li>
-                  <li>Copy the webhook URL and paste it here</li>
+                <h4 className="text-sm font-medium text-indigo-400 mb-2">How to create a Discord Webhook</h4>
+                <p className="text-xs text-amber-400 mb-2">Note: Webhooks can only be created using Discord web or desktop app (not mobile).</p>
+                <ol className="text-xs text-muted-foreground space-y-1.5 list-decimal list-inside">
+                  <li>Open <strong>Discord</strong> in your browser or desktop app</li>
+                  <li>Go to your server and right-click the channel where you want notifications</li>
+                  <li>Select <strong>"Edit Channel"</strong> → <strong>"Integrations"</strong> tab</li>
+                  <li>Click <strong>"Webhooks"</strong> → <strong>"New Webhook"</strong></li>
+                  <li>Give it a name (e.g., "ShrooomzEye Deaths") and optionally set an avatar</li>
+                  <li>Click <strong>"Copy Webhook URL"</strong></li>
+                  <li>Paste the URL in the field above and click <strong>"Save Configuration"</strong></li>
                 </ol>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Tip: You can use two different channels - one for your guild deaths and another for enemy kills.
+                </p>
               </div>
             </CardContent>
           </Card>
