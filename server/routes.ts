@@ -334,8 +334,8 @@ export async function registerRoutes(
     
     const testEmbed = {
       embeds: [{
-        title: "🧪 Test powiadomienia",
-        description: "Webhook działa poprawnie! Będziesz otrzymywać powiadomienia o śmierciach.",
+        title: "🧪 Test Notification",
+        description: "Webhook is working! You will receive death notifications.",
         color: 0x5865F2,
         footer: { text: "TibiaGuildBot Death Tracker" },
         timestamp: new Date().toISOString(),
