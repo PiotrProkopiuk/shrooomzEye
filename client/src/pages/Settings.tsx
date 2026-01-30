@@ -49,7 +49,7 @@ export default function Settings() {
     queryKey: ["/api/death-tracker/config", selectedGuildId],
     queryFn: async () => {
       if (!selectedGuildId) return null;
-      const res = await fetch(`/api/death-tracker/config/${selectedGuildId}`);
+      const res = await apiRequest("GET", `/api/death-tracker/config/${selectedGuildId}`);
       return res.json();
     },
     enabled: !!selectedGuildId,
@@ -73,17 +73,13 @@ export default function Settings() {
   
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/death-tracker/config/${selectedGuildId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mainGuildWebhookUrl: mainWebhookUrl || null,
-          enemyGuildWebhookUrl: enemyWebhookUrl || null,
-          notifyMainGuildDeaths: notifyMainDeaths,
-          notifyEnemyGuildDeaths: notifyEnemyDeaths,
-          enabled,
-          discordServerId: "default",
-        }),
+      const res = await apiRequest("POST", `/api/death-tracker/config/${selectedGuildId}`, {
+        mainGuildWebhookUrl: mainWebhookUrl || null,
+        enemyGuildWebhookUrl: enemyWebhookUrl || null,
+        notifyMainGuildDeaths: notifyMainDeaths,
+        notifyEnemyGuildDeaths: notifyEnemyDeaths,
+        enabled,
+        discordServerId: "default",
       });
       return res.json();
     },
