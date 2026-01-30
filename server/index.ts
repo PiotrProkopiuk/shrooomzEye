@@ -112,14 +112,22 @@ app.use((req, res, next) => {
       log(`Online scraper cron started (every 60 seconds)`);
       
       // Server save scheduler (10:00 CET daily)
+      // Store last run dates in memory (will reset on server restart, but that's acceptable)
       let lastResetDate = "";
       let lastFullSyncDate = "";
       
       setInterval(async () => {
         const now = new Date();
-        const hour = now.getUTCHours() + 1; // CET = UTC+1
-        const minute = now.getUTCMinutes();
-        const todayDate = now.toISOString().split('T')[0];
+        
+        // Get proper CET/CEST time using Intl API
+        const cetTimeStr = now.toLocaleString('en-GB', { timeZone: 'Europe/Berlin', hour: 'numeric', minute: 'numeric', hour12: false });
+        const [hourStr, minuteStr] = cetTimeStr.split(':');
+        const hour = parseInt(hourStr, 10);
+        const minute = parseInt(minuteStr, 10);
+        
+        // Get today's date in CET timezone
+        const cetDateStr = now.toLocaleString('en-CA', { timeZone: 'Europe/Berlin' }).split(',')[0];
+        const todayDate = cetDateStr;
         
         // 10:00 CET - Reset all player start levels
         if (hour === 10 && minute < 5 && lastResetDate !== todayDate) {
