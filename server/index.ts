@@ -103,13 +103,19 @@ app.use((req, res, next) => {
     () => {
       log(`serving on port ${port}`);
       
-      // Start the death tracker background job (online: 1min, offline: 60min)
-      startDeathTrackerJob(60, 1);
-      log(`Death tracker cron started (online: 1min, offline: 60min)`);
+      // Configurable intervals (defaults for PROD, can be overridden via env vars)
+      const isDevMode = process.env.NODE_ENV !== 'production';
+      const deathTrackerOfflineMin = parseInt(process.env.DEATH_TRACKER_OFFLINE_MIN || (isDevMode ? '120' : '60'), 10);
+      const deathTrackerOnlineMin = parseInt(process.env.DEATH_TRACKER_ONLINE_MIN || (isDevMode ? '5' : '1'), 10);
+      const onlineScraperSec = parseInt(process.env.ONLINE_SCRAPER_SEC || (isDevMode ? '300' : '60'), 10);
       
-      // Start the online players scraper (every 60 seconds)
-      startOnlineScraper({ world: "Antica", scrapeIntervalMs: 60000 });
-      log(`Online scraper cron started (every 60 seconds)`);
+      // Start the death tracker background job
+      startDeathTrackerJob(deathTrackerOfflineMin, deathTrackerOnlineMin);
+      log(`Death tracker cron started (online: ${deathTrackerOnlineMin}min, offline: ${deathTrackerOfflineMin}min)`);
+      
+      // Start the online players scraper
+      startOnlineScraper({ world: "Antica", scrapeIntervalMs: onlineScraperSec * 1000 });
+      log(`Online scraper cron started (every ${onlineScraperSec} seconds)`);
       
       // Server save scheduler (10:00 CET daily)
       // Store last run dates in memory (will reset on server restart, but that's acceptable)
