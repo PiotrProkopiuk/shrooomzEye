@@ -184,14 +184,14 @@ const VOCATION_ICONS: Record<string, string> = {
   "Elite Knight": "🛡️",
   "Paladin": "🏹",
   "Royal Paladin": "🏹",
-  "Sorcerer": "🔮",
-  "Master Sorcerer": "🔮",
-  "Druid": "🌿",
-  "Elder Druid": "🌿",
+  "Sorcerer": "🔥",
+  "Master Sorcerer": "🔥",
+  "Druid": "🍃",
+  "Elder Druid": "🍃",
   "Monk": "👊",
   "Exalted Monk": "👊",
   "None": "⚪",
-  "Unknown": "❓",
+  "Unknown": "⚪",
 };
 
 function getVocationIcon(vocation: string): string {
