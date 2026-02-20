@@ -524,43 +524,40 @@ export async function runOnlinePlayerDeathCheck(): Promise<number> {
   return totalNewDeaths;
 }
 
+const MAX_NOTIFICATION_AGE_MS = 2 * 60 * 60 * 1000; // 2 hours - skip notifications older than this
+const DISCORD_RATE_LIMIT_DELAY_MS = 1000; // 1 second between Discord webhook sends
+
 // Process and send notifications for unnotified deaths
 export async function processNotifications(): Promise<number> {
   const unnotified = await getUnnotifiedDeaths();
   if (unnotified.length === 0) return 0;
 
-  // Get all enabled configs with webhooks
   const configs = await db.select().from(deathTrackerConfig).where(eq(deathTrackerConfig.enabled, true));
   
   let notifiedCount = 0;
+  let skippedOld = 0;
+  const now = Date.now();
   
   for (const death of unnotified) {
+    const deathAge = now - new Date(death.occurredAt).getTime();
+    if (deathAge > MAX_NOTIFICATION_AGE_MS) {
+      await markDeathAsNotified(death.id);
+      skippedOld++;
+      continue;
+    }
+
     const isEnemy = death.victimGuildType === "enemy";
     let notificationSent = false;
     
-    // Find configs that should receive this notification
-    // A single config can handle both main and enemy deaths - we look for configs linked to main guild
-    // or any enabled config (for server-wide notifications)
     for (const config of configs) {
-      // For main guild deaths, config.guildId should match the victim's guild
-      // For enemy deaths, we use the config from the main guild (which tracks enemies)
-      // So we look for configs where guildId matches main guild (not enemy)
-      
-      // Get the main guild this death is related to
       const relatedGuildId = isEnemy ? config.guildId : death.victimGuildId;
-      
-      // Skip if this config is not for the related guild
       if (config.guildId !== relatedGuildId && !isEnemy) continue;
-      
-      // Check notification preferences
       if (isEnemy && !config.notifyEnemyGuildDeaths) continue;
       if (!isEnemy && !config.notifyMainGuildDeaths) continue;
       
-      // Get the appropriate webhook URL
       const webhookUrl = isEnemy ? config.enemyGuildWebhookUrl : config.mainGuildWebhookUrl;
       if (!webhookUrl) continue;
       
-      // Send notification
       const embed = formatDeathEmbed(death, isEnemy);
       const success = await sendDiscordNotification(webhookUrl, embed);
       
@@ -568,17 +565,16 @@ export async function processNotifications(): Promise<number> {
         console.log(`[DeathTracker] Sent notification for ${death.characterName} to Discord`);
         notificationSent = true;
         
-        // Update lastNotificationSentAt timestamp
         await db.update(deathTrackerConfig)
           .set({ lastNotificationSentAt: new Date() })
           .where(eq(deathTrackerConfig.id, config.id));
+        
+        await new Promise(r => setTimeout(r, DISCORD_RATE_LIMIT_DELAY_MS));
       } else {
         console.error(`[DeathTracker] Failed to notify for ${death.characterName}`);
       }
     }
     
-    // Only mark as notified if we actually sent the notification or if no webhooks are configured
-    // This allows retries if webhook delivery fails when webhooks ARE configured
     const hasAnyWebhook = configs.some(c => 
       (isEnemy && c.enemyGuildWebhookUrl) || (!isEnemy && c.mainGuildWebhookUrl)
     );
@@ -587,6 +583,10 @@ export async function processNotifications(): Promise<number> {
       await markDeathAsNotified(death.id);
       notifiedCount++;
     }
+  }
+  
+  if (skippedOld > 0) {
+    console.log(`[DeathTracker] Skipped ${skippedOld} notifications older than 2 hours`);
   }
   
   return notifiedCount;

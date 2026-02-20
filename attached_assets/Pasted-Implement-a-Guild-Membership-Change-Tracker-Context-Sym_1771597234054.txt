@@ -1,0 +1,133 @@
+Implement a Guild Membership Change Tracker.
+
+Context:
+- Symfony backend
+- Existing guild tracking via TibiaData
+- We already fetch guild members periodically
+- We have a dashboard and Discord integration (death tracker exists)
+- Goal: detect who joined and who left tracked guilds
+
+---
+
+### Feature: Guild Membership Change Detection
+
+1. Data Storage
+
+Create a persistent snapshot system:
+
+- Store guild members per guild:
+  - guild_id
+  - character_name
+  - rank
+  - joined_at (first detected)
+  - last_seen_at
+  - is_active (boolean)
+
+Do NOT overwrite historical data.
+We need historical comparison capability.
+
+---
+
+2. Change Detection Logic
+
+On each guild sync (daily or scheduled batch):
+
+- Fetch current member list from TibiaData
+- Compare with last stored snapshot
+
+Detect:
+- New members (present now, not present before)
+- Members who left (present before, not present now)
+
+Update:
+- Set is_active = false for leavers
+- Insert new records for joiners
+- Update last_seen_at for current members
+
+---
+
+3. Event Logging
+
+Create guild_membership_events table:
+
+- id
+- guild_id
+- character_name
+- event_type (JOINED / LEFT)
+- detected_at (timestamp)
+
+Log every detected change.
+
+---
+
+4. Discord Integration
+
+If Discord integration is enabled:
+
+Send message to configured channel:
+
+For join:
+"🟢 {character_name} joined {guild_name}"
+
+For leave:
+"🔴 {character_name} left {guild_name}"
+
+Batch notifications if many changes happen at once.
+
+---
+
+5. Dashboard UI
+
+Add new section: "Guild Changes"
+
+Show:
+- Recent joins (last 30 days)
+- Recent leaves (last 30 days)
+- Filter by guild
+- Pagination + sorting
+
+Columns:
+- Character name
+- Guild
+- Event type
+- Date detected
+
+---
+
+6. Performance & Limits
+
+- Guild check runs max once per day per guild
+- Support batch processing of multiple guilds
+- Avoid full table scans
+- Use indexed queries
+
+---
+
+7. Permissions
+
+- Only admins and vice leaders can see leave/join history
+- Regular users see only basic guild info
+
+---
+
+8. Output Requirements
+
+- Database migration
+- Service for snapshot comparison
+- Event logger
+- Discord notifier
+- Dashboard view with pagination and sorting
+- README update explaining:
+  - How detection works
+  - Frequency
+  - Limitations (depends on TibiaData accuracy)
+
+Do NOT:
+- Remove existing guild tracking
+- Break death tracker
+- Introduce real-time polling
+
+Focus on:
+- reliable diff detection
+- clean event logging
+- scalable structure for multiple guilds
