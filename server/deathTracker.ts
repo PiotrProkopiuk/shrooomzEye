@@ -8,6 +8,30 @@ import crypto from "crypto";
 const TIBIADATA_BASE = "https://api.tibiadata.com/v4";
 const MAX_RETRIES = 3;
 const RETRY_DELAYS = [2000, 4000, 6000]; // Exponential backoff
+const CONCURRENT_BATCH_SIZE = 5; // How many players to check in parallel
+const BATCH_DELAY_MS = 500; // Delay between batches to avoid rate limiting
+
+async function processBatched<T, R>(
+  items: T[],
+  batchSize: number,
+  delayMs: number,
+  processor: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = [];
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize);
+    const batchResults = await Promise.allSettled(batch.map(processor));
+    for (const result of batchResults) {
+      if (result.status === "fulfilled") {
+        results.push(result.value);
+      }
+    }
+    if (i + batchSize < items.length) {
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+  return results;
+}
 
 interface TibiaDeathEntry {
   time: string;
@@ -107,48 +131,47 @@ export async function checkDeathsForGuild(guildId: number, maxAgeDays: number = 
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - maxAgeDays);
 
-  console.log(`[DeathTracker] Checking ${guildPlayers.length} players from guild ${guild.name} (${victimGuildType})`);
+  console.log(`[DeathTracker] Checking ${guildPlayers.length} players from guild ${guild.name} (${victimGuildType}) in batches of ${CONCURRENT_BATCH_SIZE}`);
 
-  for (const player of guildPlayers) {
-    try {
-      const characterDeaths = await fetchCharacterDeaths(player.name);
-      if (!characterDeaths || !characterDeaths.deaths.length) continue;
+  const deathCounts = await processBatched(
+    guildPlayers,
+    CONCURRENT_BATCH_SIZE,
+    BATCH_DELAY_MS,
+    async (player) => {
+      let playerDeaths = 0;
+      try {
+        const characterDeaths = await fetchCharacterDeaths(player.name);
+        if (!characterDeaths || !characterDeaths.deaths.length) return 0;
 
-      for (const death of characterDeaths.deaths) {
-        const deathDate = new Date(death.time);
-        
-        // Only process deaths within the time window
-        if (deathDate < cutoffDate) continue;
+        for (const death of characterDeaths.deaths) {
+          const deathDate = new Date(death.time);
+          if (deathDate < cutoffDate) continue;
 
-        const deathHash = generateDeathHash(player.name, death.time, death.level);
-        
-        // Check if this death already exists
-        const [existing] = await db.select().from(deaths).where(eq(deaths.deathHash, deathHash));
-        if (existing) continue;
+          const deathHash = generateDeathHash(player.name, death.time, death.level);
+          const [existing] = await db.select().from(deaths).where(eq(deaths.deathHash, deathHash));
+          if (existing) continue;
 
-        // New death - store it
-        const deathData = parseDeathEntry(
-          player.name,
-          player.level,
-          player.vocation,
-          death,
-          victimGuildType,
-          guildId
-        );
+          const deathData = parseDeathEntry(
+            player.name,
+            player.level,
+            player.vocation,
+            death,
+            victimGuildType,
+            guildId
+          );
 
-        await db.insert(deaths).values(deathData);
-        newDeathsCount++;
-        console.log(`[DeathTracker] New death detected: ${player.name} killed by ${deathData.killerName}`);
+          await db.insert(deaths).values(deathData);
+          playerDeaths++;
+          console.log(`[DeathTracker] New death detected: ${player.name} killed by ${deathData.killerName}`);
+        }
+      } catch (error) {
+        console.error(`[DeathTracker] Error checking deaths for ${player.name}:`, error);
       }
-
-      // Rate limit - wait 300ms between characters to speed things up
-      await new Promise(resolve => setTimeout(resolve, 300));
-    } catch (error) {
-      console.error(`[DeathTracker] Error checking deaths for ${player.name}:`, error);
+      return playerDeaths;
     }
-  }
+  );
 
-  return newDeathsCount;
+  return deathCounts.reduce((sum, c) => sum + c, 0);
 }
 
 // Scan all guilds (both main and enemy)
@@ -480,18 +503,18 @@ export async function runOnlinePlayerDeathCheck(): Promise<number> {
     return 0;
   }
   
-  console.log(`[DeathTracker] Priority check: ${trackedOnline.length} tracked online players`);
+  console.log(`[DeathTracker] Priority check: ${trackedOnline.length} tracked online players in batches of ${CONCURRENT_BATCH_SIZE}`);
   
-  let totalNewDeaths = 0;
+  const deathCounts = await processBatched(
+    trackedOnline,
+    CONCURRENT_BATCH_SIZE,
+    BATCH_DELAY_MS,
+    async (playerName) => {
+      return await checkDeathsForAnyCharacter(playerName);
+    }
+  );
   
-  // Check tracked online players with checkDeathsForAnyCharacter (stores all, notifies relevant)
-  for (const playerName of trackedOnline) {
-    const newDeaths = await checkDeathsForAnyCharacter(playerName);
-    totalNewDeaths += newDeaths;
-    
-    // Small delay to avoid rate limiting
-    await new Promise(resolve => setTimeout(resolve, 200));
-  }
+  const totalNewDeaths = deathCounts.reduce((sum, c) => sum + c, 0);
   
   if (totalNewDeaths > 0) {
     console.log(`[DeathTracker] Priority check found ${totalNewDeaths} new deaths`);
