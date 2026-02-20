@@ -75,6 +75,7 @@ export const deathTrackerConfig = pgTable("death_tracker_config", {
   enemyDeathChannelId: text("enemy_death_channel_id"),
   mainGuildWebhookUrl: text("main_guild_webhook_url"),
   enemyGuildWebhookUrl: text("enemy_guild_webhook_url"),
+  membershipWebhookUrl: text("membership_webhook_url"),
   enabled: boolean("enabled").default(true),
   notifyMainGuildDeaths: boolean("notify_main_guild_deaths").default(true),
   notifyEnemyGuildDeaths: boolean("notify_enemy_guild_deaths").default(true),

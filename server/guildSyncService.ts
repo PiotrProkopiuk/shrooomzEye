@@ -80,6 +80,13 @@ export async function syncGuildMembers(guildId: number): Promise<SyncResult> {
 
   const dbMemberMap = new Map(dbMembers.map(m => [m.characterName, m]));
   const apiMemberNames = new Set(apiMembers.map(m => m.name));
+  const isFirstSync = dbMembers.length === 0;
+
+  if (isFirstSync) {
+    console.log(`[GuildSync] First sync for ${guild.name} - seeding ${apiMembers.length} members (no JOINED notifications)`);
+  }
+
+  const RECENT_JOIN_DAYS = 7;
 
   await processBatched(apiMembers, SYNC_BATCH_SIZE, BATCH_DELAY_MS, async (member) => {
     const existing = dbMemberMap.get(member.name);
@@ -118,14 +125,30 @@ export async function syncGuildMembers(guildId: number): Promise<SyncResult> {
         lastSeenAt: now,
       });
 
-      await db.insert(guildMembershipEvents).values({
-        guildId,
-        characterName: member.name,
-        eventType: "JOINED",
-        notified: false,
-      });
-      result.joined.push(member.name);
-      console.log(`[GuildSync] ${member.name} joined ${guild.name}`);
+      if (isFirstSync) {
+        const joinedDate = member.joined ? new Date(member.joined) : null;
+        const isRecentJoin = joinedDate && (now.getTime() - joinedDate.getTime()) < RECENT_JOIN_DAYS * 24 * 60 * 60 * 1000;
+
+        if (isRecentJoin) {
+          await db.insert(guildMembershipEvents).values({
+            guildId,
+            characterName: member.name,
+            eventType: "JOINED",
+            notified: true,
+          });
+          result.joined.push(member.name);
+          console.log(`[GuildSync] ${member.name} recently joined ${guild.name} (${member.joined}) - logged but not notified`);
+        }
+      } else {
+        await db.insert(guildMembershipEvents).values({
+          guildId,
+          characterName: member.name,
+          eventType: "JOINED",
+          notified: false,
+        });
+        result.joined.push(member.name);
+        console.log(`[GuildSync] ${member.name} joined ${guild.name}`);
+      }
     }
 
     const existingPlayer = await storage.getPlayerByName(member.name);
@@ -215,7 +238,7 @@ export async function sendMembershipNotifications(): Promise<number> {
     const guildName = guild?.name || "Unknown Guild";
 
     for (const config of configs) {
-      const webhookUrl = config.mainGuildWebhookUrl;
+      const webhookUrl = config.membershipWebhookUrl || config.mainGuildWebhookUrl;
       if (!webhookUrl) continue;
 
       if (events.length <= 5) {

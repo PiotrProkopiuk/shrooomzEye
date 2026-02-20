@@ -23,6 +23,7 @@ interface DeathTrackerConfig {
   discordServerId: string;
   mainGuildWebhookUrl: string | null;
   enemyGuildWebhookUrl: string | null;
+  membershipWebhookUrl: string | null;
   enabled: boolean;
   notifyMainGuildDeaths: boolean;
   notifyEnemyGuildDeaths: boolean;
@@ -35,6 +36,7 @@ export default function Settings() {
   const [selectedGuildId, setSelectedGuildId] = useState<number | null>(null);
   const [mainWebhookUrl, setMainWebhookUrl] = useState("");
   const [enemyWebhookUrl, setEnemyWebhookUrl] = useState("");
+  const [membershipWebhookUrl, setMembershipWebhookUrl] = useState("");
   const [notifyMainDeaths, setNotifyMainDeaths] = useState(true);
   const [notifyEnemyDeaths, setNotifyEnemyDeaths] = useState(true);
   const [enabled, setEnabled] = useState(true);
@@ -65,6 +67,7 @@ export default function Settings() {
     if (config) {
       setMainWebhookUrl(config.mainGuildWebhookUrl || "");
       setEnemyWebhookUrl(config.enemyGuildWebhookUrl || "");
+      setMembershipWebhookUrl(config.membershipWebhookUrl || "");
       setNotifyMainDeaths(config.notifyMainGuildDeaths ?? true);
       setNotifyEnemyDeaths(config.notifyEnemyGuildDeaths ?? true);
       setEnabled(config.enabled ?? true);
@@ -76,6 +79,7 @@ export default function Settings() {
       const res = await apiRequest("POST", `/api/death-tracker/config/${selectedGuildId}`, {
         mainGuildWebhookUrl: mainWebhookUrl || null,
         enemyGuildWebhookUrl: enemyWebhookUrl || null,
+        membershipWebhookUrl: membershipWebhookUrl || null,
         notifyMainGuildDeaths: notifyMainDeaths,
         notifyEnemyGuildDeaths: notifyEnemyDeaths,
         enabled,
@@ -106,10 +110,10 @@ export default function Settings() {
     },
     onSuccess: async (data) => {
       if (data.success) {
-        // Auto-save config after successful test
         await apiRequest("POST", `/api/death-tracker/config/${selectedGuildId}`, {
-          mainGuildWebhookUrl: data.isMain ? (data.isMain ? mainWebhookUrl : mainWebhookUrl) : mainWebhookUrl,
-          enemyGuildWebhookUrl: data.isMain ? enemyWebhookUrl : enemyWebhookUrl,
+          mainGuildWebhookUrl: mainWebhookUrl || null,
+          enemyGuildWebhookUrl: enemyWebhookUrl || null,
+          membershipWebhookUrl: membershipWebhookUrl || null,
           notifyMainGuildDeaths: notifyMainDeaths,
           notifyEnemyGuildDeaths: notifyEnemyDeaths,
           enabled,
@@ -273,6 +277,46 @@ export default function Settings() {
                 </div>
               </div>
               
+              <Separator className="bg-white/5" />
+              
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded-full bg-blue-500" />
+                  <Label className="text-sm font-medium text-blue-400">Guild Membership Changes</Label>
+                </div>
+                
+                <p className="text-xs text-muted-foreground">
+                  Get notified when players join or leave tracked guilds. Leave empty to use the guild deaths webhook instead.
+                </p>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="membership-webhook" className="text-xs text-muted-foreground">
+                    Webhook URL for join/leave notifications
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input 
+                      id="membership-webhook"
+                      type="password"
+                      placeholder="https://discord.com/api/webhooks/... (optional)"
+                      value={membershipWebhookUrl}
+                      onChange={(e) => setMembershipWebhookUrl(e.target.value)}
+                      className="bg-background/50 border-white/10 font-mono text-xs flex-1"
+                      data-testid="input-membership-webhook"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => membershipWebhookUrl && testWebhookMutation.mutate({ webhookUrl: membershipWebhookUrl, isMain: false })}
+                      disabled={!membershipWebhookUrl || testWebhookMutation.isPending}
+                      data-testid="button-test-membership-webhook"
+                    >
+                      <TestTube2 className="h-4 w-4 mr-1" />
+                      Test
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
               <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-4 mt-4">
                 <h4 className="text-sm font-medium text-indigo-400 mb-2">How to create a Discord Webhook</h4>
                 <p className="text-xs text-amber-400 mb-2">Note: Webhooks can only be created using Discord web or desktop app (not mobile).</p>
@@ -363,6 +407,14 @@ export default function Settings() {
                   <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">Configured</Badge>
                 ) : (
                   <Badge className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20">Not Set</Badge>
+                )}
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs">Membership Webhook</span>
+                {membershipWebhookUrl ? (
+                  <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">Configured</Badge>
+                ) : (
+                  <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20">Using Death Webhook</Badge>
                 )}
               </div>
             </CardContent>

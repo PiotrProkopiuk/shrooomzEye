@@ -292,16 +292,19 @@ export async function registerRoutes(
   app.post("/api/death-tracker/config/:guildId", requireAuth, requireRole("ADMIN", "MODERATOR"), async (req, res) => {
     const guildId = parseInt(req.params.guildId);
     
-    // Validate webhook URLs if provided
     const webhookUrlPattern = /^https:\/\/discord\.com\/api\/webhooks\/\d+\/.+$/;
     const mainWebhook = req.body.mainGuildWebhookUrl;
     const enemyWebhook = req.body.enemyGuildWebhookUrl;
+    const membershipWebhook = req.body.membershipWebhookUrl;
     
     if (mainWebhook && !webhookUrlPattern.test(mainWebhook)) {
       return res.status(400).json({ error: "Invalid main guild webhook URL format" });
     }
     if (enemyWebhook && !webhookUrlPattern.test(enemyWebhook)) {
       return res.status(400).json({ error: "Invalid enemy guild webhook URL format" });
+    }
+    if (membershipWebhook && !webhookUrlPattern.test(membershipWebhook)) {
+      return res.status(400).json({ error: "Invalid membership webhook URL format" });
     }
     
     const config = await deathTracker.saveDeathTrackerConfig({
@@ -311,6 +314,7 @@ export async function registerRoutes(
       enemyDeathChannelId: req.body.enemyDeathChannelId || null,
       mainGuildWebhookUrl: mainWebhook || null,
       enemyGuildWebhookUrl: enemyWebhook || null,
+      membershipWebhookUrl: membershipWebhook || null,
       enabled: req.body.enabled ?? true,
       notifyMainGuildDeaths: req.body.notifyMainGuildDeaths ?? true,
       notifyEnemyGuildDeaths: req.body.notifyEnemyGuildDeaths ?? true,
