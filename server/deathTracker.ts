@@ -255,13 +255,10 @@ export function formatDeathEmbed(death: any, isEnemy: boolean) {
   
   let killersText = "";
   if (killers.length > 0) {
-    const killerLinks = killers.slice(0, 20).map(k => 
+    const killerLinks = killers.map(k => 
       k.isPlayer ? `[${k.name}](${getTibiaCharacterUrl(k.name)})` : k.name
     );
     killersText = killerLinks.join(", ");
-    if (killers.length > 20) {
-      killersText += ` and ${killers.length - 20} more`;
-    }
   } else {
     killersText = death.killerName || "Unknown";
   }
@@ -271,11 +268,10 @@ export function formatDeathEmbed(death: any, isEnemy: boolean) {
   const victimGuildText = isEnemy ? `Enemy from ${victimGuildLink}` : `Member of your guild`;
   
   const description = [
-    `${icon} **${death.level}** - ${charLink}`,
+    `${vocationIcon} **${death.level}** - ${charLink} (${death.vocation || "Unknown"})`,
     victimGuildText,
     ``,
     `⏰ Killed **${timeAgo}** at level ${death.level}`,
-    `${vocationIcon} ${death.vocation || "Unknown"}`,
     ``,
     death.isPvp ? `⚔️ **${killerCount} Killer${killerCount !== 1 ? "s" : ""}:**` : `🐉 **PvE Death:**`,
     killersText,
