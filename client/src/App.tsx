@@ -18,6 +18,7 @@ import Login from "@/pages/Login";
 import OnlineActivity from "@/pages/OnlineActivity";
 import LevelProgress from "@/pages/LevelProgress";
 import CharacterProfile from "@/pages/CharacterProfile";
+import GuildChanges from "@/pages/GuildChanges";
 import { useEffect, useState } from "react";
 
 function Router() {
@@ -70,6 +71,7 @@ function Router() {
         <Route path="/settings" component={Settings} />
         <Route path="/online" component={OnlineActivity} />
         <Route path="/levels" component={LevelProgress} />
+        <Route path="/guild-changes" component={GuildChanges} />
         <Route path="/character/:name" component={CharacterProfile} />
         <Route component={NotFound} />
       </Switch>

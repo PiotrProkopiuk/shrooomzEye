@@ -1,0 +1,141 @@
+Refactor the existing guild scanning system to detect join/leave events
+within the current guild sync process.
+
+Context:
+- Symfony backend
+- Guild members are already scanned periodically
+- Level tracking and death tracking already exist
+- We want to run sync every 15 minutes
+- No separate job for join/leave detection
+- Avoid duplicate API calls
+
+---
+
+### 1. Scheduler
+
+Update scheduler:
+
+- Run GuildSyncService every 15 minutes
+- Ensure it supports multiple tracked guilds
+- Add per-guild configurable sync interval (default: 15 minutes)
+- Prevent overlapping executions (lock mechanism)
+
+---
+
+### 2. Database Structure
+
+Ensure we have a guild_members table:
+
+Fields:
+- id
+- guild_id
+- character_name
+- rank
+- is_active (boolean)
+- last_seen_at (datetime)
+- created_at
+- updated_at
+
+Add guild_membership_events table:
+
+- id
+- guild_id
+- character_name
+- event_type (JOINED / LEFT)
+- detected_at (datetime)
+
+Add indexes on:
+- guild_id
+- character_name
+- is_active
+
+---
+
+### 3. Join/Leave Detection Logic
+
+Inside existing GuildSyncService:
+
+Method: syncMembers(guild)
+
+Algorithm:
+
+1. Fetch current member list from TibiaData
+2. Get all active members from database for this guild
+3. Mark all DB members as potentially missing
+4. For each current member:
+   - If exists in DB:
+       - set is_active = true
+       - update last_seen_at
+       - update rank if changed
+   - If not exists:
+       - insert record
+       - create JOINED event
+5. After iteration:
+   - Any member previously active but not in current list:
+       - if last_seen_at older than 2 cycles (debounce safety)
+           - set is_active = false
+           - create LEFT event
+
+IMPORTANT:
+- Do not generate duplicate JOIN or LEFT events
+- JOIN only when previously inactive or not existing
+- LEFT only after 2 consecutive missing checks
+
+---
+
+### 4. Discord Integration
+
+Reuse existing Discord notifier.
+
+When JOINED:
+"🟢 {character_name} joined {guild_name}"
+
+When LEFT:
+"🔴 {character_name} left {guild_name}"
+
+Batch messages if more than 5 changes in one cycle.
+
+---
+
+### 5. Performance
+
+- No additional API calls
+- Reuse data from existing guild fetch
+- Avoid full table scans
+- Use indexed lookups
+- Process guilds in batches
+
+---
+
+### 6. Dashboard
+
+Update "Guild Changes" view:
+
+- Show recent JOINED / LEFT events
+- Pagination + sorting
+- Filter by guild
+- Default sort: newest first
+
+---
+
+### 7. Reliability
+
+- Add execution lock to prevent parallel sync
+- Log sync duration and errors
+- If TibiaData fails, do not trigger LEFT events
+- Retry failed syncs safely
+
+---
+
+### 8. Do NOT
+
+- Create a separate job just for join/leave
+- Increase API frequency beyond 15 min default
+- Remove existing level or death tracking
+- Change business logic unrelated to guild sync
+
+Focus on:
+- clean integration
+- minimal duplication
+- reliable change detection
+- scalable design for multiple guilds

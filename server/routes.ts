@@ -599,5 +599,35 @@ export async function registerRoutes(
     res.json({ success: true, message: `Config ${key} updated to ${value}` });
   });
 
+  // ============ GUILD SYNC / MEMBERSHIP EVENTS ============
+  const guildSync = await import("./guildSyncService");
+
+  app.get("/api/guild-sync/status", async (req, res) => {
+    res.json(guildSync.getGuildSyncStatus());
+  });
+
+  app.post("/api/guild-sync/run", requireAuth, requireRole("ADMIN"), async (req, res) => {
+    if (guildSync.getGuildSyncStatus().running) {
+      return res.status(409).json({ error: "Sync already in progress" });
+    }
+    const results = await guildSync.runFullGuildSync();
+    res.json(results);
+  });
+
+  app.get("/api/guild-changes", async (req, res) => {
+    const guildId = req.query.guildId ? parseInt(req.query.guildId as string) : undefined;
+    const page = parseInt(req.query.page as string) || 1;
+    const pageSize = parseInt(req.query.pageSize as string) || 50;
+    const eventType = req.query.eventType as "JOINED" | "LEFT" | undefined;
+
+    const result = await guildSync.getGuildMembershipEvents({
+      guildId,
+      page,
+      pageSize,
+      eventType,
+    });
+    res.json(result);
+  });
+
   return httpServer;
 }

@@ -117,6 +117,13 @@ app.use((req, res, next) => {
       startOnlineScraper({ world: "Antica", scrapeIntervalMs: onlineScraperSec * 1000 });
       log(`Online scraper cron started (every ${onlineScraperSec} seconds)`);
       
+      // Start guild sync scheduler (join/leave detection)
+      const guildSyncMin = parseInt(process.env.GUILD_SYNC_MIN || '15', 10);
+      import("./guildSyncService").then(({ startGuildSyncScheduler }) => {
+        startGuildSyncScheduler(guildSyncMin);
+        log(`Guild sync scheduler started (every ${guildSyncMin} min)`);
+      });
+      
       // Server save scheduler (10:00 CET daily)
       // Store last run dates in memory (will reset on server restart, but that's acceptable)
       let lastResetDate = "";

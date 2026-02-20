@@ -218,6 +218,29 @@ export const tibspyConfig = pgTable("tibspy_config", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Guild Members - tracks current and historical guild membership
+export const guildMembers = pgTable("guild_members", {
+  id: serial("id").primaryKey(),
+  guildId: integer("guild_id").references(() => guilds.id).notNull(),
+  characterName: text("character_name").notNull(),
+  rank: text("rank"),
+  isActive: boolean("is_active").default(true),
+  missedChecks: integer("missed_checks").default(0),
+  lastSeenAt: timestamp("last_seen_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Guild Membership Events - join/leave history
+export const guildMembershipEvents = pgTable("guild_membership_events", {
+  id: serial("id").primaryKey(),
+  guildId: integer("guild_id").references(() => guilds.id).notNull(),
+  characterName: text("character_name").notNull(),
+  eventType: text("event_type").notNull(), // 'JOINED' or 'LEFT'
+  detectedAt: timestamp("detected_at").defaultNow(),
+  notified: boolean("notified").default(false),
+});
+
 // Insert Schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
 export const insertGuildSchema = createInsertSchema(guilds).omit({ id: true });
@@ -235,6 +258,8 @@ export const insertOnlineCharacterSchema = createInsertSchema(onlineCharacters).
 export const insertTibspyCharacterDataSchema = createInsertSchema(tibspyCharacterData).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertTibspyScrapeLogSchema = createInsertSchema(tibspyScrapeLogs).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertTibspyConfigSchema = createInsertSchema(tibspyConfig).omit({ id: true, updatedAt: true });
+export const insertGuildMemberSchema = createInsertSchema(guildMembers).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertGuildMembershipEventSchema = createInsertSchema(guildMembershipEvents).omit({ id: true, detectedAt: true });
 
 // Types
 export type User = typeof users.$inferSelect;
@@ -269,3 +294,7 @@ export type TibspyScrapeLog = typeof tibspyScrapeLogs.$inferSelect;
 export type InsertTibspyScrapeLog = z.infer<typeof insertTibspyScrapeLogSchema>;
 export type TibspyConfig = typeof tibspyConfig.$inferSelect;
 export type InsertTibspyConfig = z.infer<typeof insertTibspyConfigSchema>;
+export type GuildMember = typeof guildMembers.$inferSelect;
+export type InsertGuildMember = z.infer<typeof insertGuildMemberSchema>;
+export type GuildMembershipEvent = typeof guildMembershipEvents.$inferSelect;
+export type InsertGuildMembershipEvent = z.infer<typeof insertGuildMembershipEventSchema>;

@@ -15,7 +15,8 @@ import {
   LogIn,
   Eye,
   Skull,
-  TrendingUp
+  TrendingUp,
+  UserPlus,
 } from "lucide-react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ const NAV_ITEMS = [
   { label: "Progress & Rankings", icon: TrendingUp, href: "/levels" },
   { label: "Verification", icon: ShieldCheck, href: "/verification" },
   { label: "Guild Stats", icon: BarChart3, href: "/stats" },
+  { label: "Guild Changes", icon: UserPlus, href: "/guild-changes" },
   { label: "Guilds", icon: Shield, href: "/guilds" },
   { label: "Players", icon: Users, href: "/players" },
   { label: "Events & Quests", icon: Swords, href: "/events" },
