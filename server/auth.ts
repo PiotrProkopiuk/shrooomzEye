@@ -1,5 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
 import crypto from "crypto";
 import { storage } from "./storage";
 
@@ -19,9 +20,17 @@ declare module "express-session" {
 
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID!;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET!;
-const DISCORD_REDIRECT_URI = process.env.REPLIT_DEV_DOMAIN 
-  ? `https://${process.env.REPLIT_DEV_DOMAIN}/api/auth/discord/callback`
-  : "http://localhost:5000/api/auth/discord/callback";
+function getRedirectUri() {
+  if (process.env.REPLIT_DEPLOYMENT_URL) {
+    return `https://${process.env.REPLIT_DEPLOYMENT_URL}/api/auth/discord/callback`;
+  }
+  if (process.env.REPLIT_DEV_DOMAIN) {
+    return `https://${process.env.REPLIT_DEV_DOMAIN}/api/auth/discord/callback`;
+  }
+  return "http://localhost:5000/api/auth/discord/callback";
+}
+const DISCORD_REDIRECT_URI = getRedirectUri();
+console.log(`[Auth] Discord redirect URI: ${DISCORD_REDIRECT_URI}`);
 
 // Require SESSION_SECRET in production
 const SESSION_SECRET = process.env.SESSION_SECRET || (process.env.NODE_ENV === "production" 
@@ -29,18 +38,31 @@ const SESSION_SECRET = process.env.SESSION_SECRET || (process.env.NODE_ENV === "
   : "dev-tibia-bot-secret-key");
 
 export function setupAuth(app: Express) {
-  app.use(
-    session({
-      secret: SESSION_SECRET as string,
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        secure: process.env.NODE_ENV === "production",
-        httpOnly: true,
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      },
-    })
-  );
+  const PgStore = connectPgSimple(session);
+  
+  const sessionConfig: session.SessionOptions = {
+    secret: SESSION_SECRET as string,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    },
+  };
+
+  if (process.env.DATABASE_URL) {
+    sessionConfig.store = new PgStore({
+      conString: process.env.DATABASE_URL,
+      createTableIfMissing: true,
+      tableName: "user_sessions",
+    });
+    console.log("[Auth] Using PostgreSQL session store");
+  } else if (process.env.NODE_ENV === "production") {
+    console.error("[Auth] WARNING: DATABASE_URL not set in production, using MemoryStore (sessions will not persist)");
+  }
+
+  app.use(session(sessionConfig));
 
   // Discord OAuth2 Login with CSRF protection
   app.get("/api/auth/discord", (req, res) => {

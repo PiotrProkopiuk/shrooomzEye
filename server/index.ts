@@ -4,6 +4,7 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import { startDeathTrackerJob } from "./deathTracker";
 import { startOnlineScraper } from "./onlineScraper";
+import { startGuildSyncScheduler } from "./guildSyncService";
 import { storage } from "./storage";
 import { fetchGuildMembers } from "./tibiadata";
 
@@ -119,10 +120,12 @@ app.use((req, res, next) => {
       
       // Start guild sync scheduler (join/leave detection)
       const guildSyncMin = parseInt(process.env.GUILD_SYNC_MIN || '15', 10);
-      import("./guildSyncService").then(({ startGuildSyncScheduler }) => {
+      try {
         startGuildSyncScheduler(guildSyncMin);
         log(`Guild sync scheduler started (every ${guildSyncMin} min)`);
-      });
+      } catch (err) {
+        console.error("[GuildSync] Failed to start scheduler:", err);
+      }
       
       // Server save scheduler (10:00 CET daily)
       // Store last run dates in memory (will reset on server restart, but that's acceptable)
@@ -225,6 +228,7 @@ app.use((req, res, next) => {
         }
       }, 60000); // Check every minute
       log(`Server save scheduler started (reset 10:00, full sync 10:15 CET)`);
+      log(`All background jobs initialized (mode: ${isDevMode ? 'development' : 'production'})`);
     },
   );
 })();
