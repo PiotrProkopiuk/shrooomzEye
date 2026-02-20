@@ -154,40 +154,56 @@ app.use((req, res, next) => {
             let totalUpdated = 0;
             let totalCreated = 0;
             
+            const MEMBER_BATCH_SIZE = 10;
             for (const guild of guilds) {
               try {
                 const members = await fetchGuildMembers(guild.name);
                 if (!members.length) continue;
                 
-                for (const member of members) {
-                  const existing = await storage.getPlayerByName(member.name);
-                  if (existing) {
-                    const startLevel = existing.startLevel || existing.level;
-                    const levelsGained = member.level - startLevel;
-                    await storage.updatePlayer(existing.id, {
-                      level: member.level,
-                      vocation: member.vocation,
-                      rank: member.rank,
-                      online: member.status === "online",
-                      lastScan: new Date(),
-                      levelsGained: levelsGained > 0 ? levelsGained : 0,
-                    });
-                    totalUpdated++;
-                  } else {
-                    await storage.createPlayer({
-                      name: member.name,
-                      guildId: guild.id,
-                      level: member.level,
-                      vocation: member.vocation,
-                      rank: member.rank,
-                      online: member.status === "online",
-                      startLevel: member.level,
-                      levelsGained: 0,
-                    });
-                    totalCreated++;
+                const results = await Promise.allSettled(
+                  Array.from({ length: Math.ceil(members.length / MEMBER_BATCH_SIZE) }, (_, batchIdx) => {
+                    const batch = members.slice(batchIdx * MEMBER_BATCH_SIZE, (batchIdx + 1) * MEMBER_BATCH_SIZE);
+                    return (async () => {
+                      if (batchIdx > 0) await new Promise(r => setTimeout(r, batchIdx * 100));
+                      let updated = 0, created = 0;
+                      await Promise.allSettled(batch.map(async (member) => {
+                        const existing = await storage.getPlayerByName(member.name);
+                        if (existing) {
+                          const startLevel = existing.startLevel || existing.level;
+                          const levelsGained = member.level - startLevel;
+                          await storage.updatePlayer(existing.id, {
+                            level: member.level,
+                            vocation: member.vocation,
+                            rank: member.rank,
+                            online: member.status === "online",
+                            lastScan: new Date(),
+                            levelsGained: levelsGained > 0 ? levelsGained : 0,
+                          });
+                          updated++;
+                        } else {
+                          await storage.createPlayer({
+                            name: member.name,
+                            guildId: guild.id,
+                            level: member.level,
+                            vocation: member.vocation,
+                            rank: member.rank,
+                            online: member.status === "online",
+                            startLevel: member.level,
+                            levelsGained: 0,
+                          });
+                          created++;
+                        }
+                      }));
+                      return { updated, created };
+                    })();
+                  })
+                );
+                for (const r of results) {
+                  if (r.status === "fulfilled") {
+                    totalUpdated += r.value.updated;
+                    totalCreated += r.value.created;
                   }
                 }
-                // Small delay between guilds to avoid API rate limiting
                 await new Promise(r => setTimeout(r, 2000));
               } catch (guildErr) {
                 log(`Post-save sync: Error syncing ${guild.name}: ${guildErr}`);

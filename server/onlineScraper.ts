@@ -2,6 +2,31 @@ import { db } from "./db";
 import { onlineSnapshots, onlineCharacters, onlineSessions, players, guilds } from "@shared/schema";
 import { eq, and, isNull, inArray } from "drizzle-orm";
 
+const CONCURRENT_BATCH_SIZE = 10;
+const BATCH_DELAY_MS = 100;
+
+async function processBatched<T, R>(
+  items: T[],
+  batchSize: number,
+  delayMs: number,
+  processor: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = [];
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize);
+    const batchResults = await Promise.allSettled(batch.map(processor));
+    for (const result of batchResults) {
+      if (result.status === "fulfilled") {
+        results.push(result.value);
+      }
+    }
+    if (i + batchSize < items.length && delayMs > 0) {
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+  return results;
+}
+
 interface OnlinePlayer {
   name: string;
   level: number;
@@ -111,8 +136,7 @@ export async function processOnlineSnapshot(world: string = "Antica"): Promise<{
   const newlyLoggedIn = onlinePlayers.filter(p => !previouslyOnlineNames.has(p.name));
   const loggedOff = currentlyOnline.filter(c => !nowOnlineNames.has(c.characterName));
 
-  for (const player of onlinePlayers) {
-    // Check if this player is from a tracked guild
+  await processBatched(onlinePlayers, CONCURRENT_BATCH_SIZE, BATCH_DELAY_MS, async (player) => {
     const isTracked = trackedPlayerNames.has(player.name);
     const guildId = playerGuildMap.get(player.name);
     const guild = guildId ? guildMap.get(guildId) : null;
@@ -155,9 +179,9 @@ export async function processOnlineSnapshot(world: string = "Antica"): Promise<{
       isOnline: true,
       checkedAt: now,
     });
-  }
+  });
 
-  for (const char of loggedOff) {
+  await processBatched(loggedOff, CONCURRENT_BATCH_SIZE, BATCH_DELAY_MS, async (char) => {
     await db.update(onlineCharacters)
       .set({ isCurrentlyOnline: false })
       .where(eq(onlineCharacters.id, char.id));
@@ -182,15 +206,15 @@ export async function processOnlineSnapshot(world: string = "Antica"): Promise<{
         })
         .where(eq(onlineSessions.id, session.id));
     }
-  }
+  });
 
-  for (const player of newlyLoggedIn) {
+  await processBatched(newlyLoggedIn, CONCURRENT_BATCH_SIZE, BATCH_DELAY_MS, async (player) => {
     await db.insert(onlineSessions).values({
       characterName: player.name,
       world,
       sessionStart: now,
     });
-  }
+  });
 
   lastScrapeTime = now;
   lastScrapePlayerCount = onlinePlayers.length;
