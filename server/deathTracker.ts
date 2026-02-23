@@ -2,7 +2,7 @@
 import { storage } from "./storage";
 import { db } from "./db";
 import { deaths, deathTrackerConfig, players, guilds, onlineCharacters } from "@shared/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, gte } from "drizzle-orm";
 import crypto from "crypto";
 
 const TIBIADATA_BASE = "https://api.tibiadata.com/v4";
@@ -348,18 +348,35 @@ export async function saveDeathTrackerConfig(config: any) {
 let deathTrackerInterval: NodeJS.Timeout | null = null;
 let onlineDeathCheckInterval: NodeJS.Timeout | null = null;
 
-// Get list of currently online tracked players (from main + enemy guilds)
+// Get list of currently online AND recently-offline tracked players
+// Recently-offline players are included because they may have died and logged off
 async function getOnlineTrackedPlayers(): Promise<string[]> {
   const allPlayers = await db.select({ name: players.name }).from(players);
   const trackedNames = new Set(allPlayers.map(p => p.name));
+  
+  const recentlyOfflineCutoff = new Date(Date.now() - 10 * 60 * 1000); // 10 minutes ago
   
   const onlineChars = await db.select()
     .from(onlineCharacters)
     .where(eq(onlineCharacters.isCurrentlyOnline, true));
   
-  return onlineChars
-    .filter(c => trackedNames.has(c.characterName))
-    .map(c => c.characterName);
+  const recentlyOfflineChars = await db.select()
+    .from(onlineCharacters)
+    .where(
+      and(
+        eq(onlineCharacters.isCurrentlyOnline, false),
+        gte(onlineCharacters.lastSeen, recentlyOfflineCutoff)
+      )
+    );
+  
+  const allRelevant = [...onlineChars, ...recentlyOfflineChars];
+  const uniqueNames = new Set(
+    allRelevant
+      .filter(c => trackedNames.has(c.characterName))
+      .map(c => c.characterName)
+  );
+  
+  return Array.from(uniqueNames);
 }
 
 // Check deaths for a single character (priority check for online players)
@@ -493,35 +510,46 @@ async function getAllOnlineCharacters(): Promise<string[]> {
   return onlineChars.map(c => c.name);
 }
 
+let priorityCheckRunning = false;
+
 // Priority death check for online players (runs every 1 minute)
 // Checks ALL online players and stores all deaths, notifies only for relevant ones
 export async function runOnlinePlayerDeathCheck(): Promise<number> {
-  // Get tracked players for priority
-  const trackedOnline = await getOnlineTrackedPlayers();
-  
-  if (trackedOnline.length === 0) {
+  if (priorityCheckRunning) {
+    console.log("[DeathTracker] Priority check skipped (previous check still running)");
     return 0;
   }
+  priorityCheckRunning = true;
   
-  console.log(`[DeathTracker] Priority check: ${trackedOnline.length} tracked online players in batches of ${CONCURRENT_BATCH_SIZE}`);
-  
-  const deathCounts = await processBatched(
-    trackedOnline,
-    CONCURRENT_BATCH_SIZE,
-    BATCH_DELAY_MS,
-    async (playerName) => {
-      return await checkDeathsForAnyCharacter(playerName);
+  try {
+    const trackedOnline = await getOnlineTrackedPlayers();
+    
+    if (trackedOnline.length === 0) {
+      return 0;
     }
-  );
-  
-  const totalNewDeaths = deathCounts.reduce((sum, c) => sum + c, 0);
-  
-  if (totalNewDeaths > 0) {
-    console.log(`[DeathTracker] Priority check found ${totalNewDeaths} new deaths`);
-    await processNotifications();
+    
+    console.log(`[DeathTracker] Priority check: ${trackedOnline.length} tracked players (online + recently offline) in batches of ${CONCURRENT_BATCH_SIZE}`);
+    
+    const deathCounts = await processBatched(
+      trackedOnline,
+      CONCURRENT_BATCH_SIZE,
+      BATCH_DELAY_MS,
+      async (playerName) => {
+        return await checkDeathsForAnyCharacter(playerName);
+      }
+    );
+    
+    const totalNewDeaths = deathCounts.reduce((sum, c) => sum + c, 0);
+    
+    if (totalNewDeaths > 0) {
+      console.log(`[DeathTracker] Priority check found ${totalNewDeaths} new deaths`);
+      await processNotifications();
+    }
+    
+    return totalNewDeaths;
+  } finally {
+    priorityCheckRunning = false;
   }
-  
-  return totalNewDeaths;
 }
 
 const MAX_NOTIFICATION_AGE_MS = 2 * 60 * 60 * 1000; // 2 hours - skip notifications older than this

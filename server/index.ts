@@ -106,7 +106,7 @@ app.use((req, res, next) => {
       
       // Configurable intervals (defaults for PROD, can be overridden via env vars)
       const isDevMode = process.env.NODE_ENV !== 'production';
-      const deathTrackerOfflineMin = parseInt(process.env.DEATH_TRACKER_OFFLINE_MIN || (isDevMode ? '120' : '60'), 10);
+      const deathTrackerOfflineMin = parseInt(process.env.DEATH_TRACKER_OFFLINE_MIN || (isDevMode ? '120' : '15'), 10);
       const deathTrackerOnlineMin = parseInt(process.env.DEATH_TRACKER_ONLINE_MIN || (isDevMode ? '5' : '1'), 10);
       const onlineScraperSec = parseInt(process.env.ONLINE_SCRAPER_SEC || (isDevMode ? '300' : '60'), 10);
       
