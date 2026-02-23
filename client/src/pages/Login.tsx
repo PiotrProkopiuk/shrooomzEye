@@ -5,12 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Ghost, LogIn, Shield, Info, Key } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import bgTexture from "@assets/generated_images/dark_stone_rpg_texture_background.png";
-
-const DEMO_PASSWORD = "Codex123!";
 
 export default function Login() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [demoPassword, setDemoPassword] = useState("");
   const [showDemoForm, setShowDemoForm] = useState(false);
 
@@ -18,18 +19,25 @@ export default function Login() {
     window.location.href = "/api/auth/discord";
   };
 
-  const handleDemoLogin = () => {
-    if (demoPassword === DEMO_PASSWORD) {
-      localStorage.setItem("mock_auth", "true");
+  const demoMutation = useMutation({
+    mutationFn: async (password: string) => {
+      await apiRequest("POST", "/api/auth/demo", { password });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       window.location.href = "/";
-    } else {
+    },
+    onError: () => {
       toast({ title: "Invalid Password", description: "Demo password is incorrect.", variant: "destructive" });
-    }
+    },
+  });
+
+  const handleDemoLogin = () => {
+    demoMutation.mutate(demoPassword);
   };
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center relative overflow-hidden p-6">
-      {/* Texture Overlay */}
       <div 
         className="absolute inset-0 opacity-[0.05] pointer-events-none mix-blend-overlay z-0"
         style={{ backgroundImage: `url(${bgTexture})`, backgroundSize: 'cover' }}
@@ -40,21 +48,22 @@ export default function Login() {
           <div className="h-16 w-16 bg-primary/20 rounded-2xl flex items-center justify-center border border-primary/30 mb-4 shadow-[0_0_20px_rgba(234,179,8,0.2)]">
             <Ghost className="h-10 w-10 text-primary" />
           </div>
-          <h1 className="text-4xl font-display font-bold text-foreground">TibiaBot</h1>
-          <p className="text-muted-foreground mt-2">Guild Management Panel</p>
+          <h1 className="text-4xl font-display font-bold text-foreground">ShrooomzEye</h1>
+          <p className="text-muted-foreground mt-2">Guild Intelligence Dashboard</p>
         </div>
 
         <Card className="bg-card/50 border-border/50 backdrop-blur-md shadow-2xl">
           <CardHeader className="text-center pb-2">
             <CardTitle className="text-xl">Authentication Required</CardTitle>
             <CardDescription>
-              Leaders and Vice-Leaders only. Please log in with your Discord account to verify your guild roles.
+              Log in with your Discord account to access your guild dashboard.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 pt-6">
             <Button 
               onClick={handleDiscordLogin}
               className="w-full h-12 bg-[#5865F2] hover:bg-[#4752C4] text-white gap-3 text-lg font-semibold border-none shadow-lg transition-all active:scale-[0.98]"
+              data-testid="button-discord-login"
             >
               <LogIn className="h-5 w-5" />
               Login with Discord
@@ -97,9 +106,10 @@ export default function Login() {
                 <Button 
                   onClick={handleDemoLogin}
                   className="w-full"
+                  disabled={demoMutation.isPending}
                   data-testid="button-demo-login"
                 >
-                  Enter Demo Mode
+                  {demoMutation.isPending ? "Logging in..." : "Enter Demo Mode"}
                 </Button>
               </div>
             )}

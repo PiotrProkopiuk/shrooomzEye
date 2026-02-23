@@ -6,7 +6,6 @@ import {
   Settings, 
   Menu,
   Shield,
-  Ghost,
   ChevronDown,
   LayoutGrid,
   ShieldCheck,
@@ -17,6 +16,8 @@ import {
   Skull,
   TrendingUp,
   UserPlus,
+  Crown,
+  ShieldHalf,
 } from "lucide-react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -29,8 +30,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/lib/auth";
 import bgTexture from "@assets/generated_images/dark_stone_rpg_texture_background.png";
 
 const NAV_ITEMS = [
@@ -54,9 +56,12 @@ interface Guild {
   server: string;
   isEnemy: boolean;
   verified: boolean;
+  subscriptionStatus?: string;
 }
 
 function Sidebar({ location }: { location: string }) {
+  const { user, isAdmin, logout } = useAuth();
+
   return (
     <div className="h-full flex flex-col bg-sidebar border-r border-border relative overflow-hidden">
         <div 
@@ -94,25 +99,44 @@ function Sidebar({ location }: { location: string }) {
             </Link>
           );
         })}
+
+        {isAdmin && (
+          <Link href="/admin">
+            <div
+              className={`flex items-center gap-3 px-4 py-3 rounded-md transition-all duration-200 cursor-pointer group mt-2 ${
+                location === "/admin"
+                  ? "bg-sidebar-primary/10 text-primary border border-sidebar-primary/20 shadow-[0_0_15px_-3px_rgba(234,179,8,0.15)]"
+                  : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent"
+              }`}
+              data-testid="link-admin"
+            >
+              <ShieldHalf className={`h-5 w-5 ${location === "/admin" ? "text-primary" : "text-muted-foreground group-hover:text-foreground"}`} />
+              <span className="font-medium">Admin Panel</span>
+              <Badge className="ml-auto bg-red-500/20 text-red-400 border-red-500/30 text-[9px] px-1.5">Admin</Badge>
+            </div>
+          </Link>
+        )}
       </nav>
 
       <div className="p-4 border-t border-sidebar-border z-10">
          <div className="flex items-center justify-between mb-4 px-2">
             <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs">A</div>
+                <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs">
+                  {user?.username?.[0]?.toUpperCase() || "?"}
+                </div>
                 <div>
-                    <div className="text-sm font-medium">Administrator</div>
-                    <Badge variant="outline" className="text-[10px] h-4 border-primary/30 text-primary">Leader Role</Badge>
+                    <div className="text-sm font-medium" data-testid="text-username">{user?.username || "Unknown"}</div>
+                    <Badge variant="outline" className="text-[10px] h-4 border-primary/30 text-primary">
+                      {user?.globalRole || "USER"}
+                    </Badge>
                 </div>
             </div>
             <Button 
                 variant="ghost" 
                 size="icon" 
                 className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                onClick={() => {
-                    localStorage.removeItem("mock_auth");
-                    window.location.href = "/login";
-                }}
+                onClick={logout}
+                data-testid="button-logout"
             >
                 <LogIn className="h-4 w-4 rotate-180" />
             </Button>
@@ -135,26 +159,19 @@ function Sidebar({ location }: { location: string }) {
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const { user, activeGuild, selectGuild } = useAuth();
   
   const { data: guilds = [] } = useQuery<Guild[]>({
     queryKey: ["/api/guilds"],
     queryFn: async () => {
-      const response = await fetch("/api/guilds");
+      const response = await fetch("/api/guilds", { credentials: "include" });
       if (!response.ok) throw new Error("Failed to fetch guilds");
       return response.json();
     },
   });
 
-  const mainGuild = guilds.find(g => !g.isEnemy) || guilds[0];
-  const [activeGuild, setActiveGuild] = useState<Guild | null>(null);
-  
-  useEffect(() => {
-    if (guilds.length > 0 && !activeGuild) {
-      setActiveGuild(mainGuild || guilds[0]);
-    }
-  }, [guilds, activeGuild, mainGuild]);
-
-  const currentGuild = activeGuild || mainGuild;
+  const currentGuild = guilds.find(g => g.id === activeGuild?.guildId) || guilds.find(g => !g.isEnemy) || guilds[0];
+  const subscriptionStatus = activeGuild?.subscriptionStatus || currentGuild?.subscriptionStatus || "FREE";
 
   return (
     <div className="min-h-screen bg-background flex text-foreground font-sans">
@@ -182,7 +199,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="h-10 px-4 py-2 border-white/10 hover:bg-white/5 gap-2 text-foreground font-display font-semibold">
+                        <Button variant="outline" className="h-10 px-4 py-2 border-white/10 hover:bg-white/5 gap-2 text-foreground font-display font-semibold" data-testid="button-guild-selector">
                             <Shield className="h-4 w-4 text-primary" />
                             {currentGuild ? `${currentGuild.name} (${currentGuild.server})` : "Select Guild"}
                             {currentGuild && !currentGuild.verified && <Badge variant="destructive" className="h-4 text-[8px] px-1 uppercase ml-1 animate-pulse">Unverified</Badge>}
@@ -199,8 +216,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                             {guilds.filter(g => !g.isEnemy).map(guild => (
                               <DropdownMenuItem 
                                 key={guild.id} 
-                                onClick={() => setActiveGuild(guild)}
+                                onClick={() => selectGuild(guild.id)}
                                 className="hover:bg-sidebar-accent cursor-pointer flex justify-between items-center"
+                                data-testid={`menu-guild-${guild.id}`}
                               >
                                 <span>{guild.name} ({guild.server})</span>
                                 {guild.verified ? <ShieldCheck className="h-3 w-3 text-emerald-500" /> : <ShieldAlert className="h-3 w-3 text-amber-500" />}
@@ -215,8 +233,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                             {guilds.filter(g => g.isEnemy).map(guild => (
                               <DropdownMenuItem 
                                 key={guild.id} 
-                                onClick={() => setActiveGuild(guild)}
+                                onClick={() => selectGuild(guild.id)}
                                 className="hover:bg-sidebar-accent cursor-pointer flex justify-between items-center"
+                                data-testid={`menu-guild-${guild.id}`}
                               >
                                 <span className="text-red-400/80">{guild.name} ({guild.server})</span>
                                 <Skull className="h-3 w-3 text-red-500" />
@@ -226,6 +245,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
                         )}
                     </DropdownMenuContent>
                 </DropdownMenu>
+
+                {subscriptionStatus && subscriptionStatus !== "FREE" && (
+                  <Badge className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20 gap-1" data-testid="badge-subscription">
+                    <Crown className="h-3 w-3" />
+                    {subscriptionStatus}
+                  </Badge>
+                )}
             </div>
             
             <div className="flex items-center gap-4">
@@ -233,9 +259,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
                     <span className="text-xs font-medium text-muted-foreground">TibiaData API: Connected</span>
                 </div>
-                <div className="h-8 w-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary font-bold font-display">
-                    A
-                </div>
+                {user?.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.username}
+                    className="h-8 w-8 rounded-full border border-primary/30"
+                    data-testid="img-user-avatar"
+                  />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary font-bold font-display" data-testid="text-user-initial">
+                    {user?.username?.[0]?.toUpperCase() || "?"}
+                  </div>
+                )}
             </div>
         </header>
 

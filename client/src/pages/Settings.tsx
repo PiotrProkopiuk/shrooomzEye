@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,13 +9,32 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Save, ShieldAlert, Bell, Server, Webhook, TestTube2, CheckCircle, XCircle } from "lucide-react";
+import {
+  Save,
+  ShieldAlert,
+  Bell,
+  Server,
+  Webhook,
+  TestTube2,
+  CheckCircle,
+  XCircle,
+  Link2,
+  Copy,
+  Trash2,
+  Crown,
+  CreditCard,
+  UserCog,
+  Users,
+} from "lucide-react";
 
 interface Guild {
   id: number;
   name: string;
   isEnemy: boolean;
+  subscriptionStatus?: string;
+  subscriptionExpiresAt?: string;
 }
 
 interface DeathTrackerConfig {
@@ -29,9 +49,35 @@ interface DeathTrackerConfig {
   notifyEnemyGuildDeaths: boolean;
 }
 
+interface GuildInvite {
+  id: number;
+  token: string;
+  guildId: number;
+  role: string;
+  expiresAt: string | null;
+  createdAt: string;
+}
+
+interface GuildMember {
+  id: number;
+  guildId: number;
+  userId: number;
+  role: string;
+  user?: { id: number; username: string; discordId: string };
+}
+
+interface PaymentData {
+  id: number;
+  amountTibiaCoins: number;
+  characterNameUsedForPayment: string;
+  status: string;
+  createdAt: string;
+}
+
 export default function Settings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user, activeGuild } = useAuth();
   
   const [selectedGuildId, setSelectedGuildId] = useState<number | null>(null);
   const [mainWebhookUrl, setMainWebhookUrl] = useState("");
@@ -40,28 +86,57 @@ export default function Settings() {
   const [notifyMainDeaths, setNotifyMainDeaths] = useState(true);
   const [notifyEnemyDeaths, setNotifyEnemyDeaths] = useState(true);
   const [enabled, setEnabled] = useState(true);
+
+  const [inviteRole, setInviteRole] = useState("MEMBER");
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentCharName, setPaymentCharName] = useState("");
+  const [transferUserId, setTransferUserId] = useState("");
   
   const { data: guilds = [] } = useQuery<Guild[]>({
     queryKey: ["/api/guilds"],
   });
   
   const mainGuild = guilds.find(g => !g.isEnemy);
+  const currentGuildId = selectedGuildId || activeGuild?.guildId || mainGuild?.id;
+  const currentGuild = guilds.find(g => g.id === currentGuildId);
   
   const { data: config } = useQuery<DeathTrackerConfig | null>({
-    queryKey: ["/api/death-tracker/config", selectedGuildId],
+    queryKey: ["/api/death-tracker/config", currentGuildId],
     queryFn: async () => {
-      if (!selectedGuildId) return null;
-      const res = await apiRequest("GET", `/api/death-tracker/config/${selectedGuildId}`);
+      if (!currentGuildId) return null;
+      const res = await apiRequest("GET", `/api/death-tracker/config/${currentGuildId}`);
       return res.json();
     },
-    enabled: !!selectedGuildId,
+    enabled: !!currentGuildId,
+  });
+
+  const { data: invites = [] } = useQuery<GuildInvite[]>({
+    queryKey: ["/api/guilds", currentGuildId, "invites"],
+    queryFn: async () => {
+      if (!currentGuildId) return [];
+      const res = await apiRequest("GET", `/api/guilds/${currentGuildId}/invites`);
+      return res.json();
+    },
+    enabled: !!currentGuildId,
+  });
+
+  const { data: payments = [] } = useQuery<PaymentData[]>({
+    queryKey: ["/api/guilds", currentGuildId, "payments"],
+    queryFn: async () => {
+      if (!currentGuildId) return [];
+      const res = await apiRequest("GET", `/api/guilds/${currentGuildId}/payments`);
+      return res.json();
+    },
+    enabled: !!currentGuildId,
   });
   
   useEffect(() => {
-    if (mainGuild && !selectedGuildId) {
+    if (activeGuild && !selectedGuildId) {
+      setSelectedGuildId(activeGuild.guildId);
+    } else if (mainGuild && !selectedGuildId) {
       setSelectedGuildId(mainGuild.id);
     }
-  }, [mainGuild, selectedGuildId]);
+  }, [mainGuild, activeGuild, selectedGuildId]);
   
   useEffect(() => {
     if (config) {
@@ -76,7 +151,7 @@ export default function Settings() {
   
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", `/api/death-tracker/config/${selectedGuildId}`, {
+      const res = await apiRequest("POST", `/api/death-tracker/config/${currentGuildId}`, {
         mainGuildWebhookUrl: mainWebhookUrl || null,
         enemyGuildWebhookUrl: enemyWebhookUrl || null,
         membershipWebhookUrl: membershipWebhookUrl || null,
@@ -89,17 +164,10 @@ export default function Settings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/death-tracker/config"] });
-      toast({
-        title: "Saved",
-        description: "Webhook configuration has been saved.",
-      });
+      toast({ title: "Saved", description: "Webhook configuration has been saved." });
     },
     onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to save configuration.",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to save configuration.", variant: "destructive" });
     },
   });
   
@@ -110,7 +178,7 @@ export default function Settings() {
     },
     onSuccess: async (data) => {
       if (data.success) {
-        await apiRequest("POST", `/api/death-tracker/config/${selectedGuildId}`, {
+        await apiRequest("POST", `/api/death-tracker/config/${currentGuildId}`, {
           mainGuildWebhookUrl: mainWebhookUrl || null,
           enemyGuildWebhookUrl: enemyWebhookUrl || null,
           membershipWebhookUrl: membershipWebhookUrl || null,
@@ -120,26 +188,81 @@ export default function Settings() {
           discordServerId: "default",
         });
         queryClient.invalidateQueries({ queryKey: ["/api/death-tracker/config"] });
-        toast({
-          title: "Test successful",
-          description: "Webhook tested and configuration saved.",
-        });
+        toast({ title: "Test successful", description: "Webhook tested and configuration saved." });
       } else {
-        toast({
-          title: "Test failed",
-          description: data.message || "Failed to send message. Check the webhook URL.",
-          variant: "destructive",
-        });
+        toast({ title: "Test failed", description: data.message || "Failed to send message.", variant: "destructive" });
       }
     },
   });
+
+  const createInviteMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", `/api/guilds/${currentGuildId}/invites`, { role: inviteRole });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/guilds", currentGuildId, "invites"] });
+      toast({ title: "Invite created", description: "Share the invite link with your team." });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const deleteInviteMutation = useMutation({
+    mutationFn: async (inviteId: number) => {
+      await apiRequest("DELETE", `/api/guilds/${currentGuildId}/invites/${inviteId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/guilds", currentGuildId, "invites"] });
+      toast({ title: "Invite deleted" });
+    },
+  });
+
+  const paymentMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", `/api/guilds/${currentGuildId}/payment-request`, {
+        amountTibiaCoins: parseInt(paymentAmount),
+        characterNameUsedForPayment: paymentCharName,
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/guilds", currentGuildId, "payments"] });
+      setPaymentAmount("");
+      setPaymentCharName("");
+      toast({ title: "Payment request submitted", description: "An admin will review your payment." });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const transferMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", `/api/guilds/${currentGuildId}/transfer`, { newOwnerId: parseInt(transferUserId) });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      toast({ title: "Ownership transferred", description: "You are now Vice Leader." });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const copyInviteLink = (token: string) => {
+    const url = `${window.location.origin}/invite/${token}`;
+    navigator.clipboard.writeText(url);
+    toast({ title: "Copied!", description: "Invite link copied to clipboard." });
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-display font-bold text-foreground">Server Configuration</h1>
-          <p className="text-muted-foreground">Manage guild settings and Discord notifications.</p>
+          <p className="text-muted-foreground">Manage guild settings, invites, and Discord notifications.</p>
         </div>
         <Button 
           className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
@@ -154,7 +277,159 @@ export default function Settings() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
-          
+
+          <Card className="bg-card/50 border-blue-500/20 border">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-blue-400">
+                  <Link2 className="h-5 w-5" />
+                  Guild Invites
+                </CardTitle>
+                <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20">
+                  {invites.length} active
+                </Badge>
+              </div>
+              <CardDescription>
+                Create invite links to let others join your guild dashboard.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Select value={inviteRole} onValueChange={setInviteRole}>
+                  <SelectTrigger className="w-40" data-testid="select-invite-role">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="MEMBER">Member</SelectItem>
+                    <SelectItem value="OFFICER">Officer</SelectItem>
+                    <SelectItem value="VICE_LEADER">Vice Leader</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  onClick={() => createInviteMutation.mutate()}
+                  disabled={createInviteMutation.isPending}
+                  className="gap-2"
+                  data-testid="button-create-invite"
+                >
+                  <Link2 className="h-4 w-4" />
+                  Create Invite
+                </Button>
+              </div>
+
+              {invites.length > 0 && (
+                <div className="space-y-2">
+                  {invites.map((invite) => (
+                    <div key={invite.id} className="flex items-center justify-between p-3 rounded bg-background/30 border border-white/5" data-testid={`row-invite-${invite.id}`}>
+                      <div className="flex items-center gap-3">
+                        <code className="text-xs text-muted-foreground font-mono">{invite.token.substring(0, 12)}...</code>
+                        <Badge variant="outline" className="text-[10px]">{invite.role}</Badge>
+                        {invite.expiresAt && (
+                          <span className="text-[10px] text-muted-foreground">
+                            Expires: {new Date(invite.expiresAt).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => copyInviteLink(invite.token)} data-testid={`button-copy-invite-${invite.id}`}>
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteInviteMutation.mutate(invite.id)} data-testid={`button-delete-invite-${invite.id}`}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card/50 border-yellow-500/20 border">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-yellow-400">
+                  <Crown className="h-5 w-5" />
+                  Subscription & Payment
+                </CardTitle>
+                <Badge className={`${currentGuild?.subscriptionStatus === "PREMIUM" ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" : "bg-muted text-muted-foreground"}`}>
+                  {currentGuild?.subscriptionStatus || "FREE"}
+                </Badge>
+              </div>
+              <CardDescription>
+                Manage your guild's subscription plan. Pay with Tibia Coins.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {currentGuild?.subscriptionExpiresAt && (
+                <div className="p-3 rounded bg-background/30 border border-white/5">
+                  <span className="text-xs text-muted-foreground">
+                    Expires: {new Date(currentGuild.subscriptionExpiresAt).toLocaleDateString()}
+                  </span>
+                </div>
+              )}
+
+              <div className="space-y-3 p-4 rounded bg-background/30 border border-white/5">
+                <h4 className="text-sm font-medium flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-yellow-400" />
+                  Request Subscription
+                </h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Amount (TC)</Label>
+                    <Input
+                      type="number"
+                      placeholder="250"
+                      value={paymentAmount}
+                      onChange={(e) => setPaymentAmount(e.target.value)}
+                      className="bg-background/50 border-white/10"
+                      data-testid="input-payment-amount"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Character Name</Label>
+                    <Input
+                      placeholder="Your character"
+                      value={paymentCharName}
+                      onChange={(e) => setPaymentCharName(e.target.value)}
+                      className="bg-background/50 border-white/10"
+                      data-testid="input-payment-char"
+                    />
+                  </div>
+                </div>
+                <Button
+                  onClick={() => paymentMutation.mutate()}
+                  disabled={!paymentAmount || !paymentCharName || paymentMutation.isPending}
+                  className="w-full gap-2"
+                  data-testid="button-submit-payment"
+                >
+                  <CreditCard className="h-4 w-4" />
+                  {paymentMutation.isPending ? "Submitting..." : "Submit Payment Request"}
+                </Button>
+              </div>
+
+              {payments.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase">Payment History</h4>
+                  {payments.map((p) => (
+                    <div key={p.id} className="flex items-center justify-between p-2 rounded bg-background/20 border border-white/5" data-testid={`row-payment-history-${p.id}`}>
+                      <div className="text-xs">
+                        <span className="font-medium">{p.amountTibiaCoins} TC</span>
+                        <span className="text-muted-foreground ml-2">via {p.characterNameUsedForPayment}</span>
+                      </div>
+                      <Badge variant="outline" className={`text-[10px] ${
+                        p.status === "PENDING" ? "border-yellow-500 text-yellow-400" :
+                        p.status === "CONFIRMED" ? "border-emerald-500 text-emerald-400" :
+                        "border-red-500 text-red-400"
+                      }`}>
+                        {p.status}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           <Card className="bg-card/50 border-indigo-500/20 border">
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -329,9 +604,6 @@ export default function Settings() {
                   <li>Click <strong>"Copy Webhook URL"</strong></li>
                   <li>Paste the URL in the field above and click <strong>"Save Configuration"</strong></li>
                 </ol>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Tip: You can use two different channels - one for your guild deaths and another for enemy kills.
-                </p>
               </div>
             </CardContent>
           </Card>
@@ -417,6 +689,41 @@ export default function Settings() {
                   <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20">Using Death Webhook</Badge>
                 )}
               </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card/50 border-orange-500/20 border">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base text-orange-400">
+                <UserCog className="h-4 w-4" />
+                Ownership Transfer
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Transfer guild ownership to another member. You will become Vice Leader.
+              </p>
+              <div className="space-y-2">
+                <Label className="text-xs">New Owner User ID</Label>
+                <Input
+                  type="number"
+                  placeholder="User ID"
+                  value={transferUserId}
+                  onChange={(e) => setTransferUserId(e.target.value)}
+                  className="bg-background/50 border-white/10 text-xs"
+                  data-testid="input-transfer-user-id"
+                />
+              </div>
+              <Button
+                variant="outline"
+                className="w-full text-xs border-orange-500/30 text-orange-400 hover:bg-orange-500/10"
+                size="sm"
+                disabled={!transferUserId || transferMutation.isPending}
+                onClick={() => transferMutation.mutate()}
+                data-testid="button-transfer-ownership"
+              >
+                Transfer Ownership
+              </Button>
             </CardContent>
           </Card>
 

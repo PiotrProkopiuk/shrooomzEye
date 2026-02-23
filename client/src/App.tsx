@@ -3,6 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider, useAuth } from "@/lib/auth";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/Layout";
 import Dashboard from "@/pages/Dashboard";
@@ -19,41 +20,37 @@ import OnlineActivity from "@/pages/OnlineActivity";
 import LevelProgress from "@/pages/LevelProgress";
 import CharacterProfile from "@/pages/CharacterProfile";
 import GuildChanges from "@/pages/GuildChanges";
-import { useEffect, useState } from "react";
+import Admin from "@/pages/Admin";
+import InviteAccept from "@/pages/InviteAccept";
+import { useEffect } from "react";
 
 function Router() {
   const [location, setLocation] = useLocation();
-  const [isAuthenticated, setIsAuthenticated] = useState(() => localStorage.getItem("mock_auth") === "true");
+  const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
-    const checkAuth = () => {
-      const auth = localStorage.getItem("mock_auth") === "true";
-      setIsAuthenticated(auth);
-    };
-    
-    // Check auth on every location change
-    checkAuth();
-    
-    window.addEventListener('storage', checkAuth);
-    const interval = setInterval(checkAuth, 1000);
-    
-    return () => {
-      window.removeEventListener('storage', checkAuth);
-      clearInterval(interval);
-    };
-  }, [location]);
-
-  useEffect(() => {
-    if (!isAuthenticated && location !== "/login") {
+    if (!isLoading && !isAuthenticated && location !== "/login" && !location.startsWith("/invite/")) {
       setLocation("/login");
     }
-  }, [isAuthenticated, location, setLocation]);
+  }, [isAuthenticated, isLoading, location, setLocation]);
 
-  if (!isAuthenticated && location !== "/login") {
-    return null; // Prevent flicker
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
   }
 
-  if (location === "/login") {
+  if (location.startsWith("/invite/")) {
+    return (
+      <Switch>
+        <Route path="/invite/:token" component={InviteAccept} />
+      </Switch>
+    );
+  }
+
+  if (!isAuthenticated) {
     return <Login />;
   }
 
@@ -73,6 +70,7 @@ function Router() {
         <Route path="/levels" component={LevelProgress} />
         <Route path="/guild-changes" component={GuildChanges} />
         <Route path="/character/:name" component={CharacterProfile} />
+        <Route path="/admin" component={Admin} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
@@ -83,8 +81,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Router />
+        <AuthProvider>
+          <Toaster />
+          <Router />
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

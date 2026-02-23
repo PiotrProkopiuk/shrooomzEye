@@ -3,8 +3,10 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import crypto from "crypto";
 import { storage } from "./storage";
+import { db } from "./db";
+import { guildUsers, guilds, referrals, users } from "@shared/schema";
+import { eq, and } from "drizzle-orm";
 
-// Extend session to include user and oauth state
 declare module "express-session" {
   interface SessionData {
     user?: {
@@ -12,8 +14,9 @@ declare module "express-session" {
       discordId: string;
       username: string;
       avatar: string | null;
-      role: string;
+      globalRole: string;
     };
+    activeGuildId?: number;
     oauthState?: string;
   }
 }
@@ -32,10 +35,13 @@ function getRedirectUri() {
 const DISCORD_REDIRECT_URI = getRedirectUri();
 console.log(`[Auth] Discord redirect URI: ${DISCORD_REDIRECT_URI}`);
 
-// Require SESSION_SECRET in production
 const SESSION_SECRET = process.env.SESSION_SECRET || (process.env.NODE_ENV === "production" 
   ? (() => { throw new Error("SESSION_SECRET must be set in production"); })()
   : "dev-tibia-bot-secret-key");
+
+function generateReferralCode(): string {
+  return crypto.randomBytes(4).toString("hex").toUpperCase();
+}
 
 export function setupAuth(app: Express) {
   const PgStore = connectPgSimple(session);
@@ -47,7 +53,7 @@ export function setupAuth(app: Express) {
     cookie: {
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     },
   };
 
@@ -64,27 +70,32 @@ export function setupAuth(app: Express) {
 
   app.use(session(sessionConfig));
 
-  // Discord OAuth2 Login with CSRF protection
   app.get("/api/auth/discord", (req, res) => {
     const state = crypto.randomBytes(16).toString("hex");
     req.session.oauthState = state;
+    
+    const ref = req.query.ref as string | undefined;
+    const stateData = ref ? `${state}:ref:${ref}` : state;
     
     const params = new URLSearchParams({
       client_id: DISCORD_CLIENT_ID,
       redirect_uri: DISCORD_REDIRECT_URI,
       response_type: "code",
       scope: "identify guilds",
-      state,
+      state: stateData,
     });
     res.redirect(`https://discord.com/api/oauth2/authorize?${params}`);
   });
 
-  // Discord OAuth2 Callback with CSRF validation
   app.get("/api/auth/discord/callback", async (req, res) => {
     const { code, state } = req.query;
     
-    // Validate CSRF state
-    if (!state || state !== req.session.oauthState) {
+    const stateStr = state as string;
+    const [actualState, , refCode] = stateStr?.includes(":ref:") 
+      ? stateStr.split(":ref:").flatMap((s, i) => i === 0 ? [s, "ref"] : [s])
+      : [stateStr, undefined, undefined];
+    
+    if (!actualState || actualState !== req.session.oauthState) {
       return res.redirect("/login?error=invalid_state");
     }
     delete req.session.oauthState;
@@ -92,7 +103,6 @@ export function setupAuth(app: Express) {
     if (!code) return res.redirect("/login?error=no_code");
 
     try {
-      // Exchange code for token
       const tokenRes = await fetch("https://discord.com/api/oauth2/token", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -110,14 +120,14 @@ export function setupAuth(app: Express) {
         return res.redirect("/login?error=token_failed");
       }
 
-      // Get user info
       const userRes = await fetch("https://discord.com/api/users/@me", {
         headers: { Authorization: `Bearer ${tokenData.access_token}` },
       });
       const discordUser = await userRes.json();
 
-      // Find or create user
       let user = await storage.getUserByDiscordId(discordUser.id);
+      const isNewUser = !user;
+      
       if (!user) {
         user = await storage.createUser({
           discordId: discordUser.id,
@@ -125,18 +135,47 @@ export function setupAuth(app: Express) {
           avatar: discordUser.avatar 
             ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`
             : null,
-          role: "USER",
+          globalRole: "USER",
+          referralCode: generateReferralCode(),
         });
+        
+        if (refCode && user) {
+          const [referrer] = await db.select().from(users)
+            .where(eq(users.referralCode, refCode));
+          if (referrer && referrer.id !== user.id) {
+            await db.insert(referrals).values({
+              referrerUserId: referrer.id,
+              referredUserId: user.id,
+              rewardApplied: false,
+            });
+          }
+        }
+      } else {
+        await db.update(users).set({
+          username: discordUser.username,
+          avatar: discordUser.avatar 
+            ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`
+            : null,
+        }).where(eq(users.id, user.id));
       }
 
-      // Store in session
+      if (user.blocked) {
+        return res.redirect("/login?error=blocked");
+      }
+
       req.session.user = {
         id: user.id,
         discordId: user.discordId,
         username: user.username,
         avatar: user.avatar,
-        role: user.role || "USER",
+        globalRole: user.globalRole || "USER",
       };
+
+      const userGuilds = await db.select({ guildId: guildUsers.guildId })
+        .from(guildUsers).where(eq(guildUsers.userId, user.id));
+      if (userGuilds.length > 0) {
+        req.session.activeGuildId = userGuilds[0].guildId;
+      }
 
       res.redirect("/");
     } catch (error) {
@@ -145,52 +184,111 @@ export function setupAuth(app: Express) {
     }
   });
 
-  // Get current user
-  app.get("/api/auth/me", (req, res) => {
+  app.get("/api/auth/me", async (req, res) => {
     if (req.session.user) {
-      res.json(req.session.user);
+      const userGuilds = await db.select({
+        guildId: guildUsers.guildId,
+        role: guildUsers.role,
+        guildName: guilds.name,
+        guildServer: guilds.server,
+        subscriptionStatus: guilds.subscriptionStatus,
+      })
+        .from(guildUsers)
+        .innerJoin(guilds, eq(guildUsers.guildId, guilds.id))
+        .where(eq(guildUsers.userId, req.session.user.id));
+
+      res.json({
+        ...req.session.user,
+        activeGuildId: req.session.activeGuildId || null,
+        guilds: userGuilds,
+      });
     } else {
       res.status(401).json({ error: "Not authenticated" });
     }
   });
 
-  // Logout
+  app.post("/api/auth/select-guild", requireAuth, async (req, res) => {
+    const { guildId } = req.body;
+    if (!guildId) return res.status(400).json({ error: "guildId required" });
+
+    const [membership] = await db.select().from(guildUsers)
+      .where(and(
+        eq(guildUsers.userId, req.session.user!.id),
+        eq(guildUsers.guildId, guildId)
+      ));
+
+    if (!membership && req.session.user!.globalRole !== "ADMIN") {
+      return res.status(403).json({ error: "Not a member of this guild" });
+    }
+
+    req.session.activeGuildId = guildId;
+    res.json({ success: true, activeGuildId: guildId });
+  });
+
   app.post("/api/auth/logout", (req, res) => {
     req.session.destroy((err) => {
       if (err) return res.status(500).json({ error: "Logout failed" });
       res.json({ success: true });
     });
   });
+
+  app.post("/api/auth/demo", async (req, res) => {
+    const { password } = req.body;
+    if (password !== "Codex123!") {
+      return res.status(401).json({ error: "Invalid demo password" });
+    }
+
+    let demoUser = await storage.getUserByDiscordId("demo");
+    if (!demoUser) {
+      demoUser = await storage.createUser({
+        discordId: "demo",
+        username: "Demo User",
+        avatar: null,
+        globalRole: "ADMIN",
+        referralCode: "DEMO0000",
+      });
+    }
+
+    req.session.user = {
+      id: demoUser.id,
+      discordId: demoUser.discordId,
+      username: demoUser.username,
+      avatar: demoUser.avatar,
+      globalRole: demoUser.globalRole || "ADMIN",
+    };
+
+    const userGuilds = await db.select({ guildId: guildUsers.guildId })
+      .from(guildUsers).where(eq(guildUsers.userId, demoUser.id));
+    if (userGuilds.length > 0) {
+      req.session.activeGuildId = userGuilds[0].guildId;
+    }
+
+    res.json({ success: true });
+  });
 }
 
-// Auth middleware
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
-  // Support demo mode for development
-  if (req.headers["x-demo-mode"] === "true" || req.query.demo === "true") {
-    req.session.user = {
-      id: 0,
-      discordId: "demo",
-      username: "Demo User",
-      avatar: null,
-      role: "ADMIN",
-    };
-  }
-  
   if (!req.session.user) {
     return res.status(401).json({ error: "Authentication required" });
+  }
+  if (req.session.user.globalRole === "ADMIN") {
+    return next();
   }
   next();
 }
 
-// Role-based access
-export function requireRole(...roles: string[]) {
+export function requireGlobalRole(...roles: string[]) {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.session.user) {
       return res.status(401).json({ error: "Authentication required" });
     }
-    if (!roles.includes(req.session.user.role)) {
+    if (!roles.includes(req.session.user.globalRole)) {
       return res.status(403).json({ error: "Insufficient permissions" });
     }
     next();
   };
+}
+
+export function requireRole(...roles: string[]) {
+  return requireGlobalRole(...roles);
 }

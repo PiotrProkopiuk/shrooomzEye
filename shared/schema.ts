@@ -8,7 +8,9 @@ export const users = pgTable("users", {
   discordId: text("discord_id").notNull().unique(),
   username: text("username").notNull(),
   avatar: text("avatar"),
-  role: text("role").default("USER"), // 'ADMIN', 'MODERATOR', 'USER'
+  globalRole: text("global_role").default("USER"),
+  referralCode: text("referral_code").unique(),
+  blocked: boolean("blocked").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -16,17 +18,62 @@ export const users = pgTable("users", {
 export const guilds = pgTable("guilds", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  server: text("server").notNull(), // Tibia server (e.g., Antica)
+  server: text("server").notNull(),
   description: text("description"),
   formationDate: text("formation_date"),
   totalExp: text("total_exp"),
   guildPower: integer("guild_power").default(0),
-  guildType: text("guild_type").default("main"), // 'main', 'ally', 'enemy'
-  isEnemy: boolean("is_enemy").default(false), // deprecated, use guildType
+  guildType: text("guild_type").default("main"),
+  isEnemy: boolean("is_enemy").default(false),
   verified: boolean("verified").default(false),
   verificationCode: text("verification_code"),
   verifiedAt: timestamp("verified_at"),
   discordServerId: text("discord_server_id"),
+  ownerId: integer("owner_id").references(() => users.id),
+  subscriptionStatus: text("subscription_status").default("FREE"),
+  subscriptionExpiresAt: timestamp("subscription_expires_at"),
+});
+
+// Guild Users - multi-tenant membership & roles
+export const guildUsers = pgTable("guild_users", {
+  id: serial("id").primaryKey(),
+  guildId: integer("guild_id").references(() => guilds.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  role: text("role").notNull().default("MEMBER"),
+  permissions: jsonb("permissions"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Guild Invites
+export const guildInvites = pgTable("guild_invites", {
+  id: serial("id").primaryKey(),
+  token: text("token").notNull().unique(),
+  guildId: integer("guild_id").references(() => guilds.id).notNull(),
+  role: text("role").notNull().default("MEMBER"),
+  expiresAt: timestamp("expires_at"),
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Payment Requests (Tibia Coin subscription model)
+export const paymentRequests = pgTable("payment_requests", {
+  id: serial("id").primaryKey(),
+  guildId: integer("guild_id").references(() => guilds.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  amountTibiaCoins: integer("amount_tibia_coins").notNull(),
+  characterNameUsedForPayment: text("character_name_used_for_payment").notNull(),
+  status: text("status").notNull().default("PENDING"),
+  createdAt: timestamp("created_at").defaultNow(),
+  confirmedAt: timestamp("confirmed_at"),
+});
+
+// Referrals
+export const referrals = pgTable("referrals", {
+  id: serial("id").primaryKey(),
+  referrerUserId: integer("referrer_user_id").references(() => users.id).notNull(),
+  referredUserId: integer("referred_user_id").references(() => users.id).notNull(),
+  rewardApplied: boolean("reward_applied").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Characters/Players table
@@ -37,7 +84,7 @@ export const players = pgTable("players", {
   vocation: text("vocation").notNull(),
   exp: text("exp"),
   guildId: integer("guild_id").references(() => guilds.id),
-  guildType: text("guild_type").default("main"), // 'main', 'ally', 'enemy'
+  guildType: text("guild_type").default("main"),
   rank: text("rank"),
   online: boolean("online").default(false),
   lastScan: timestamp("last_scan").defaultNow(),
@@ -46,7 +93,7 @@ export const players = pgTable("players", {
   expGained: text("exp_gained"),
 });
 
-// Deaths/PvP Tracking (Enhanced for Death Tracker)
+// Deaths/PvP Tracking
 export const deaths = pgTable("deaths", {
   id: serial("id").primaryKey(),
   characterId: integer("character_id").references(() => players.id),
@@ -57,12 +104,12 @@ export const deaths = pgTable("deaths", {
   killerGuild: text("killer_guild"),
   killerGuildId: integer("killer_guild_id").references(() => guilds.id),
   victimGuildId: integer("victim_guild_id").references(() => guilds.id),
-  victimGuildType: text("victim_guild_type"), // 'main' or 'enemy'
+  victimGuildType: text("victim_guild_type"),
   isPvp: boolean("is_pvp").default(false),
   occurredAt: timestamp("occurred_at"),
   createdAt: timestamp("created_at").defaultNow(),
   notified: boolean("notified").default(false),
-  deathHash: text("death_hash").unique(), // For duplicate detection
+  deathHash: text("death_hash").unique(),
   description: text("description"),
 });
 
@@ -100,14 +147,14 @@ export const pvpLogs = pgTable("pvp_logs", {
 export const events = pgTable("events", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
-  type: text("type").notNull(), // 'quest', 'boss'
+  type: text("type").notNull(),
   templateId: integer("template_id").references(() => templates.id),
   maxParticipants: integer("max_participants"),
   currentParticipants: integer("current_participants").default(0),
   startTime: timestamp("start_time"),
   guildId: integer("guild_id").references(() => guilds.id),
   discordRoleId: text("discord_role_id"),
-  status: text("status").default("open"), // 'open', 'full', 'completed', 'cancelled'
+  status: text("status").default("open"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -125,9 +172,10 @@ export const templates = pgTable("templates", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
-  type: text("type").notNull(), // 'quest', 'boss'
+  type: text("type").notNull(),
   defaultMaxParticipants: integer("default_max_participants"),
   requirements: jsonb("requirements"),
+  guildId: integer("guild_id").references(() => guilds.id),
 });
 
 // PvP Action Config
@@ -135,7 +183,7 @@ export const pvpActionConfig = pgTable("pvp_action_config", {
   id: serial("id").primaryKey(),
   guildId: integer("guild_id").references(() => guilds.id),
   commandAlias: text("command_alias").default("/pvp_action"),
-  excludedChannels: jsonb("excluded_channels"), // Array of channel IDs
+  excludedChannels: jsonb("excluded_channels"),
   targetChannelId: text("target_channel_id"),
 });
 
@@ -148,7 +196,7 @@ export const scanCache = pgTable("scan_cache", {
   expiresAt: timestamp("expires_at"),
 });
 
-// Online Snapshots - stores every scrape result for analytics
+// Online Snapshots
 export const onlineSnapshots = pgTable("online_snapshots", {
   id: serial("id").primaryKey(),
   characterName: text("character_name").notNull(),
@@ -159,7 +207,7 @@ export const onlineSnapshots = pgTable("online_snapshots", {
   checkedAt: timestamp("checked_at").defaultNow(),
 });
 
-// Online Sessions - derived from snapshots (login/logout detection)
+// Online Sessions
 export const onlineSessions = pgTable("online_sessions", {
   id: serial("id").primaryKey(),
   characterName: text("character_name").notNull(),
@@ -170,7 +218,7 @@ export const onlineSessions = pgTable("online_sessions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Online Characters Cache - current online status (updated each scrape)
+// Online Characters Cache
 export const onlineCharacters = pgTable("online_characters", {
   id: serial("id").primaryKey(),
   characterName: text("character_name").notNull().unique(),
@@ -180,7 +228,7 @@ export const onlineCharacters = pgTable("online_characters", {
   lastSeen: timestamp("last_seen").defaultNow(),
   isCurrentlyOnline: boolean("is_currently_online").default(true),
   guildName: text("guild_name"),
-  isTrackedGuild: boolean("is_tracked_guild").default(false), // main or enemy guild
+  isTrackedGuild: boolean("is_tracked_guild").default(false),
 });
 
 // TibSpy Scraper - Character enrichment data
@@ -190,16 +238,16 @@ export const tibspyCharacterData = pgTable("tibspy_character_data", {
   playerId: integer("player_id").references(() => players.id),
   lastScrapedAt: timestamp("last_scraped_at"),
   scrapeCount: integer("scrape_count").default(0),
-  priority: text("priority").default("normal"), // 'high', 'normal', 'low'
-  data: jsonb("data"), // Raw TibSpy response data
+  priority: text("priority").default("normal"),
+  data: jsonb("data"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// TibSpy Daily Scrape Logs - Track daily metrics
+// TibSpy Daily Scrape Logs
 export const tibspyScrapeLogs = pgTable("tibspy_scrape_logs", {
   id: serial("id").primaryKey(),
-  date: text("date").notNull().unique(), // YYYY-MM-DD format
+  date: text("date").notNull().unique(),
   totalAttempts: integer("total_attempts").default(0),
   successfulScrapes: integer("successful_scrapes").default(0),
   skippedCooldown: integer("skipped_cooldown").default(0),
@@ -210,7 +258,7 @@ export const tibspyScrapeLogs = pgTable("tibspy_scrape_logs", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// TibSpy Config - Configurable parameters
+// TibSpy Config
 export const tibspyConfig = pgTable("tibspy_config", {
   id: serial("id").primaryKey(),
   key: text("key").notNull().unique(),
@@ -237,14 +285,18 @@ export const guildMembershipEvents = pgTable("guild_membership_events", {
   id: serial("id").primaryKey(),
   guildId: integer("guild_id").references(() => guilds.id).notNull(),
   characterName: text("character_name").notNull(),
-  eventType: text("event_type").notNull(), // 'JOINED' or 'LEFT'
+  eventType: text("event_type").notNull(),
   detectedAt: timestamp("detected_at").defaultNow(),
   notified: boolean("notified").default(false),
 });
 
-// Insert Schemas
+// ============ INSERT SCHEMAS ============
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
 export const insertGuildSchema = createInsertSchema(guilds).omit({ id: true });
+export const insertGuildUserSchema = createInsertSchema(guildUsers).omit({ id: true, createdAt: true });
+export const insertGuildInviteSchema = createInsertSchema(guildInvites).omit({ id: true, createdAt: true });
+export const insertPaymentRequestSchema = createInsertSchema(paymentRequests).omit({ id: true, createdAt: true, confirmedAt: true });
+export const insertReferralSchema = createInsertSchema(referrals).omit({ id: true, createdAt: true });
 export const insertPlayerSchema = createInsertSchema(players).omit({ id: true });
 export const insertDeathSchema = createInsertSchema(deaths).omit({ id: true, createdAt: true });
 export const insertPvpLogSchema = createInsertSchema(pvpLogs).omit({ id: true });
@@ -262,11 +314,19 @@ export const insertTibspyConfigSchema = createInsertSchema(tibspyConfig).omit({ 
 export const insertGuildMemberSchema = createInsertSchema(guildMembers).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertGuildMembershipEventSchema = createInsertSchema(guildMembershipEvents).omit({ id: true, detectedAt: true });
 
-// Types
+// ============ TYPES ============
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Guild = typeof guilds.$inferSelect;
 export type InsertGuild = z.infer<typeof insertGuildSchema>;
+export type GuildUser = typeof guildUsers.$inferSelect;
+export type InsertGuildUser = z.infer<typeof insertGuildUserSchema>;
+export type GuildInvite = typeof guildInvites.$inferSelect;
+export type InsertGuildInvite = z.infer<typeof insertGuildInviteSchema>;
+export type PaymentRequest = typeof paymentRequests.$inferSelect;
+export type InsertPaymentRequest = z.infer<typeof insertPaymentRequestSchema>;
+export type Referral = typeof referrals.$inferSelect;
+export type InsertReferral = z.infer<typeof insertReferralSchema>;
 export type Player = typeof players.$inferSelect;
 export type InsertPlayer = z.infer<typeof insertPlayerSchema>;
 export type Death = typeof deaths.$inferSelect;

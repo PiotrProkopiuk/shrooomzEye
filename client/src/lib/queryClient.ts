@@ -7,18 +7,12 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-function getDemoHeaders(): Record<string, string> {
-  const isDemoMode = localStorage.getItem("mock_auth") === "true";
-  return isDemoMode ? { "X-Demo-Mode": "true" } : {};
-}
-
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
   const headers: Record<string, string> = {
-    ...getDemoHeaders(),
     ...(data ? { "Content-Type": "application/json" } : {}),
   };
   
@@ -41,7 +35,6 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     const res = await fetch(queryKey.join("/") as string, {
       credentials: "include",
-      headers: getDemoHeaders(),
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {

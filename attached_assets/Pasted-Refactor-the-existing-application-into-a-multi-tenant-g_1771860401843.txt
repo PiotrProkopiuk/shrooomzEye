@@ -1,0 +1,267 @@
+Refactor the existing application into a multi-tenant guild-based platform.
+
+Context:
+- Symfony backend
+- Existing guild tracking (levels, deaths, join/leave)
+- Discord integration already exists
+- Scheduler already runs guild sync
+- We now want:
+  - Per-user guild panels
+  - Discord login
+  - Role & permission system
+  - Manual Tibia Coin subscription handling
+  - Referral system
+  - Admin panel
+
+IMPORTANT:
+Do not break existing tracking logic.
+Refactor architecture cleanly.
+
+--------------------------------------------------
+1. AUTHENTICATION – DISCORD LOGIN (OAuth2)
+--------------------------------------------------
+
+Implement Discord OAuth2 login:
+
+User entity:
+- id
+- discord_id (unique)
+- username
+- avatar
+- global_role (USER / ADMIN)
+- referral_code (unique)
+- created_at
+
+On first login:
+- create user
+- generate referral_code automatically
+
+--------------------------------------------------
+2. MULTI-GUILD (MULTI-TENANT) ARCHITECTURE
+--------------------------------------------------
+
+Create guilds table:
+
+- id
+- name
+- server
+- owner_id (leader user id)
+- subscription_status (FREE / PREMIUM)
+- subscription_expires_at
+- created_at
+
+Create guild_users table:
+
+- id
+- guild_id
+- user_id
+- role (LEADER / VICE_LEADER / OFFICER / MEMBER)
+- permissions (JSON)
+- created_at
+
+Users can belong to multiple guilds.
+Add “Switch Guild” selector in dashboard.
+
+All existing guild tracking must become guild-scoped.
+
+--------------------------------------------------
+3. ROLE & PERMISSION SYSTEM (RBAC + granular)
+--------------------------------------------------
+
+Default roles:
+
+LEADER:
+- full access
+- manage users
+- manage payments
+- transfer ownership
+- edit permissions
+
+VICE_LEADER:
+- manage users (except leader)
+- manage tracking settings
+- manage templates
+
+OFFICER:
+- manage boss templates
+- manage quest templates
+
+MEMBER:
+- read-only
+
+Permissions JSON example:
+{
+  "manage_members": true,
+  "manage_tracking": true,
+  "manage_templates": false,
+  "manage_payments": false
+}
+
+Leader can edit permissions per user.
+
+Enforce permission checks in controllers.
+
+--------------------------------------------------
+4. INVITE SYSTEM
+--------------------------------------------------
+
+Create guild_invites table:
+
+- id
+- token (UUID)
+- guild_id
+- role
+- expires_at
+- created_by
+
+Flow:
+- Leader generates invite link
+- Link: /invite/{token}
+- User logs in via Discord
+- Assigned to guild with defined role
+
+Do not require Discord bot for invites.
+
+--------------------------------------------------
+5. OWNERSHIP TRANSFER
+--------------------------------------------------
+
+Feature: Transfer Guild Ownership
+
+- Only LEADER can initiate
+- Select VICE_LEADER
+- Confirm action
+- Update:
+    guild.owner_id = new user
+    previous leader becomes VICE_LEADER
+
+Must be atomic transaction.
+
+--------------------------------------------------
+6. SUBSCRIPTIONS (Manual Tibia Coin model)
+--------------------------------------------------
+
+Create payment_requests table:
+
+- id
+- guild_id
+- user_id
+- amount_tibia_coins
+- character_name_used_for_payment
+- status (PENDING / CONFIRMED / REJECTED)
+- created_at
+- confirmed_at
+
+Flow:
+- Leader creates subscription request
+- System sends webhook to ADMIN Discord
+- Admin manually verifies on Tibia.com
+- Admin marks as CONFIRMED
+- subscription_status = PREMIUM
+- subscription_expires_at updated
+
+If expired:
+- automatically downgrade to FREE
+
+--------------------------------------------------
+7. PLANS
+--------------------------------------------------
+
+FREE:
+- 1 guild
+- sync every 60 minutes
+- 30 days history
+- max 10 users
+- basic tracking
+
+PREMIUM:
+- sync every 15 minutes
+- unlimited history
+- unlimited users
+- boss templates
+- quest templates
+- mass movement alerts
+
+Enforce plan restrictions at service level.
+
+--------------------------------------------------
+8. REFERRAL SYSTEM
+--------------------------------------------------
+
+Create referrals table:
+
+- id
+- referrer_user_id
+- referred_user_id
+- reward_applied (boolean)
+- created_at
+
+Flow:
+- New user can enter referral code at registration
+- If referred user purchases PREMIUM:
+    extend referrer’s subscription by +7 days
+- Prevent self-referrals
+
+--------------------------------------------------
+9. ADMIN PANEL
+--------------------------------------------------
+
+Route: /admin
+
+Accessible only to global_role = ADMIN
+
+Admin capabilities:
+- view all users
+- view all guilds
+- manually activate subscription
+- confirm payment requests
+- downgrade guild
+- block user
+- view revenue metrics (TC total)
+
+Add simple dashboard summary:
+- total guilds
+- premium guilds
+- pending payments
+- total TC confirmed
+
+--------------------------------------------------
+10. DASHBOARD STRUCTURE
+--------------------------------------------------
+
+Per-guild dashboard context:
+
+- guild selector dropdown
+- tracking overview
+- guild changes
+- boss templates
+- quest templates
+- subscription status indicator
+
+Ensure full tenant isolation:
+No guild data leak across users.
+
+--------------------------------------------------
+11. SAFETY & PERFORMANCE
+--------------------------------------------------
+
+- Use database transactions for critical updates
+- Enforce indexes on foreign keys
+- Do not duplicate guild sync jobs
+- Respect subscription plan for sync frequency
+
+--------------------------------------------------
+12. DO NOT
+--------------------------------------------------
+
+- Remove existing guild tracking
+- Break join/leave detection
+- Create duplicate schedulers
+- Mix guild data across tenants
+
+Focus on:
+- scalable architecture
+- clean RBAC
+- subscription gating
+- admin control
+- long-term maintainability

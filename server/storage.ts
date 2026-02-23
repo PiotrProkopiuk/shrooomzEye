@@ -1,7 +1,12 @@
 import { 
   users, guilds, players, pvpLogs, templates, deaths, events, eventParticipants, pvpActionConfig, scanCache,
+  guildUsers, guildInvites, paymentRequests, referrals,
   type User, type InsertUser, 
   type Guild, type InsertGuild,
+  type GuildUser, type InsertGuildUser,
+  type GuildInvite, type InsertGuildInvite,
+  type PaymentRequest, type InsertPaymentRequest,
+  type Referral,
   type Player, type InsertPlayer,
   type PvpLog, type InsertPvpLog,
   type Template, type InsertTemplate,
@@ -11,7 +16,7 @@ import {
   type PvpActionConfig, type InsertPvpActionConfig
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, gte, lte, sql } from "drizzle-orm";
+import { eq, and, desc, gte, lte, sql, count } from "drizzle-orm";
 
 export interface DeathFilters {
   dateFrom?: Date;
@@ -84,6 +89,35 @@ export interface IStorage {
   // Stats
   getGuildStats(guildId: number): Promise<any>;
   getLeaderboard(guildId: number): Promise<Player[]>;
+
+  // Guild Users (multi-tenant)
+  getGuildUsers(guildId: number): Promise<GuildUser[]>;
+  getGuildUser(guildId: number, userId: number): Promise<GuildUser | undefined>;
+  addGuildUser(data: InsertGuildUser): Promise<GuildUser>;
+  updateGuildUserRole(guildId: number, userId: number, role: string): Promise<GuildUser>;
+  removeGuildUser(guildId: number, userId: number): Promise<void>;
+  getUserGuilds(userId: number): Promise<Array<GuildUser & { guild: Guild }>>;
+
+  // Guild Invites
+  createGuildInvite(data: InsertGuildInvite): Promise<GuildInvite>;
+  getGuildInvite(token: string): Promise<GuildInvite | undefined>;
+  getGuildInvites(guildId: number): Promise<GuildInvite[]>;
+  deleteGuildInvite(id: number): Promise<void>;
+
+  // Payment Requests
+  createPaymentRequest(data: InsertPaymentRequest): Promise<PaymentRequest>;
+  getPaymentRequests(guildId?: number): Promise<PaymentRequest[]>;
+  getPaymentRequest(id: number): Promise<PaymentRequest | undefined>;
+  updatePaymentRequestStatus(id: number, status: string): Promise<PaymentRequest>;
+
+  // Referrals
+  getUserReferrals(userId: number): Promise<Referral[]>;
+
+  // Admin
+  getAllUsers(): Promise<User[]>;
+  getAllGuildsAdmin(): Promise<Guild[]>;
+  updateUser(id: number, data: Partial<User>): Promise<User>;
+  getAdminMetrics(): Promise<{ totalUsers: number; totalGuilds: number; activeGuilds: number; totalPayments: number }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -103,8 +137,8 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async updateUserRole(id: number, role: string): Promise<User> {
-    const [user] = await db.update(users).set({ role }).where(eq(users.id, id)).returning();
+  async updateUserRole(id: number, globalRole: string): Promise<User> {
+    const [user] = await db.update(users).set({ globalRole }).where(eq(users.id, id)).returning();
     return user;
   }
 
@@ -383,6 +417,133 @@ export class DatabaseStorage implements IStorage {
       .where(eq(players.guildId, guildId))
       .orderBy(desc(players.level))
       .limit(20);
+  }
+
+  // Guild Users (multi-tenant)
+  async getGuildUsers(guildId: number): Promise<GuildUser[]> {
+    return await db.select().from(guildUsers).where(eq(guildUsers.guildId, guildId));
+  }
+
+  async getGuildUser(guildId: number, userId: number): Promise<GuildUser | undefined> {
+    const [gu] = await db.select().from(guildUsers)
+      .where(and(eq(guildUsers.guildId, guildId), eq(guildUsers.userId, userId)));
+    return gu;
+  }
+
+  async addGuildUser(data: InsertGuildUser): Promise<GuildUser> {
+    const [gu] = await db.insert(guildUsers).values(data).returning();
+    return gu;
+  }
+
+  async updateGuildUserRole(guildId: number, userId: number, role: string): Promise<GuildUser> {
+    const [gu] = await db.update(guildUsers)
+      .set({ role })
+      .where(and(eq(guildUsers.guildId, guildId), eq(guildUsers.userId, userId)))
+      .returning();
+    return gu;
+  }
+
+  async removeGuildUser(guildId: number, userId: number): Promise<void> {
+    await db.delete(guildUsers)
+      .where(and(eq(guildUsers.guildId, guildId), eq(guildUsers.userId, userId)));
+  }
+
+  async getUserGuilds(userId: number): Promise<Array<GuildUser & { guild: Guild }>> {
+    const rows = await db.select({
+      id: guildUsers.id,
+      guildId: guildUsers.guildId,
+      userId: guildUsers.userId,
+      role: guildUsers.role,
+      permissions: guildUsers.permissions,
+      createdAt: guildUsers.createdAt,
+      guild: guilds,
+    }).from(guildUsers)
+      .innerJoin(guilds, eq(guildUsers.guildId, guilds.id))
+      .where(eq(guildUsers.userId, userId));
+    return rows as any;
+  }
+
+  // Guild Invites
+  async createGuildInvite(data: InsertGuildInvite): Promise<GuildInvite> {
+    const [invite] = await db.insert(guildInvites).values(data).returning();
+    return invite;
+  }
+
+  async getGuildInvite(token: string): Promise<GuildInvite | undefined> {
+    const [invite] = await db.select().from(guildInvites).where(eq(guildInvites.token, token));
+    return invite;
+  }
+
+  async getGuildInvites(guildId: number): Promise<GuildInvite[]> {
+    return await db.select().from(guildInvites).where(eq(guildInvites.guildId, guildId));
+  }
+
+  async deleteGuildInvite(id: number): Promise<void> {
+    await db.delete(guildInvites).where(eq(guildInvites.id, id));
+  }
+
+  // Payment Requests
+  async createPaymentRequest(data: InsertPaymentRequest): Promise<PaymentRequest> {
+    const [pr] = await db.insert(paymentRequests).values(data).returning();
+    return pr;
+  }
+
+  async getPaymentRequests(guildId?: number): Promise<PaymentRequest[]> {
+    if (guildId) {
+      return await db.select().from(paymentRequests)
+        .where(eq(paymentRequests.guildId, guildId))
+        .orderBy(desc(paymentRequests.createdAt));
+    }
+    return await db.select().from(paymentRequests).orderBy(desc(paymentRequests.createdAt));
+  }
+
+  async getPaymentRequest(id: number): Promise<PaymentRequest | undefined> {
+    const [pr] = await db.select().from(paymentRequests).where(eq(paymentRequests.id, id));
+    return pr;
+  }
+
+  async updatePaymentRequestStatus(id: number, status: string): Promise<PaymentRequest> {
+    const updates: any = { status };
+    if (status === "CONFIRMED") {
+      updates.confirmedAt = new Date();
+    }
+    const [pr] = await db.update(paymentRequests).set(updates).where(eq(paymentRequests.id, id)).returning();
+    return pr;
+  }
+
+  // Referrals
+  async getUserReferrals(userId: number): Promise<Referral[]> {
+    return await db.select().from(referrals)
+      .where(eq(referrals.referrerUserId, userId))
+      .orderBy(desc(referrals.createdAt));
+  }
+
+  // Admin
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async getAllGuildsAdmin(): Promise<Guild[]> {
+    return await db.select().from(guilds).orderBy(desc(guilds.id));
+  }
+
+  async updateUser(id: number, data: Partial<User>): Promise<User> {
+    const [user] = await db.update(users).set(data).where(eq(users.id, id)).returning();
+    return user;
+  }
+
+  async getAdminMetrics(): Promise<{ totalUsers: number; totalGuilds: number; activeGuilds: number; totalPayments: number }> {
+    const [userCount] = await db.select({ count: sql<number>`count(*)` }).from(users);
+    const [guildCount] = await db.select({ count: sql<number>`count(*)` }).from(guilds);
+    const [activeGuildCount] = await db.select({ count: sql<number>`count(*)` }).from(guilds)
+      .where(eq(guilds.verified, true));
+    const [paymentCount] = await db.select({ count: sql<number>`count(*)` }).from(paymentRequests);
+    return {
+      totalUsers: Number(userCount.count),
+      totalGuilds: Number(guildCount.count),
+      activeGuilds: Number(activeGuildCount.count),
+      totalPayments: Number(paymentCount.count),
+    };
   }
 }
 
