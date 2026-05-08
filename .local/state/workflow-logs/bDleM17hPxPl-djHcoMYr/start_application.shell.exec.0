@@ -1,0 +1,1155 @@
+[1G[0K⠙[1G[0K
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+[1G[0K⠙[1G[0K[Auth] Discord redirect URI: https://3ba702f2-331a-44cc-a978-3828d1b81bd4-00-3sysh62zh5hi7.picard.replit.dev/api/auth/discord/callback
+[Auth] Using PostgreSQL session store
+2:25:34 PM [express] serving on port 5000
+[DeathTracker] Starting background job (offline: every 120min, online: every 5min)
+[DeathTracker] Running full death check (all guild players)...
+2:25:34 PM [express] Death tracker cron started (online: 5min, offline: 120min)
+[OnlineScraper] Starting scraper for Antica (interval: 300000ms)
+[OnlineScraper] Fetching online players from TibiaData API for Antica
+2:25:34 PM [express] Online scraper cron started (every 300 seconds)
+[GuildSync] Scheduler started (every 15 min)
+2:25:34 PM [express] Guild sync scheduler started (every 15 min)
+2:25:34 PM [express] Server save scheduler started (reset 10:00, full sync 10:15 CET)
+2:25:34 PM [express] All background jobs initialized (mode: development)
+[DeathTracker] Checking 106 players from guild Codex (main) in batches of 5
+[OnlineScraper] Fetched 490 online players from TibiaData
+[DeathTracker] New death detected: Darkness Elias killed by Aliveado Talerinha
+[DeathTracker] New death detected: Siin ed killed by Rdzawy Lep
+[DeathTracker] New death detected: Siin ed killed by Sensii Berserk
+[DeathTracker] New death detected: Darkness Elias killed by flimsy lost soul
+[DeathTracker] New death detected: Siin ed killed by Gaz'haragoth
+[DeathTracker] New death detected: Darkness Elias killed by gorger inferniarch
+[DeathTracker] New death detected: Siin ed killed by Robin Tha Hood
+[DeathTracker] New death detected: Siin ed killed by Siin ed
+[DeathTracker] New death detected: Sirath Zaor killed by blight spitter
+[DeathTracker] New death detected: Perro Elegante killed by usurper knight
+[DeathTracker] New death detected: Sirath Zaor killed by falcon paladin
+[DeathTracker] New death detected: Sirath Zaor killed by shell drake
+[DeathTracker] New death detected: Sirath Zaor killed by Urmahlullu the Tamed
+[DeathTracker] New death detected: Sirath Zaor killed by gazer spectre
+[DeathTracker] New death detected: Sirath Zaor killed by Sirath Zaor
+[DeathTracker] New death detected: Frozaa killed by trap
+[DeathTracker] New death detected: Alex Mytiessana killed by arachnophobica
+[DeathTracker] New death detected: Rolmidriel killed by Zginiesz sdkiem
+[DeathTracker] New death detected: Rolmidriel killed by Rolmidriel
+[DeathTracker] New death detected: Rolmidriel killed by glooth brigand
+[DeathTracker] New death detected: Rolmidriel killed by spiky carnivor
+[DeathTracker] New death detected: Rolmidriel killed by Rolmidriel
+[DeathTracker] New death detected: Saygon Saiyan killed by dworc shadowstalker
+[DeathTracker] New death detected: Saygon Saiyan killed by dworc shadowstalker
+[DeathTracker] New death detected: Saygon Saiyan killed by orclops bloodbreaker
+[DeathTracker] New death detected: Saygon Saiyan killed by gorger inferniarch
+[DeathTracker] New death detected: Saygon Saiyan killed by dragolisk
+2:25:41 PM [express] GET /api/auth/me 401 in 1ms :: {"error":"Not authenticated"}
+[DeathTracker] New death detected: Shrooomz killed by plaguesmith
+[DeathTracker] New death detected: Shrooomz killed by evil prospector
+[DeathTracker] New death detected: Shrooomz killed by Neo Doombringer
+[DeathTracker] New death detected: Shrooomz killed by dworc shadowstalker
+[DeathTracker] New death detected: Shrooomz killed by dark torturer
+[DeathTracker] New death detected: Shrooomz killed by white weretiger
+[DeathTracker] New death detected: Shrooomz killed by midnight asura
+[DeathTracker] New death detected: Shrooomz killed by reality reaver
+[DeathTracker] New death detected: Shrooomz killed by candy horror
+[DeathTracker] New death detected: Kip Axe killed by werehyaena
+[DeathTracker] New death detected: Kip Axe killed by gazer spectre
+[DeathTracker] New death detected: Phignis killed by boogy
+[DeathTracker] New death detected: Phignis killed by King wake Awake
+[DeathTracker] New death detected: Phignis killed by Ormmm
+[DeathTracker] New death detected: Phignis killed by King wake Awake
+[DeathTracker] New death detected: Phignis killed by King wake Awake
+[DeathTracker] New death detected: Skavulskow killed by sphinx
+[DeathTracker] New death detected: Pall Bro killed by emerald tortoise
+[DeathTracker] New death detected: Skavulskow killed by Skavulskow
+[DeathTracker] New death detected: Pall Bro killed by hulking prehemoth
+[DeathTracker] New death detected: Skavulskow killed by Neo Doombringer
+[DeathTracker] New death detected: Pall Bro killed by grim reaper
+[DeathTracker] New death detected: Skavulskow killed by The Pale Worm
+[DeathTracker] New death detected: Pall Bro killed by grim reaper
+[DeathTracker] New death detected: Skavulskow killed by deathling spellsinger
+[DeathTracker] New death detected: Skavulskow killed by Skavulskow
+[DeathTracker] New death detected: Skavulskow killed by true dawnfire asura
+[DeathTracker] New death detected: Jaibert Pro killed by Szkodliwy Gryzon
+[DeathTracker] New death detected: Jaibert Pro killed by priestess of the wild sun
+[DeathTracker] New death detected: Jaibert Pro killed by arachnophobica
+[DeathTracker] New death detected: Jaibert Pro killed by true midnight asura
+[DeathTracker] New death detected: Jaibert Pro killed by Jaibert Pro
+[DeathTracker] New death detected: Sane Ryonos killed by norcferatu nightweaver
+[DeathTracker] New death detected: Sane Ryonos killed by norcferatu heartless
+[DeathTracker] New death detected: Sane Ryonos killed by norcferatu nightweaver
+[GuildSync] Starting sync for 4 guilds
+[DeathTracker] New death detected: Parrazz killed by vulcongra
+[DeathTracker] New death detected: Parrazz killed by enslaved dwarf
+[DeathTracker] New death detected: Parrazz killed by Parrazz
+[DeathTracker] New death detected: Parrazz killed by lost basher
+[DeathTracker] New death detected: Parrazz killed by wyrm
+[DeathTracker] New death detected: Parrazz killed by Parrazz
+[DeathTracker] New death detected: Parrazz killed by falcon paladin
+[DeathTracker] New death detected: Parrazz killed by vulcongra
+[DeathTracker] New death detected: Parrazz killed by lost basher
+[DeathTracker] New death detected: Parrazz killed by Parrazz
+[DeathTracker] New death detected: Parrazz killed by lost basher
+[DeathTracker] New death detected: Parrazz killed by lost thrower
+[DeathTracker] New death detected: Ferpax killed by trap
+[DeathTracker] New death detected: Ferpax killed by mammoth
+[DeathTracker] New death detected: Ferpax killed by feral sphinx
+[DeathTracker] New death detected: Ferpax killed by lion hydra
+[GuildSync] Fadder joined Codex
+[GuildSync] Jogunn joined Codex
+[GuildSync] Ervyx joined Codex
+[GuildSync] Cyanox joined Codex
+[GuildSync] Krzychu Monkuje joined Codex
+[GuildSync] Skosztuj joined Codex
+[GuildSync] Brownie Monk joined Codex
+[GuildSync] Donmats joined Codex
+[GuildSync] Rozumesz joined Codex
+[GuildSync] Risa joined Codex
+[GuildSync] Mord Parano joined Codex
+[GuildSync] The Burdened Gandalf joined Codex
+[GuildSync] Sigma Stilon Savelis joined Codex
+[GuildSync] Zupa Owocowa joined Codex
+[GuildSync] Zeyton shaitan joined Codex
+[GuildSync] Phignis missing from Codex (check 1/2)
+[GuildSync] Saygon Saiyan missing from Codex (check 1/2)
+[GuildSync] Kim Furious missing from Codex (check 1/2)
+[GuildSync] Decarth missing from Codex (check 1/2)
+[GuildSync] Axe Artista missing from Codex (check 1/2)
+[GuildSync] Tszymek missing from Codex (check 1/2)
+[GuildSync] Wess Doro missing from Codex (check 1/2)
+[GuildSync] Bagu missing from Codex (check 1/2)
+[DeathTracker] New death detected: Seraveas killed by undead elite gladiator
+[GuildSync] Wiem Oco Chodzi missing from Codex (check 1/2)
+[GuildSync] Dzwigowy Enrike missing from Codex (check 1/2)
+[GuildSync] Pall Bro missing from Codex (check 1/2)
+[GuildSync] King of Excuses missing from Codex (check 1/2)
+[GuildSync] Black Monko missing from Codex (check 1/2)
+[GuildSync] Sane Ryonos missing from Codex (check 1/2)
+[GuildSync] Gumisiowiec missing from Codex (check 1/2)
+[GuildSync] Story Iv missing from Codex (check 1/2)
+[GuildSync] Ryu Shuriken missing from Codex (check 1/2)
+[GuildSync] Codex: +15 joined, -0 left, 69 updated
+[DeathTracker] New death detected: Qosno killed by Elfret
+[DeathTracker] New death detected: Spiritual Chicken killed by Rdzawek
+[DeathTracker] New death detected: Spiritual Chicken killed by Szukamciebie
+[DeathTracker] New death detected: Qosno killed by greed worm
+[DeathTracker] New death detected: Spiritual Chicken killed by Spiritual Chicken
+[DeathTracker] New death detected: Qosno killed by dworc shadowstalker
+[DeathTracker] New death detected: Spiritual Chicken killed by Vladrukh
+[DeathTracker] New death detected: Qosno killed by wardragon
+[DeathTracker] New death detected: Spiritual Chicken killed by unchained fire
+[DeathTracker] New death detected: Qosno killed by naga warrior
+[DeathTracker] New death detected: Spiritual Chicken killed by Szkodliwy Gryzon
+[DeathTracker] New death detected: Spiritual Chicken killed by true frost flower asura
+[DeathTracker] New death detected: Spiritual Chicken killed by true midnight asura
+[DeathTracker] New death detected: Spiritual Chicken killed by Spiritual Chicken
+[DeathTracker] New death detected: Spiritual Chicken killed by gorerilla
+[DeathTracker] New death detected: Spiritual Chicken killed by undertaker
+[DeathTracker] New death detected: Spiritual Chicken killed by nighthunter
+[DeathTracker] New death detected: Cyrl oreily killed by Sir Ecrusher
+[DeathTracker] New death detected: Cyrl oreily killed by Sir Ecrusher
+[DeathTracker] New death detected: Cyrl oreily killed by gazer spectre
+[DeathTracker] New death detected: Eeffoc killed by mega dragon
+[DeathTracker] New death detected: Foxsake killed by cobra vizier
+[DeathTracker] New death detected: Foxsake killed by reality reaver
+[DeathTracker] New death detected: Bagu killed by falcon paladin
+[DeathTracker] New death detected: Husaro killed by grimeleech
+[DeathTracker] New death detected: Husaro killed by gazer spectre
+[DeathTracker] New death detected: Gumisiowiec killed by burster spectre
+[GuildSync] Hi nzky joined Retro Rushers
+[GuildSync] Merfi Knight joined Retro Rushers
+[GuildSync] Xogan joined Retro Rushers
+[DeathTracker] New death detected: Lothrexx killed by lost basher
+[DeathTracker] New death detected: Kaladin Stormcalled killed by Rdzawek
+[DeathTracker] New death detected: Lothrexx killed by Super Fox
+[DeathTracker] New death detected: Kaladin Stormcalled killed by Neo Doombringer
+[DeathTracker] New death detected: Lothrexx killed by lost basher
+[DeathTracker] New death detected: Kaladin Stormcalled killed by blood hand
+[DeathTracker] New death detected: Lord Morcego killed by Szukamciebie
+[DeathTracker] New death detected: Kaladin Stormcalled killed by gorerilla
+[DeathTracker] New death detected: Kaladin Stormcalled killed by gore horn
+[DeathTracker] New death detected: Kaladin Stormcalled killed by nighthunter
+[DeathTracker] New death detected: El Kogiel Mogiel killed by menacing carnivor
+[GuildSync] Crixxor von Deth joined Retro Rushers
+[GuildSync] Hollow winter joined Retro Rushers
+[GuildSync] Gigis Redemption joined Retro Rushers
+[GuildSync] Occidendum joined Retro Rushers
+[GuildSync] Zyca Zazlox joined Retro Rushers
+[GuildSync] Wlu joined Retro Rushers
+[GuildSync] You dead bye joined Retro Rushers
+[GuildSync] Tom Cruiser missing from Retro Rushers (check 1/2)
+[GuildSync] Bochen missing from Retro Rushers (check 1/2)
+[GuildSync] Revanne Fiddy krueger missing from Retro Rushers (check 1/2)
+[GuildSync] Mysterious Ma Ster missing from Retro Rushers (check 1/2)
+[GuildSync] Majkel Essasito missing from Retro Rushers (check 1/2)
+[GuildSync] Hin zky missing from Retro Rushers (check 1/2)
+[GuildSync] Niiff missing from Retro Rushers (check 1/2)
+[GuildSync] Retro Rushers: +10 joined, -0 left, 104 updated
+[DeathTracker] New death detected: Dudek Kiing killed by reality reaver
+[DeathTracker] New death detected: Dudek Kiing killed by Zethados
+[DeathTracker] New death detected: Dudek Kiing killed by dread intruder
+[DeathTracker] New death detected: Dudek Kiing killed by breach brood
+[DeathTracker] New death detected: Dudek Kiing killed by reality reaver
+[DeathTracker] New death detected: Matii Little killed by dworc shadowstalker
+[DeathTracker] New death detected: Loven Dani killed by sphinx
+[DeathTracker] New death detected: Loven Dani killed by usurper archer
+[DeathTracker] New death detected: Loven Dani killed by deathling spellsinger
+[DeathTracker] New death detected: Konungen Xvi killed by Neo Doombringer
+[DeathTracker] New death detected: Konungen Xvi killed by lava lurker
+[DeathTracker] New death detected: Konungen Xvi killed by Eri Halszki
+[DeathTracker] New death detected: Tszymek killed by werehyaena
+[DeathTracker] New death detected: Mendelbalbeko killed by retching horror
+[DeathTracker] New death detected: Tszymek killed by werelioness
+[DeathTracker] New death detected: Tszymek killed by sphinx
+[GuildSync] Exon Frontline joined Curbstompaz
+[DeathTracker] New death detected: Siwy Dymeq killed by flimsy lost soul
+[DeathTracker] New death detected: Siwy Dymeq killed by Siwy Dymeq
+[DeathTracker] New death detected: Siwy Dymeq killed by gazer spectre
+[DeathTracker] New death detected: Menschen killed by Menschen
+[GuildSync] Big Kat Knight joined Curbstompaz
+[GuildSync] Catfish Hillbilly joined Curbstompaz
+[GuildSync] Dorek Monk joined Curbstompaz
+[GuildSync] Dorek Healer joined Curbstompaz
+[GuildSync] Eilla joined Curbstompaz
+[GuildSync] Dorek Rasher joined Curbstompaz
+[GuildSync] El Necora joined Curbstompaz
+[GuildSync] Fest joined Curbstompaz
+[GuildSync] Haha Du Dog joined Curbstompaz
+[GuildSync] Keny Zemyres joined Curbstompaz
+[GuildSync] Kari Angel joined Curbstompaz
+[GuildSync] Igor Rasher joined Curbstompaz
+[GuildSync] Jibbsu Wariat joined Curbstompaz
+[DeathTracker] New death detected: Astynn Bank killed by Duuh Defus Ca
+[DeathTracker] New death detected: Astynn Bank killed by Elfret
+[DeathTracker] New death detected: Astynn Bank killed by retching horror
+[DeathTracker] New death detected: Astynn Bank killed by Szkodliwy Gryzon
+[DeathTracker] New death detected: Astynn Bank killed by gazer spectre
+[DeathTracker] New death detected: Astynn Bank killed by choking fear
+[GuildSync] Masai Koke joined Curbstompaz
+[GuildSync] Niemilyms joined Curbstompaz
+[GuildSync] Niemilyek joined Curbstompaz
+[DeathTracker] New death detected: Pablito Hero killed by dawnfire asura
+[GuildSync] Qinanenbre joined Curbstompaz
+[DeathTracker] New death detected: Pablito Hero killed by time waster
+[DeathTracker] New death detected: Pablito Hero killed by Pablito Hero
+[DeathTracker] New death detected: Pablito Hero killed by Pablito Hero
+[DeathTracker] New death detected: Pablito Hero killed by Pablito Hero
+[GuildSync] Rokkoz Morte joined Curbstompaz
+[GuildSync] Rivvz joined Curbstompaz
+[GuildSync] Story Iv joined Curbstompaz
+[GuildSync] Strzelam runami joined Curbstompaz
+[GuildSync] Tooomasz joined Curbstompaz
+[GuildSync] Triuu joined Curbstompaz
+[GuildSync] Turbo Starlord joined Curbstompaz
+[GuildSync] Seba the slasher missing from Curbstompaz (check 1/2)
+[GuildSync] Pappa Green Mode missing from Curbstompaz (check 1/2)
+[GuildSync] Adico missing from Curbstompaz (check 1/2)
+[GuildSync] Frrezzer missing from Curbstompaz (check 1/2)
+[GuildSync] Yo Mate missing from Curbstompaz (check 1/2)
+[GuildSync] Aiche missing from Curbstompaz (check 1/2)
+[GuildSync] Igor Comander missing from Curbstompaz (check 1/2)
+[GuildSync] Nobunaga Chikara missing from Curbstompaz (check 1/2)
+[GuildSync] Oooooob missing from Curbstompaz (check 1/2)
+[GuildSync] Rapatusek missing from Curbstompaz (check 1/2)
+[GuildSync] Alanzerah Bombinha missing from Curbstompaz (check 1/2)
+[GuildSync] Bazaar Baby missing from Curbstompaz (check 1/2)
+[GuildSync] Kreh Sona missing from Curbstompaz (check 1/2)
+[GuildSync] Ooob missing from Curbstompaz (check 1/2)
+[GuildSync] Proya missing from Curbstompaz (check 1/2)
+[GuildSync] Tytuz Ek missing from Curbstompaz (check 1/2)
+[GuildSync] Wheel Snipe Celly missing from Curbstompaz (check 1/2)
+[GuildSync] Ally the Pally missing from Curbstompaz (check 1/2)
+[GuildSync] Curil Oreily missing from Curbstompaz (check 1/2)
+[GuildSync] Ghost of Guns missing from Curbstompaz (check 1/2)
+[GuildSync] Ingentiing missing from Curbstompaz (check 1/2)
+[GuildSync] Kacperek Antica missing from Curbstompaz (check 1/2)
+[GuildSync] Nrthreexthree Bjhighlow Pmme missing from Curbstompaz (check 1/2)
+[GuildSync] Pirrr missing from Curbstompaz (check 1/2)
+[GuildSync] Spike Girl missing from Curbstompaz (check 1/2)
+[GuildSync] Toritya missing from Curbstompaz (check 1/2)
+[GuildSync] Wojewoda missing from Curbstompaz (check 1/2)
+[GuildSync] Psycho Pat missing from Curbstompaz (check 1/2)
+[GuildSync] Izza Ster missing from Curbstompaz (check 1/2)
+[GuildSync] Oob the Noob missing from Curbstompaz (check 1/2)
+[GuildSync] Puck Bunny missing from Curbstompaz (check 1/2)
+[GuildSync] Oobie missing from Curbstompaz (check 1/2)
+[GuildSync] Oooob missing from Curbstompaz (check 1/2)
+[GuildSync] Exon Da Doom missing from Curbstompaz (check 1/2)
+[GuildSync] Michelangelo di Lodovico missing from Curbstompaz (check 1/2)
+[GuildSync] Aka Pain missing from Curbstompaz (check 1/2)
+[GuildSync] Ando Fevin missing from Curbstompaz (check 1/2)
+[GuildSync] Daedly missing from Curbstompaz (check 1/2)
+[GuildSync] Gato De Playa missing from Curbstompaz (check 1/2)
+[GuildSync] Henry Fondle missing from Curbstompaz (check 1/2)
+[GuildSync] Juvexass Riri missing from Curbstompaz (check 1/2)
+[GuildSync] Oooooooooooob missing from Curbstompaz (check 1/2)
+[GuildSync] Pekero badylo missing from Curbstompaz (check 1/2)
+[GuildSync] The Comandante missing from Curbstompaz (check 1/2)
+[GuildSync] Zelen Khor missing from Curbstompaz (check 1/2)
+[GuildSync] Oob missing from Curbstompaz (check 1/2)
+[GuildSync] Admiral Dongor missing from Curbstompaz (check 1/2)
+[GuildSync] Kamis missing from Curbstompaz (check 1/2)
+[GuildSync] Sky Arlequin missing from Curbstompaz (check 1/2)
+[GuildSync] Sugar Waifuuu missing from Curbstompaz (check 1/2)
+[GuildSync] Curbstompaz: +25 joined, -0 left, 105 updated
+[DeathTracker] New death detected: Its Dzeison killed by feral sphinx
+[DeathTracker] New death detected: Its Dzeison killed by minotaur hunter
+[DeathTracker] New death detected: Its Dzeison killed by retching horror
+[DeathTracker] New death detected: Dudek King killed by liodile
+[DeathTracker] New death detected: Dudek King killed by Henricusa
+[DeathTracker] New death detected: Dudek King killed by Gaz'haragoth
+[OnlineScraper] Snapshot complete: 490 online, 409 logged in, 705 logged off
+[DeathTracker] New death detected: Urban Tankuje killed by death
+[DeathTracker] New death detected: Cacarooch killed by vexclaw
+[DeathTracker] New death detected: Axe Artista killed by wardragon
+[DeathTracker] New death detected: Axe Artista killed by Sir Siwy
+[GuildSync] Hussaris Furora joined Camel riders
+[GuildSync] Gugulethu Mhlungu joined Camel riders
+[GuildSync] Fhenlim Pacifico joined Camel riders
+[GuildSync] Corrupted Parli joined Camel riders
+[GuildSync] Dziabniety bogus joined Camel riders
+[GuildSync] Hashirama Reborn missing from Camel riders (check 1/2)
+[GuildSync] Oderafinu Ziwi missing from Camel riders (check 1/2)
+[GuildSync] Eldrik Dark missing from Camel riders (check 1/2)
+[GuildSync] Kaszika missing from Camel riders (check 1/2)
+[GuildSync] Kryvyn missing from Camel riders (check 1/2)
+[GuildSync] Its Art missing from Camel riders (check 1/2)
+[GuildSync] Kaeth Ana missing from Camel riders (check 1/2)
+[GuildSync] Xendor of Askara missing from Camel riders (check 1/2)
+[GuildSync] Lord Chinarox missing from Camel riders (check 1/2)
+[GuildSync] Makhullu missing from Camel riders (check 1/2)
+[GuildSync] Ra tiinho missing from Camel riders (check 1/2)
+[GuildSync] Camel riders: +5 joined, -0 left, 36 updated
+[DeathTracker] New death detected: Sigma Stilon Pieczarka killed by Ek Today
+[DeathTracker] New death detected: Pusty Tankuje killed by falcon paladin
+[DeathTracker] New death detected: Sigma Stilon Pieczarka killed by lost husher
+[DeathTracker] New death detected: Pusty Tankuje killed by varg
+[DeathTracker] New death detected: Sigma Stilon Pieczarka killed by ripper spectre
+[DeathTracker] New death detected: Sigma Stilon Pieczarka killed by choking fear
+[DeathTracker] New death detected: Sigma Stilon Pieczarka killed by Ishtrax
+[DeathTracker] New death detected: Sigma Stilon Pieczarka killed by lost thrower
+[DeathTracker] New death detected: Broken Wollf killed by falcon paladin
+[DeathTracker] New death detected: Broken Wollf killed by werelion
+[DeathTracker] New death detected: Fox Vexol killed by Fox Vexol
+[DeathTracker] New death detected: Fox Vexol killed by retching horror
+[DeathTracker] New death detected: Fox Vexol killed by Fox Vexol
+[DeathTracker] New death detected: Fox Vexol killed by Fox Vexol
+[DeathTracker] New death detected: Fox Vexol killed by Fox Vexol
+[DeathTracker] New death detected: Fox Vexol killed by headwalker
+[DeathTracker] New death detected: Fox Vexol killed by arachnophobica
+[DeathTracker] New death detected: King of Excuses killed by Lilaya
+[DeathTracker] New death detected: King of Excuses killed by Stkos
+[DeathTracker] New death detected: King of Excuses killed by Lilaya
+[DeathTracker] New death detected: King of Excuses killed by Zaawiszka
+[DeathTracker] New death detected: Mora Sage killed by Mora Sage
+[DeathTracker] New death detected: Mora Sage killed by soul-broken harbinger
+[DeathTracker] New death detected: Mora Sage killed by soul-broken harbinger
+[DeathTracker] New death detected: Damian Dzyndza killed by Neo Doombringer
+[DeathTracker] New death detected: Mora Sage killed by soul-broken harbinger
+[DeathTracker] New death detected: Damian Dzyndza killed by lava lurker
+[DeathTracker] New death detected: Damian Dzyndza killed by Eri Halszki
+[GuildSync] Sending membership notifications...
+[GuildSync] Sent 0 membership notifications
+[GuildSync] Sync complete in 15076ms
+[DeathTracker] New death detected: Black Monko killed by falcon paladin
+[DeathTracker] New death detected: Chinol The Druid killed by werepanther
+[DeathTracker] New death detected: Chinol The Druid killed by weeper
+[DeathTracker] New death detected: Chinol The Druid killed by cunning werepanther
+[DeathTracker] New death detected: Dzwigowy Enrike killed by cinder wyrmling
+[DeathTracker] New death detected: Saheya killed by Saheya
+[DeathTracker] New death detected: Saheya killed by nibblemaw
+[DeathTracker] New death detected: Saheya killed by grim reaper
+[DeathTracker] New death detected: Mordo Typie killed by waspoid
+[DeathTracker] New death detected: Mordo Typie killed by Leiden
+[DeathTracker] New death detected: Mordo Typie killed by falcon paladin
+[DeathTracker] New death detected: Mordo Typie killed by juvenile bashmu
+[DeathTracker] New death detected: Xiondz Mazur killed by Xiondz Mazur
+[DeathTracker] New death detected: Xiondz Mazur killed by soul-broken harbinger
+[DeathTracker] New death detected: Xiondz Mazur killed by soul-broken harbinger
+[DeathTracker] New death detected: Xiondz Mazur killed by soul-broken harbinger
+[DeathTracker] New death detected: Xiondz Mazur killed by energy elemental
+[DeathTracker] New death detected: Ryu Shuriken killed by reality reaver
+[DeathTracker] New death detected: Ryu Shuriken killed by dread intruder
+[DeathTracker] New death detected: Mistick Jewel killed by Mistick Jewel
+[DeathTracker] New death detected: Mistick Jewel killed by ripper spectre
+[DeathTracker] New death detected: Mistick Jewel killed by Gervan
+[DeathTracker] Found 208 new deaths for guild Codex
+[DeathTracker] Checking 152 players from guild Retro Rushers (enemy) in batches of 5
+[DeathTracker] New death detected: Elfret killed by Skavulskow
+[DeathTracker] New death detected: Elfret killed by Pieceofhistory
+[DeathTracker] New death detected: Hey Tico killed by Sir Siwy
+[DeathTracker] New death detected: Hey Tico killed by Seraveas
+[DeathTracker] New death detected: Hey Tico killed by Grzana The Warrior
+[DeathTracker] New death detected: Hey Tico killed by Xayarith Druid
+[DeathTracker] New death detected: Hey Tico killed by Doctor Marrow
+[DeathTracker] New death detected: Hey Tico killed by Grzana The Warrior
+[DeathTracker] New death detected: Hey Tico killed by Magna Lea
+[DeathTracker] New death detected: Hey Tico killed by Zile Strike
+[DeathTracker] New death detected: Wallace Maaster killed by energised raubritter
+[DeathTracker] New death detected: Rdzawy Lep killed by Lilaya
+[DeathTracker] New death detected: Rdzawy Lep killed by raubritter chastener
+[DeathTracker] New death detected: Dmgerp killed by usurper warlock
+[DeathTracker] New death detected: Dmgerp killed by Sir Siwy
+[DeathTracker] New death detected: Dmgerp killed by roaring lion
+[DeathTracker] New death detected: Resko killed by Risorv
+[DeathTracker] New death detected: Resko killed by Dalmarog Turt
+[DeathTracker] New death detected: Resko killed by Seraveas
+[DeathTracker] New death detected: Resko killed by lava lurker
+[DeathTracker] New death detected: Resko killed by true midnight asura
+[DeathTracker] New death detected: Resko killed by floating savant
+[DeathTracker] New death detected: Neo Doombringer killed by Neo Doombringer
+[DeathTracker] New death detected: Neo Doombringer killed by energised raubritter
+[DeathTracker] New death detected: Neo Doombringer killed by energised raubritter
+[DeathTracker] New death detected: Neo Doombringer killed by Lilaya
+[DeathTracker] Priority check: 14 tracked players (online + recently offline) in batches of 5
+[DeathTracker] New death detected: Neo Doombringer killed by Alucarr
+[DeathTracker] New death detected: Neo Doombringer killed by Fox Vexol
+[DeathTracker] New death detected: Neo Doombringer killed by Ichgahal
+[DeathTracker] New death detected: Bridge Commander killed by Fioletowy Motylek Nicosci
+[DeathTracker] New death detected: Zly On Hyla killed by Zly On Hyla
+[DeathTracker] New death detected: Zly On Hyla killed by burster spectre
+[DeathTracker] New death detected: Zly On Hyla killed by Ainsworth Chise
+[DeathTracker] New death detected: Zly On Hyla killed by Castiele Of Anjos
+[DeathTracker] New death detected: Zly On Hyla killed by true midnight asura
+[DeathTracker] New death detected: Zly On Hyla killed by Amund
+[DeathTracker] New death detected: Zly On Hyla killed by Zjemwas
+[DeathTracker] New death detected: Zly On Hyla killed by ripper spectre
+[DeathTracker] New death detected: Zly On Hyla killed by The Devil Eye
+[DeathTracker] New death detected: Zly On Hyla killed by Zjemwas
+[DeathTracker] New death detected: Zly On Hyla killed by burster spectre
+[DeathTracker] New death detected: Alucarr killed by The Gravedigger
+[DeathTracker] New death detected: Alucarr killed by Alucarr
+[DeathTracker] New death detected: Cziczi Pal killed by hulking prehemoth
+[DeathTracker] New death detected: Cziczi Pal killed by Lilaya
+[DeathTracker] New death detected: Cziczi Pal killed by Eeffoc
+[DeathTracker] New death detected: Cziczi Pal killed by Kitchen Tomek
+[DeathTracker] New death detected: Cziczi Pal killed by makara
+[DeathTracker] New death detected: Cziczi Pal killed by crypt warrior
+[DeathTracker] New death detected: Sir Arckenn killed by The End Of Days
+[DeathTracker] New death detected: Artus Magus killed by Sir Siwy
+[DeathTracker] New death detected: Sir Arckenn killed by Zaawiszka
+[DeathTracker] New death detected: Artus Magus killed by Skuty Paral
+[DeathTracker] New death detected: Sir Arckenn killed by dark torturer
+[DeathTracker] New death detected: Artus Magus killed by Mexora
+[DeathTracker] New death detected: Sir Arckenn killed by Xayarith Druid
+[DeathTracker] New death detected: Artus Magus killed by Zile Strike
+[DeathTracker] New death detected: Taishun killed by guzzlemaw
+[DeathTracker] New death detected: Super Fox killed by falcon paladin
+[DeathTracker] New death detected: Super Fox killed by ink splash
+[DeathTracker] New death detected: Super Fox killed by Super Fox
+[DeathTracker] New death detected: Raevfuchs killed by Qvava
+[DeathTracker] New death detected: Bob Bullet killed by Seraveas
+[DeathTracker] New death detected: Bob Bullet killed by death
+[DeathTracker] New death detected: Bob Bullet killed by Vladrukh
+[DeathTracker] New death detected: Bob Bullet killed by death
+[DeathTracker] New death detected: Bob Bullet killed by Grzana The Warrior
+[DeathTracker] New death detected: Szukamciebieja killed by Szukamciebieja
+[DeathTracker] New death detected: Shidi killed by crypt warrior
+[DeathTracker] New death detected: Szukamciebieja killed by Valigus Dragon
+[DeathTracker] New death detected: Shidi killed by Mexora
+[DeathTracker] New death detected: Szukamciebieja killed by Local Life
+[DeathTracker] New death detected: Shidi killed by cobra assassin
+[DeathTracker] New death detected: Shidi killed by cobra vizier
+[DeathTracker] New death detected: Shidi killed by cobra vizier
+[DeathTracker] New death detected: The Mazino killed by cloak of terror
+[DeathTracker] New death detected: Shidi killed by sineater inferniarch
+[DeathTracker] New death detected: The Mazino killed by Jand Paralyze
+[DeathTracker] New death detected: Shidi killed by Kaszankolot
+[DeathTracker] New death detected: The Mazino killed by branchy crawler
+[DeathTracker] New death detected: Shidi killed by Zjemwas
+[DeathTracker] New death detected: Shidi killed by cobra scout
+[DeathTracker] New death detected: Shidi killed by Shidi
+[DeathTracker] New death detected: Shidi killed by cobra assassin
+[DeathTracker] New death detected: Shidi killed by cobra vizier
+[DeathTracker] New death detected: Hin zky killed by burning book
+[DeathTracker] New death detected: Hin zky killed by Mushroom
+[DeathTracker] New death detected: Hin zky killed by dworc shadowstalker
+[DeathTracker] New death detected: Hin zky killed by raubritter skirmisher
+[DeathTracker] New death detected: Szkodliwy Gryzon killed by Sako Wero
+[DeathTracker] New death detected: Szkodliwy Gryzon killed by brachiodemon
+[DeathTracker] New death detected: Kocur Sfinks killed by Ferondon Zandi
+[DeathTracker] New death detected: Kocur Sfinks killed by Blissey Imperial
+[DeathTracker] New death detected: Bohen killed by Izcandar Champion of Summer
+[DeathTracker] New death detected: Bohen killed by falcon knight
+[DeathTracker] New death detected: Bohen killed by Sudden Relapse
+[DeathTracker] New death detected: Velox Occidendum killed by cloak of terror
+[DeathTracker] New death detected: Velox Occidendum killed by squid warden
+[DeathTracker] New death detected: Velox Occidendum killed by Velox Occidendum
+[DeathTracker] New death detected: Velox Occidendum killed by branchy crawler
+[DeathTracker] New death detected: Velox Occidendum killed by Mexora
+[DeathTracker] New death detected: Velox Occidendum killed by Velox Occidendum
+[DeathTracker] New death detected: Velox Occidendum killed by Velox Occidendum
+[DeathTracker] New death detected: Elljanko killed by manticore
+[DeathTracker] New death detected: Elljanko killed by Sako Wero
+[DeathTracker] New death detected: Elljanko killed by mitmah scout
+[DeathTracker] New death detected: Elljanko killed by Reaper Chakeowena
+[DeathTracker] New death detected: Elljanko killed by Seraveas
+[DeathTracker] New death detected: Elljanko killed by El Maniatico
+[DeathTracker] New death detected: Elljanko killed by Orc Leadher
+[DeathTracker] New death detected: Elljanko killed by Xayarith Druid
+[DeathTracker] New death detected: Elljanko killed by Betiin Dyballa
+[DeathTracker] New death detected: Elljanko killed by Xayarith Druid
+[DeathTracker] New death detected: Mleczarzz killed by Mleczarzz
+[DeathTracker] New death detected: Mleczarzz killed by Seraveas
+[DeathTracker] New death detected: Mleczarzz killed by Sir Siwy
+[DeathTracker] New death detected: Mleczarzz killed by Eeffoc
+[DeathTracker] New death detected: Mleczarzz killed by Elovio
+[DeathTracker] New death detected: Mleczarzz killed by Misio lat trzydziesci
+[DeathTracker] New death detected: Mleczarzz killed by Zdrowy Rozsadek
+[DeathTracker] New death detected: Mleczarzz killed by fear
+[DeathTracker] New death detected: Mleczarzz killed by falcon paladin
+[DeathTracker] New death detected: Mleczarzz killed by Kitchen Tomek
+[DeathTracker] New death detected: Mleczarzz killed by Qvava
+[DeathTracker] New death detected: Mleczarzz killed by Urmahlullu the Tamed
+[DeathTracker] New death detected: Mleczarzz killed by Hide in sewers
+[DeathTracker] New death detected: Mleczarzz killed by Mleczarzz
+[DeathTracker] New death detected: Mleczarzz killed by Urban Tankuje
+[DeathTracker] New death detected: Mleczarzz killed by Robie cochce gdziechce
+[DeathTracker] New death detected: Mleczarzz killed by Grand Chaplain Gaunder
+[DeathTracker] New death detected: Mleczarzz killed by floating savant
+[DeathTracker] New death detected: Mleczarzz killed by floating savant
+[DeathTracker] New death detected: Mleczarzz killed by Urban Tankuje
+[DeathTracker] New death detected: Mleczarzz killed by son of verminor
+[DeathTracker] New death detected: Mleczarzz killed by Story Iv
+[DeathTracker] New death detected: Mleczarzz killed by Naspawany Czesiek
+[DeathTracker] New death detected: Mleczarzz killed by Naspawany Czesiek
+[DeathTracker] New death detected: Mleczarzz killed by Paris Assar
+[DeathTracker] New death detected: Mleczarzz killed by Mleczarzz
+[DeathTracker] New death detected: Mleczarzz killed by Deltreggia
+[DeathTracker] New death detected: Mleczarzz killed by Mleczarzz
+[DeathTracker] New death detected: Fake Viveex killed by Seraveas
+[DeathTracker] New death detected: Fake Viveex killed by Seraveas
+[DeathTracker] New death detected: Fake Viveex killed by Seraveas
+[DeathTracker] New death detected: Sili Malyn killed by Xayarith Druid
+[DeathTracker] New death detected: Ragnarr Soul killed by Seraveas
+[DeathTracker] New death detected: Palec nie grzebalec killed by corrupt naga
+[DeathTracker] New death detected: Palec nie grzebalec killed by Uciekam Szeryfowi
+[DeathTracker] New death detected: Berra Kritiserar killed by Kaladin Stormcalled
+[DeathTracker] New death detected: Palec nie grzebalec killed by naga archer
+[DeathTracker] New death detected: Berra Kritiserar killed by Xayarith Druid
+[DeathTracker] New death detected: Palec nie grzebalec killed by crusader
+[DeathTracker] New death detected: Berra Kritiserar killed by Grzana The Warrior
+[DeathTracker] New death detected: Palec nie grzebalec killed by headwalker
+[DeathTracker] New death detected: Palec nie grzebalec killed by Palec nie grzebalec
+[DeathTracker] New death detected: Vihan Juwutighan killed by Xsantoss
+[DeathTracker] New death detected: Kavina killed by Super Karolek
+[DeathTracker] New death detected: Kavina killed by Kavina
+[DeathTracker] New death detected: Kavina killed by The Devil Eye
+[DeathTracker] New death detected: Kavina killed by Mexora
+[DeathTracker] New death detected: Kurpamak killed by Kurpamak
+[DeathTracker] New death detected: Mysterious Ma Ster killed by thorn steed
+[DeathTracker] New death detected: Meladex Chavosin killed by Willicus
+[DeathTracker] New death detected: Meladex Chavosin killed by Ryuk Phantomhive
+[DeathTracker] New death detected: Meladex Chavosin killed by Vorexx
+[DeathTracker] New death detected: Meladex Chavosin killed by Kaladin Stormcalled
+[DeathTracker] New death detected: Meladex Chavosin killed by dawnfire asura
+[DeathTracker] New death detected: Meladex Chavosin killed by mean lost soul
+[DeathTracker] New death detected: Meladex Chavosin killed by Raksoo Poderoso
+[DeathTracker] New death detected: Meladex Chavosin killed by Shavis Neria
+[DeathTracker] New death detected: Xian Shi killed by Deltreggia
+[DeathTracker] New death detected: Repress killed by Seraveas
+[DeathTracker] New death detected: Repress killed by Reaper Chakeowena
+[DeathTracker] New death detected: Repress killed by Kaladin Stormcalled
+[DeathTracker] New death detected: Fogodechao killed by Elovio
+[DeathTracker] New death detected: Fogodechao killed by Ek Today
+[DeathTracker] New death detected: Fogodechao killed by Namitek Destro
+[DeathTracker] New death detected: Fogodechao killed by Loco Blocko
+[DeathTracker] New death detected: Fogodechao killed by Bumpolo
+[DeathTracker] New death detected: Fogodechao killed by Naspawany Czesiek
+[DeathTracker] New death detected: Fogodechao killed by Melonova
+[DeathTracker] New death detected: Fogodechao killed by falcon knight
+[DeathTracker] New death detected: Zginiesz sdkiem killed by Niven
+[DeathTracker] New death detected: Zginiesz sdkiem killed by Sako Wero
+[DeathTracker] New death detected: Zginiesz sdkiem killed by Alucarr
+[DeathTracker] New death detected: Zginiesz sdkiem killed by Seraveas
+[DeathTracker] New death detected: Zginiesz sdkiem killed by Mexora
+[DeathTracker] New death detected: Zginiesz sdkiem killed by Blissey Imperial
+[DeathTracker] New death detected: Rdzawek killed by Sir Siwy
+[DeathTracker] New death detected: Rdzawek killed by Seraveas
+[DeathTracker] New death detected: Rdzawek killed by Rdzawek
+[DeathTracker] New death detected: Rdzawek killed by The End Of Days
+[DeathTracker] New death detected: Rdzawek killed by Seraveas
+[DeathTracker] New death detected: Rdzawek killed by Xayarith Druid
+[DeathTracker] New death detected: Rdzawek killed by Xayarith Druid
+[DeathTracker] New death detected: Rdzawek killed by Sako Wero
+[DeathTracker] New death detected: Rdzawek killed by Xayarith Druid
+[DeathTracker] New death detected: Rdzawek killed by Sako Wero
+[DeathTracker] New death detected: Rdzawek killed by Earl Osam
+[DeathTracker] New death detected: Deadly Waves killed by Deadly Waves
+[DeathTracker] New death detected: Dabui killed by Mad Mila
+[DeathTracker] New death detected: Deadly Waves killed by Deadly Waves
+[DeathTracker] New death detected: Xyvva killed by freakish lost soul
+[DeathTracker] New death detected: Xyvva killed by flimsy lost soul
+[DeathTracker] New death detected: Xyvva killed by Atab
+[DeathTracker] New death detected: Xyvva killed by Xayarith Druid
+[DeathTracker] New death detected: Xyvva killed by Xayarith Druid
+[DeathTracker] New death detected: Xyvva killed by hardened usurper warlock
+[DeathTracker] New death detected: Xyvva killed by Etooder
+[DeathTracker] New death detected: Xyvva killed by Grzana The Warrior
+[DeathTracker] New death detected: Krul Podwurka killed by crypt warrior
+[DeathTracker] New death detected: Lilaya killed by Jeffenstein
+[DeathTracker] New death detected: Krul Podwurka killed by crypt warrior
+[DeathTracker] New death detected: Lilaya killed by Jeffenstein
+[DeathTracker] New death detected: Krul Podwurka killed by crypt warrior
+[DeathTracker] New death detected: Lilaya killed by Tobionee
+[DeathTracker] New death detected: Krul Podwurka killed by crypt warrior
+[DeathTracker] New death detected: Scatterbrained Sorcerer killed by Krakowski Smok
+[DeathTracker] New death detected: Kifeck killed by Seraveas
+[DeathTracker] New death detected: Kifeck killed by Kaszankolot
+[DeathTracker] New death detected: Crixxor von Deth killed by Lilaya
+[DeathTracker] New death detected: Crixxor von Deth killed by Reaper Chakeowena
+[DeathTracker] New death detected: Crixxor von Deth killed by adult goanna
+[DeathTracker] New death detected: Crixxor von Deth killed by Kaladin Stormcalled
+[DeathTracker] New death detected: Crixxor von Deth killed by Pieceofhistory
+[DeathTracker] New death detected: Crixxor von Deth killed by Milky Waayy
+[DeathTracker] New death detected: Majkel Essasito killed by Scarlett Etzel
+[DeathTracker] New death detected: Majkel Essasito killed by grim reaper
+[DeathTracker] New death detected: Majkel Essasito killed by dark torturer
+[DeathTracker] New death detected: Draggon Hatchling killed by Gipps
+[DeathTracker] New death detected: Draggon Hatchling killed by Kyorn Thus
+[DeathTracker] New death detected: Draggon Hatchling killed by Sako Wero
+[DeathTracker] New death detected: Draggon Hatchling killed by Sako Wero
+[DeathTracker] New death detected: Draggon Hatchling killed by Qvava
+[DeathTracker] New death detected: Draggon Hatchling killed by Xayarith Druid
+[DeathTracker] New death detected: Szukamciebie killed by Niven
+[DeathTracker] New death detected: Szukamciebie killed by Seraveas
+[DeathTracker] New death detected: Szukamciebie killed by frazzlemaw
+[DeathTracker] New death detected: Szukamciebie killed by Szukamciebie
+[DeathTracker] New death detected: Szukamciebie killed by silencer
+[DeathTracker] New death detected: Szukamciebie killed by burster spectre
+[DeathTracker] New death detected: Szukamciebie killed by Jojsoned
+[DeathTracker] New death detected: Epic Relaxsz killed by Ninja Wjazd
+[DeathTracker] New death detected: Epic Relaxsz killed by Mexora
+[DeathTracker] New death detected: Epic Relaxsz killed by Dosenaprikose
+[DeathTracker] New death detected: Bonitelli killed by Seraveas
+[DeathTracker] New death detected: Bonitelli killed by Seraveas
+[DeathTracker] New death detected: Fase killed by Seraveas
+[DeathTracker] New death detected: Nieleczacy Edek killed by courage leech
+[DeathTracker] New death detected: Baltazaur killed by The End Of Days
+[DeathTracker] New death detected: Baltazaur killed by The Pale Worm
+[DeathTracker] New death detected: Baltazaur killed by Baltazaur
+[DeathTracker] New death detected: Baltazaur killed by Baltazaur
+[DeathTracker] New death detected: Baltazaur killed by norcferatu nightweaver
+[DeathTracker] New death detected: You dead bye killed by dragon lord
+[DeathTracker] New death detected: You dead bye killed by Sir Siwy
+[DeathTracker] New death detected: You dead bye killed by Lilaya
+[DeathTracker] New death detected: Lujeee killed by Milky Waay
+[DeathTracker] New death detected: Hollow winter killed by Gipps
+[DeathTracker] New death detected: Hollow winter killed by Robie cochce gdziechce
+[DeathTracker] New death detected: Niiff killed by Krakowski Smok
+[DeathTracker] New death detected: Zyca Zazlox killed by Seraveas
+[DeathTracker] New death detected: Wlu killed by The Comandante
+[DeathTracker] New death detected: Wlu killed by The Comandante
+[DeathTracker] New death detected: Wlu killed by Isruna
+[DeathTracker] New death detected: Wlu killed by Sako Wero
+[DeathTracker] New death detected: Wlu killed by Lilaya
+[DeathTracker] New death detected: Wlu killed by Czujesz Wujka Wlodka
+[DeathTracker] New death detected: Wlu killed by Czujesz Wujka Wlodka
+[DeathTracker] New death detected: Wlu killed by Cyberpayuot
+[DeathTracker] New death detected: Wlu killed by Cyberpayuot
+[DeathTracker] New death detected: Wlu killed by skeleton elite warrior
+[DeathTracker] New death detected: Wlu killed by Story Iv
+[DeathTracker] New death detected: Wlu killed by Jaskovy
+[DeathTracker] New death detected: Wlu killed by Kreatina Pawel
+[DeathTracker] New death detected: Wlu killed by Ninja Wjazd
+[DeathTracker] New death detected: Xogan killed by falcon paladin
+[DeathTracker] New death detected: Xogan killed by floating savant
+[DeathTracker] New death detected: Xogan killed by Mexora
+[DeathTracker] New death detected: Xogan killed by flimsy lost soul
+[DeathTracker] New death detected: Merfi Knight killed by floating savant
+[DeathTracker] New death detected: Gigis Redemption killed by Merfi Knight
+[DeathTracker] New death detected: Gigis Redemption killed by Zile Strike
+[DeathTracker] New death detected: Misio lat trzydziesci killed by Seraveas
+[DeathTracker] New death detected: Misio lat trzydziesci killed by burning book
+[DeathTracker] New death detected: Karol lat dwadziescia killed by Story Iv
+[DeathTracker] Found 286 new deaths for guild Retro Rushers
+[DeathTracker] Checking 186 players from guild Curbstompaz (main) in batches of 5
+[DeathTracker] New death detected: Fiskleverolja killed by Kierowca Mopa
+[DeathTracker] New death detected: Fiskleverolja killed by Brvek
+[DeathTracker] New death detected: Fiskleverolja killed by Sensii Berserk
+[DeathTracker] New death detected: Fiskleverolja killed by Ladraozao
+[DeathTracker] New death detected: Cykel Sven killed by Silvfix
+[DeathTracker] New death detected: Cykel Sven killed by Joker Brookss
+[DeathTracker] New death detected: Cykel Sven killed by Wizeboy
+[DeathTracker] New death detected: Cykel Sven killed by Parli Nohands
+[DeathTracker] New death detected: Cykel Sven killed by Parli Nohands
+[DeathTracker] New death detected: Cykel Sven killed by Willicus
+[DeathTracker] New death detected: Cykel Sven killed by Typowy Lukaszek
+[DeathTracker] New death detected: Cykel Sven killed by Typowy Lukaszek
+[DeathTracker] New death detected: Cykel Sven killed by Pedrin Milionario
+[DeathTracker] New death detected: Pappa Green Mode killed by Ali eltaip
+[DeathTracker] New death detected: Didi Drog killed by Silvfix
+[DeathTracker] New death detected: Wrozee killed by Boss Skowron
+[DeathTracker] New death detected: Didi Drog killed by Tobionee
+[DeathTracker] New death detected: Wrozee killed by Dark master chaos
+[DeathTracker] New death detected: Didi Drog killed by Tobionee
+[DeathTracker] New death detected: Wrozee killed by Ali eltaip
+[DeathTracker] New death detected: Didi Drog killed by Tobionee
+[DeathTracker] New death detected: Wrozee killed by Parli Nohands
+[DeathTracker] New death detected: Didi Drog killed by Silvfix
+[DeathTracker] New death detected: Wrozee killed by Aleksander Wielki Silacz
+[DeathTracker] New death detected: Didi Drog killed by Silvfix
+[DeathTracker] New death detected: Didi Drog killed by Silvfix
+[DeathTracker] New death detected: Benremjetz killed by Parli Nohands
+[DeathTracker] New death detected: Amund killed by Amund
+[DeathTracker] New death detected: Amund killed by Tekno Barcelona
+[DeathTracker] New death detected: Seba the slasher killed by wyrm
+[DeathTracker] New death detected: Proffs killed by Silvfix
+[DeathTracker] New death detected: Proffs killed by serpent spawn
+[DeathTracker] New death detected: Aiche killed by manticore
+[DeathTracker] New death detected: Aiche killed by Wijatek
+[DeathTracker] New death detected: Aiche killed by Aleksander Wielki Silacz
+[DeathTracker] New death detected: Xayarith Druid killed by Ali eltaip
+[DeathTracker] New death detected: Xayarith Druid killed by Paapps
+[DeathTracker] New death detected: Xayarith Druid killed by Zaliczylem
+[DeathTracker] New death detected: Xayarith Druid killed by Aleksander Wielki Silacz
+[DeathTracker] New death detected: Michelangelo di Lodovico killed by Svolacius
+[DeathTracker] New death detected: Michelangelo di Lodovico killed by Benediktus
+[DeathTracker] New death detected: Michelangelo di Lodovico killed by Not Abdo
+[DeathTracker] New death detected: Gokturk Ege killed by Velox Occidendum
+[DeathTracker] New death detected: Gudlaug killed by El Niumi
+[DeathTracker] New death detected: Gokturk Ege killed by Zaliczylem
+[DeathTracker] New death detected: Gokturk Ege killed by Parli Nohands
+[DeathTracker] New death detected: Gokturk Ege killed by Kocur Sfinks
+[DeathTracker] New death detected: Gokturk Ege killed by Zginiesz sdkiem
+[DeathTracker] New death detected: Easy Monkiera killed by Silvfix
+[DeathTracker] New death detected: Easy Monkiera killed by Vuk samotnjak
+[DeathTracker] New death detected: Easy Monkiera killed by Lilaya
+[DeathTracker] New death detected: Easy Monkiera killed by Lilaya
+[DeathTracker] New death detected: Easy Monkiera killed by Snurra Flaskan
+[DeathTracker] New death detected: Easy Monkiera killed by demon
+[DeathTracker] New death detected: Easy Monkiera killed by Zginiesz sdkiem
+[DeathTracker] New death detected: Easy Monkiera killed by Parli Nohands
+[DeathTracker] New death detected: How About That killed by Velox Occidendum
+[DeathTracker] New death detected: How About That killed by Niven
+[DeathTracker] New death detected: How About That killed by Ka En Er
+[DeathTracker] New death detected: Conrad Fisher killed by Parli Nohands
+[DeathTracker] New death detected: Conrad Fisher killed by Parli Nohands
+[DeathTracker] New death detected: Conrad Fisher killed by Ivanx Inflame
+[DeathTracker] New death detected: Conrad Fisher killed by werehyaena
+[DeathTracker] New death detected: Conrad Fisher killed by Rateye Ric
+[DeathTracker] New death detected: Conrad Fisher killed by Zaliczylem
+[DeathTracker] New death detected: Conrad Fisher killed by Tpeszu
+[DeathTracker] New death detected: Conrad Fisher killed by elite pirat
+[DeathTracker] New death detected: Alanzerah Bombinha killed by freakish lost soul
+[DeathTracker] New death detected: Alanzerah Bombinha killed by mean lost soul
+[DeathTracker] New death detected: Alanzerah Bombinha killed by corrupt naga
+[DeathTracker] New death detected: Blissey Imperial killed by Aleksander Wielki Silacz
+[DeathTracker] New death detected: Deskiewicz Mareczek killed by Parli Nohands
+[DeathTracker] New death detected: Deskiewicz Mareczek killed by Zevelina
+[DeathTracker] New death detected: Deskiewicz Mareczek killed by Rdzawek
+[DeathTracker] New death detected: Deskiewicz Mareczek killed by Parli Nohands
+[DeathTracker] New death detected: Min pappa killed by Jeffenstein
+[DeathTracker] New death detected: Bazaar Baby killed by Elite Bronson
+[DeathTracker] New death detected: Min pappa killed by Jeffenstein
+[DeathTracker] New death detected: Min pappa killed by Jeffenstein
+[DeathTracker] New death detected: Min pappa killed by Silvfix
+[DeathTracker] New death detected: Min pappa killed by Nydexa
+[DeathTracker] New death detected: Min pappa killed by Qelly
+[DeathTracker] New death detected: Ernesto Valore killed by Parli Nohands
+[DeathTracker] New death detected: Ernesto Valore killed by arachnophobica
+[DeathTracker] New death detected: Ernesto Valore killed by ripper spectre
+[DeathTracker] New death detected: Ernesto Valore killed by falcon paladin
+[DeathTracker] New death detected: Ernesto Valore killed by ogre ruffian
+[DeathTracker] New death detected: Ernesto Valore killed by Kajo Kaan
+[DeathTracker] New death detected: Ernesto Valore killed by arachnophobica
+[DeathTracker] New death detected: Ernesto Valore killed by Dziabniety bogus
+[DeathTracker] New death detected: Ernesto Valore killed by Lishen
+[DeathTracker] New death detected: Ernesto Valore killed by Zaliczylem
+[DeathTracker] New death detected: Ernesto Valore killed by Super Fox
+[DeathTracker] New death detected: Ernesto Valore killed by Parli Nohands
+[DeathTracker] New death detected: Ernesto Valore killed by Urmahlullu the Immaculate
+[DeathTracker] New death detected: Ernesto Valore killed by Parli Nohands
+[DeathTracker] New death detected: Aka Pain killed by white weretiger
+[DeathTracker] New death detected: Aka Pain killed by weretiger
+[DeathTracker] New death detected: Aka Pain killed by Lawyna Amran
+[DeathTracker] New death detected: Aka Pain killed by Ivanx Inflame
+[DeathTracker] New death detected: Krugz killed by raubritter marksman
+[DeathTracker] New death detected: Krugz killed by usurper archer
+[DeathTracker] New death detected: Pekero badylo killed by Zly On Hyla
+[DeathTracker] New death detected: Skra Myson killed by Stivin
+[DeathTracker] New death detected: Skra Myson killed by Anrio Nukif
+[DeathTracker] New death detected: Skra Myson killed by werehyaena
+[DeathTracker] New death detected: Skra Myson killed by Corrupted Parli
+[DeathTracker] New death detected: Skra Myson killed by omnivora
+[DeathTracker] New death detected: Skra Myson killed by Ivanx Inflame
+[DeathTracker] New death detected: Pirrr killed by Moody California
+[DeathTracker] New death detected: Mittias killed by Parli Nohands
+[DeathTracker] New death detected: Plix Falcon Greaves killed by choking fear
+[DeathTracker] New death detected: Plix Falcon Greaves killed by Ladraozao
+[DeathTracker] New death detected: Plix Falcon Greaves killed by Kajo Kaan
+[DeathTracker] New death detected: Plix Falcon Greaves killed by Parli Nohands
+[DeathTracker] New death detected: Plix Falcon Greaves killed by Nydexa
+[DeathTracker] New death detected: Plix Falcon Greaves killed by skeleton elite warrior
+[DeathTracker] New death detected: Plix Falcon Greaves killed by Zly On Hyla
+[DeathTracker] New death detected: Plix Falcon Greaves killed by Dark master chaos
+[DeathTracker] New death detected: Plix Falcon Greaves killed by Enkiie
+[DeathTracker] New death detected: Plix Falcon Greaves killed by Kevin The Bully
+[DeathTracker] New death detected: Puck Bunny killed by trap
+[DeathTracker] New death detected: Ja Sdker killed by Vuk samotnjak
+[DeathTracker] New death detected: Ja Sdker killed by El Niumi
+[DeathTracker] New death detected: Ja Sdker killed by Parli Nohands
+[DeathTracker] New death detected: Seko Jullurin killed by Invadur
+[DeathTracker] New death detected: Ja Sdker killed by Parli Nohands
+[DeathTracker] New death detected: Ja Sdker killed by Hey Tico
+[DeathTracker] New death detected: Skuty Paral killed by Hey Tico
+[DeathTracker] New death detected: Skuty Paral killed by Skuty Paral
+[DeathTracker] New death detected: Skuty Paral killed by Tekno Barcelona
+[DeathTracker] New death detected: Skuty Paral killed by Typowy Lukaszek
+[DeathTracker] New death detected: The Devil Eye killed by Dasol
+[DeathTracker] New death detected: Szanowny Paladyn killed by Hey Tico
+[DeathTracker] New death detected: Szanowny Paladyn killed by Parli Nohands
+[DeathTracker] New death detected: Szanowny Paladyn killed by Waaa Pezufshet
+[DeathTracker] New death detected: Szanowny Paladyn killed by Zly On Hyla
+[DeathTracker] New death detected: Szanowny Paladyn killed by skeleton elite warrior
+[DeathTracker] New death detected: Szanowny Paladyn killed by skeleton elite warrior
+[DeathTracker] New death detected: Vybielacz killed by Anrio Nukif
+[DeathTracker] New death detected: Sugar Waifuuu killed by Indestructible Luki
+[DeathTracker] New death detected: Oloofmajster killed by Jumal Hane
+[DeathTracker] New death detected: Oloofmajster killed by Mallyy
+[DeathTracker] New death detected: Oloofmajster killed by Mallyy
+[DeathTracker] New death detected: Izza Ster killed by Pulkownik Pan Siergiusz
+[DeathTracker] New death detected: Izza Ster killed by Parli Nohands
+[DeathTracker] New death detected: Izza Ster killed by flimsy lost soul
+[DeathTracker] New death detected: Izza Ster killed by broodrider inferniarch
+[DeathTracker] New death detected: Zile Strike killed by Kevin The Bully
+[DeathTracker] New death detected: Toritya killed by Hey Tico
+[DeathTracker] New death detected: Zile Strike killed by Kevin The Bully
+[DeathTracker] New death detected: Toritya killed by burning gladiator
+[DeathTracker] New death detected: Zile Strike killed by Kevin The Bully
+[DeathTracker] New death detected: Toritya killed by Deltreggia
+[DeathTracker] New death detected: Mara Jaal killed by Cziczi Pal
+[DeathTracker] New death detected: Toritya killed by Shady basha
+[DeathTracker] New death detected: Mara Jaal killed by Jaanuusz
+[DeathTracker] New death detected: Toritya killed by Shady basha
+[DeathTracker] New death detected: Shendain killed by Zginiesz sdkiem
+[DeathTracker] New death detected: Shendain killed by Typowy Lukaszek
+[DeathTracker] New death detected: Victory Rush killed by Silvfix
+[DeathTracker] New death detected: Sheon Kada killed by Ivar Bjornulf
+[DeathTracker] New death detected: Sheon Kada killed by Zginiesz sdkiem
+[DeathTracker] New death detected: Catfish Hillbilly killed by Silvfix
+[DeathTracker] New death detected: Catfish Hillbilly killed by Scarlett Etzel
+[DeathTracker] New death detected: Big Kat Knight killed by Bella Eon
+[DeathTracker] New death detected: Oob killed by flimsy lost soul
+[DeathTracker] New death detected: Big Kat Knight killed by ripper spectre
+[DeathTracker] New death detected: Oob killed by Kevin The Bully
+[DeathTracker] New death detected: Big Kat Knight killed by Ryu No Chikara
+[DeathTracker] New death detected: Oob killed by Phantom Kraken
+[DeathTracker] New death detected: Big Kat Knight killed by Parli Nohands
+[DeathTracker] New death detected: Oob killed by Enri Crys
+[DeathTracker] New death detected: Oob killed by Aleksander Wielki Silacz
+[DeathTracker] New death detected: Oob killed by cobra vizier
+[DeathTracker] New death detected: Cube Aldent killed by Yasiulla
+[DeathTracker] New death detected: Monk Da Doom killed by iks chuka
+[DeathTracker] New death detected: Ieron Ne Kki killed by Ando Fevin
+[DeathTracker] New death detected: Ieron Ne Kki killed by Da Shiko
+[DeathTracker] New death detected: Exon Estatez killed by Silvfix
+[DeathTracker] New death detected: Exon Estatez killed by Charloveer Wojtas
+[DeathTracker] New death detected: Cotista de Muleta killed by brachiodemon
+[DeathTracker] New death detected: Exon Estatez killed by Aleksander Wielki Silacz
+[DeathTracker] New death detected: Strzelam runami killed by Ali eltaip
+[DeathTracker] New death detected: Psycho Pat killed by lava creature
+[DeathTracker] New death detected: Oob the Noob killed by Tanakz Archer
+[DeathTracker] New death detected: Oob the Noob killed by Stormpiercer
+[DeathTracker] New death detected: Oob the Noob killed by wereboar
+[DeathTracker] New death detected: Oob the Noob killed by Shir Mago
+[DeathTracker] New death detected: Oob the Noob killed by Aloha Kielbasy
+[DeathTracker] New death detected: Igor Comander killed by Kocur Sfinks
+[DeathTracker] New death detected: Igor Comander killed by Super Fox
+[DeathTracker] New death detected: Igor Comander killed by skeleton elite warrior
+[DeathTracker] New death detected: Igor Comander killed by Aleksander Wielki Silacz
+[DeathTracker] New death detected: Igor Comander killed by Typowy Lukaszek
+[DeathTracker] New death detected: Adacho The Braniewo killed by grim reaper
+[DeathTracker] New death detected: Kaszankolot killed by Oleey Go Clockwise
+[DeathTracker] New death detected: Oobie killed by Ali eltaip
+[DeathTracker] New death detected: Kaszankolot killed by Elljanko
+[DeathTracker] New death detected: Oobie killed by Kevin The Bully
+[DeathTracker] New death detected: Oobie killed by Tobionee
+[DeathTracker] New death detected: Oobie killed by Silvfix
+[DeathTracker] New death detected: Oobie killed by Lawyna Amran
+[DeathTracker] New death detected: Oobie killed by Silvfix
+[DeathTracker] New death detected: Oobie killed by Kevin The Bully
+[DeathTracker] New death detected: Oobie killed by Silvfix
+[DeathTracker] New death detected: Oobie killed by Silvfix
+[DeathTracker] New death detected: Oobie killed by Phantom Kraken
+[DeathTracker] New death detected: Oobie killed by Enkiie
+[DeathTracker] New death detected: Oobie killed by Silvfix
+[DeathTracker] New death detected: Oobie killed by hellhunter inferniarch
+[DeathTracker] New death detected: Oobie killed by gorger inferniarch
+[DeathTracker] New death detected: Oobie killed by Tobionee
+[DeathTracker] New death detected: Oobie killed by flimsy lost soul
+[DeathTracker] New death detected: Oobie killed by rootthing amber shaper
+[DeathTracker] New death detected: Oobie killed by Typowy Lukaszek
+[DeathTracker] New death detected: Oobie killed by Dasol
+[DeathTracker] New death detected: Oobie killed by Kevin The Bully
+[DeathTracker] New death detected: Ally the Pally killed by shock head
+[DeathTracker] New death detected: Jibbsu Wariat killed by werehyaena
+[DeathTracker] New death detected: Kreh Sona killed by Zero Szesc Zwagi
+[DeathTracker] New death detected: Kreh Sona killed by Zero Szesc Zwagi
+[DeathTracker] New death detected: Kreh Sona killed by adult goanna
+[DeathTracker] New death detected: Kreh Sona killed by Madokk
+[DeathTracker] New death detected: Kreh Sona killed by Kalash Criminel
+[DeathTracker] New death detected: Masai Koke killed by frazzlemaw
+[DeathTracker] New death detected: Masai Koke killed by worker golem
+[DeathTracker] New death detected: Igor Rasher killed by Jayjay
+[DeathTracker] New death detected: Exon Da Doom killed by gorger inferniarch
+[DeathTracker] New death detected: Mclovynn killed by hardened usurper warlock
+[DeathTracker] New death detected: Betiin Dyballa killed by Elljanko
+[DeathTracker] New death detected: Betiin Dyballa killed by Aleksander Wielki Silacz
+[DeathTracker] New death detected: Kamis killed by Mitmah Vanguard
+[DeathTracker] New death detected: Kamis killed by Aftershock
+[DeathTracker] New death detected: Kamis killed by falcon paladin
+[DeathTracker] New death detected: Kamis killed by grim reaper
+[DeathTracker] New death detected: Kamis killed by trap
+[DeathTracker] New death detected: Kamis killed by barkless devotee
+[DeathTracker] New death detected: Kamis killed by werehyaena
+[DeathTracker] New death detected: Altoy killed by Kajo Kaan
+[DeathTracker] New death detected: Altoy killed by Ek Today
+[DeathTracker] New death detected: Altoy killed by Parli Nohands
+[DeathTracker] New death detected: Altoy killed by Parli Nohands
+[DeathTracker] New death detected: Altoy killed by Typowy Lukaszek
+[DeathTracker] New death detected: Altoy killed by Toxic Aki
+[DeathTracker] New death detected: Mexora killed by Beacon of Madness
+[DeathTracker] New death detected: Mexora killed by Kocur Sfinks
+[DeathTracker] New death detected: Mexora killed by ripper spectre
+[DeathTracker] New death detected: Mexora killed by Aleksander Wielki Silacz
+[DeathTracker] New death detected: Mexora killed by Parli Nohands
+[DeathTracker] New death detected: Mexora killed by Parli Nohands
+[DeathTracker] New death detected: John Veto killed by Nydexa
+[DeathTracker] New death detected: Haha Du Dog killed by Jeffenstein
+[DeathTracker] New death detected: Haha Du Dog killed by hellspawn
+[DeathTracker] New death detected: Haha Du Dog killed by Zginiesz sdkiem
+[DeathTracker] New death detected: Grzana The Warrior killed by Kajo Kaan
+[DeathTracker] New death detected: Grzana The Warrior killed by Corrupted Parli
+[DeathTracker] New death detected: Grzana The Warrior killed by gazer spectre
+[DeathTracker] New death detected: Grzana The Warrior killed by Zginiesz sdkiem
+[DeathTracker] New death detected: Luluxxd killed by Parli Nohands
+[DeathTracker] New death detected: Leczy Menda killed by Zly On Hyla
+[DeathTracker] New death detected: Leczy Menda killed by Typowy Lukaszek
+[DeathTracker] New death detected: Ohmydaizzz killed by Khal Tyrell
+[DeathTracker] New death detected: Ohmydaizzz killed by Ohmydaizzz
+[DeathTracker] New death detected: Ohmydaizzz killed by Ohmydaizzz
+[DeathTracker] New death detected: Ohmydaizzz killed by Ohmydaizzz
+[DeathTracker] New death detected: Ohmydaizzz killed by Ohmydaizzz
+[DeathTracker] New death detected: Ohmydaizzz killed by Lujeee
+[DeathTracker] New death detected: Rivvz killed by Parli Nohands
+[DeathTracker] New death detected: Proya killed by Proya
+[DeathTracker] New death detected: Rivvz killed by Ek Today
+[DeathTracker] New death detected: Proya killed by Szlugtex
+[DeathTracker] New death detected: Rivvz killed by Parli Nohands
+[DeathTracker] New death detected: Proya killed by Proya
+[DeathTracker] New death detected: Rivvz killed by Uciekam Szeryfowi
+[DeathTracker] New death detected: Proya killed by Feliath
+[DeathTracker] New death detected: Rivvz killed by Arnel
+[DeathTracker] New death detected: Proya killed by Ka En Er
+[DeathTracker] New death detected: Rivvz killed by burster spectre
+[DeathTracker] New death detected: Rivvz killed by ripper spectre
+[DeathTracker] New death detected: Rivvz killed by Arnel
+[DeathTracker] New death detected: Rivvz killed by skeleton elite warrior
+[DeathTracker] New death detected: Exon Noobslayer killed by Ali eltaip
+[DeathTracker] New death detected: Sky Arlequin killed by Lancei Palitos
+[DeathTracker] New death detected: Exon Noobslayer killed by Kevin The Bully
+[DeathTracker] New death detected: Sky Arlequin killed by Don Warlord
+[DeathTracker] New death detected: Ajeyyy killed by Zly On Hyla
+[DeathTracker] New death detected: Sky Arlequin killed by Don Warlord
+[DeathTracker] New death detected: Ajeyyy killed by Aleksander Wielki Silacz
+[DeathTracker] New death detected: Sky Arlequin killed by Sky Arlequin
+[DeathTracker] New death detected: Sky Arlequin killed by Ruzalb
+[DeathTracker] New death detected: Sky Arlequin killed by Ruzalb
+[DeathTracker] New death detected: Sky Arlequin killed by Willicus
+[DeathTracker] New death detected: Sky Arlequin killed by Cam Frost
+[DeathTracker] New death detected: Sky Arlequin killed by Yuzuriha Mashiro
+[DeathTracker] New death detected: Sky Arlequin killed by Yuzuriha Mashiro
+[DeathTracker] New death detected: Sky Arlequin killed by Super Fox
+[DeathTracker] New death detected: Sky Arlequin killed by Zero Szesc Zwagi
+[DeathTracker] New death detected: Sky Arlequin killed by Zero Szesc Zwagi
+[DeathTracker] New death detected: Sky Arlequin killed by Hey Tico
+[DeathTracker] New death detected: Sky Arlequin killed by Repress
+[DeathTracker] New death detected: Sky Arlequin killed by Redbulz
+[DeathTracker] New death detected: Sky Arlequin killed by Redbulz
+[DeathTracker] New death detected: Sky Arlequin killed by Szukamciebie
+[DeathTracker] New death detected: Sky Arlequin killed by lamassu
+[DeathTracker] New death detected: Sky Arlequin killed by Dark Archmage
+[DeathTracker] New death detected: Ralpin killed by Robie cochce gdziechce
+[DeathTracker] New death detected: Toudda killed by Velox Occidendum
+[DeathTracker] New death detected: Ubercrit killed by Rdzawy Lep
+[DeathTracker] New death detected: Ubercrit killed by night harpy
+[DeathTracker] New death detected: Ubercrit killed by Kajo Kaan
+[DeathTracker] New death detected: Ubercrit killed by adult goanna
+[DeathTracker] New death detected: Ubercrit killed by Baltazaur
+[DeathTracker] New death detected: Vaya Cocos killed by Anrio Nukif
+[DeathTracker] New death detected: Vaya Cocos killed by Velox Occidendum
+[DeathTracker] New death detected: Vaya Cocos killed by Dark master chaos
+[DeathTracker] New death detected: Vaya Cocos killed by Dasol
+[DeathTracker] New death detected: Vaya Cocos killed by Dasol
+[DeathTracker] New death detected: Vaya Cocos killed by Kevin The Bully
+[DeathTracker] New death detected: Vaya Cocos killed by Kevin The Bully
+[DeathTracker] New death detected: Vaya Cocos killed by Dasol
+[DeathTracker] Found 321 new deaths for guild Curbstompaz
+[DeathTracker] Checking 75 players from guild Camel riders (enemy) in batches of 5
+[DeathTracker] New death detected: Moozambooko killed by Miikus
+[DeathTracker] New death detected: Me Mccready killed by Haytamz Oligarch
+[DeathTracker] New death detected: Moozambooko killed by Minavand
+[DeathTracker] New death detected: Me Mccready killed by Qvava
+[DeathTracker] New death detected: Moozambooko killed by Minavand
+[DeathTracker] New death detected: Me Mccready killed by Lilaya
+[DeathTracker] New death detected: Me Mccready killed by Kraehe
+[DeathTracker] New death detected: Me Mccready killed by Aathea
+[DeathTracker] New death detected: Me Mccready killed by Zaawiszka
+[DeathTracker] New death detected: Me Mccready killed by Zaawiszka
+[DeathTracker] New death detected: Me Mccready killed by orclops bloodbreaker
+[DeathTracker] New death detected: Me Mccready killed by emerald tortoise
+[DeathTracker] New death detected: Me Mccready killed by Diamonz
+[DeathTracker] New death detected: Me Mccready killed by Orc Leadher
+[DeathTracker] New death detected: Me Mccready killed by Sharin Max
+[DeathTracker] New death detected: Me Mccready killed by Greats Druid
+[DeathTracker] New death detected: Me Mccready killed by Greats Druid
+[DeathTracker] New death detected: Archercatore killed by Mad Bobro
+[DeathTracker] New death detected: Aleksander Wielki Silacz killed by lumbering carnivor
+[DeathTracker] New death detected: Aleksander Wielki Silacz killed by Lilaya
+[DeathTracker] New death detected: Aleksander Wielki Silacz killed by Xayarith Druid
+[DeathTracker] New death detected: Doc Fechabox killed by Uciekam Szeryfowi
+[DeathTracker] New death detected: Doc Fechabox killed by crazed summer rearguard
+[DeathTracker] New death detected: Marquinho Blocker killed by Marquinho Blocker
+[DeathTracker] New death detected: Marquinho Blocker killed by Lilaya
+[DeathTracker] New death detected: Steplagg killed by Qwsoxqswm Qwsoqxswm Qawgwgswm
+[DeathTracker] New death detected: Steplagg killed by Risorv
+[DeathTracker] New death detected: Steplagg killed by Bill The Headcase
+[DeathTracker] New death detected: Steplagg killed by mirror image
+[DeathTracker] New death detected: Steplagg killed by Xayarith Druid
+[DeathTracker] New death detected: Steplagg killed by Sako Wero
+[DeathTracker] New death detected: Makhullu killed by lava creature
+[DeathTracker] New death detected: Eldrik Dark killed by Diamonz
+[DeathTracker] New death detected: Eldrik Dark killed by Drapieznny
+[DeathTracker] New death detected: Eldrik Dark killed by Qvava
+[DeathTracker] New death detected: Eldrik Dark killed by Qvava
+[DeathTracker] New death detected: Eldrik Dark killed by Paque Lloren
+[DeathTracker] New death detected: Eldrik Dark killed by Kraehe
+[DeathTracker] New death detected: Eldrik Dark killed by Biellzs Marrento
+[DeathTracker] New death detected: Eldrik Dark killed by Ohbarvis Ezza
+[DeathTracker] New death detected: Eldrik Dark killed by Ohbarvis Ezza
+[DeathTracker] New death detected: Mijha killed by Qvava
+[DeathTracker] New death detected: Mijha killed by Qvava
+[DeathTracker] New death detected: Mijha killed by Kocur Sfinks
+[DeathTracker] New death detected: Mijha killed by Zibbintzibbin
+[DeathTracker] New death detected: Sacrfice killed by Ryuk Phantomhive
+[DeathTracker] New death detected: Sacrfice killed by Lilaya
+[DeathTracker] New death detected: Sacrfice killed by Risorv
+[DeathTracker] New death detected: Sacrfice killed by Loszka Dzika
+[DeathTracker] New death detected: Sacrfice killed by Kraehe
+[DeathTracker] New death detected: Sacrfice killed by Kraehe
+[DeathTracker] New death detected: Sacrfice killed by Sacrfice
+[DeathTracker] New death detected: Sacrfice killed by Hellikipotel
+[DeathTracker] New death detected: Sacrfice killed by Kaszankolot
+[DeathTracker] New death detected: Waaaah Jamil killed by Mexora
+[DeathTracker] New death detected: Seawind killed by Willicus
+[DeathTracker] New death detected: Kaszika killed by Lilaya
+[DeathTracker] New death detected: Kaszika killed by Ohbarvis Ezza
+[DeathTracker] New death detected: Kaszika killed by Lilaya
+[DeathTracker] New death detected: Kaszika killed by Lilaya
+[DeathTracker] New death detected: Kaszika killed by Pan Fafik
+[DeathTracker] New death detected: Qiisingmakakk killed by Qvava
+[DeathTracker] New death detected: Qiisingmakakk killed by Kaszankolot
+[DeathTracker] New death detected: Qiisingmakakk killed by Elite Bronson
+[DeathTracker] New death detected: Kryvyn killed by Pan Orron
+[DeathTracker] New death detected: Kryvyn killed by Best Sio Healer
+[DeathTracker] New death detected: Kryvyn killed by lizard legionnaire
+[DeathTracker] New death detected: Kryvyn killed by brimstone bug
+[DeathTracker] New death detected: Kryvyn killed by Alucarr
+[DeathTracker] New death detected: Kryvyn killed by Bieelski
+[DeathTracker] New death detected: Kryvyn killed by Ryu No Chikara
+[DeathTracker] New death detected: Kryvyn killed by Alucarr
+[DeathTracker] New death detected: Kryvyn killed by Willicus
+[DeathTracker] New death detected: Kryvyn killed by Emots
+[DeathTracker] New death detected: Kryvyn killed by feral sphinx
+[DeathTracker] New death detected: Ladraozao killed by Ryu No Chikara
+[DeathTracker] New death detected: Ladraozao killed by Ryuk Phantomhive
+[DeathTracker] New death detected: Ladraozao killed by Jeff Jaernskegg
+[DeathTracker] New death detected: Ladraozao killed by Ryuk Phantomhive
+[DeathTracker] New death detected: Ladraozao killed by Alucarr
+[DeathTracker] New death detected: Ladraozao killed by two-headed turtle
+[DeathTracker] New death detected: Ladraozao killed by Ladraozao
+[DeathTracker] New death detected: Ladraozao killed by Ohbarvis Ezza
+[DeathTracker] New death detected: Ladraozao killed by dark torturer
+[DeathTracker] New death detected: Ladraozao killed by Alucarr
+[DeathTracker] New death detected: Ladraozao killed by Elite Bronson
+[DeathTracker] New death detected: Ladraozao killed by Blissey Imperial
+[DeathTracker] New death detected: Ladraozao killed by Mexora
+[DeathTracker] New death detected: Ladraozao killed by Willicus
+[DeathTracker] New death detected: Ladraozao killed by Alucarr
+[DeathTracker] New death detected: Ladraozao killed by Bieelski
+[DeathTracker] New death detected: Xendor of Askara killed by crape man
+[DeathTracker] New death detected: Dziabniety bogus killed by Alucarr
+[DeathTracker] New death detected: Xendor of Askara killed by Alucarr
+[DeathTracker] New death detected: Dziabniety bogus killed by Exivaexiva Kakadu No
+[DeathTracker] New death detected: Xendor of Askara killed by agony
+[DeathTracker] New death detected: Dziabniety bogus killed by Fullako
+[DeathTracker] New death detected: Mateusz Serek Wielki killed by Mateusz Serek Wielki
+[DeathTracker] New death detected: Hussaris Furora killed by chasm spawn
+[DeathTracker] New death detected: Hussaris Furora killed by falcon paladin
+[DeathTracker] New death detected: Hussaris Furora killed by chasm spawn
+[DeathTracker] New death detected: Hussaris Furora killed by chasm spawn
+[DeathTracker] New death detected: Hussaris Furora killed by elder wyrm
+[DeathTracker] New death detected: Hussaris Furora killed by Ohbarvis Ezza
+[DeathTracker] New death detected: Hussaris Furora killed by chasm spawn
+[DeathTracker] New death detected: Hussaris Furora killed by reality reaver
+[DeathTracker] New death detected: Hussaris Furora killed by chasm spawn
+[DeathTracker] New death detected: Hussaris Furora killed by mean lost soul
+[DeathTracker] New death detected: Hussaris Furora killed by mean lost soul
+[DeathTracker] New death detected: Hussaris Furora killed by grimeleech
+[DeathTracker] New death detected: Corrupted Parli killed by Lilaya
+[DeathTracker] New death detected: Corrupted Parli killed by Ohbarvis Ezza
+[DeathTracker] New death detected: Corrupted Parli killed by Lilaya
+[DeathTracker] New death detected: Fhenlim Pacifico killed by werelion
+[DeathTracker] New death detected: Corrupted Parli killed by Lilaya
+[DeathTracker] New death detected: Fhenlim Pacifico killed by Cerilb
+[DeathTracker] New death detected: Corrupted Parli killed by Pan Fafik
+[DeathTracker] New death detected: Gugulethu Mhlungu killed by Atos Bomb
+[DeathTracker] New death detected: Gugulethu Mhlungu killed by Ryu No Chikara
+[DeathTracker] New death detected: Gugulethu Mhlungu killed by Mexora
+[DeathTracker] New death detected: Gugulethu Mhlungu killed by Mexora
+[DeathTracker] New death detected: Waaa Pezufshet killed by Mexora
+[DeathTracker] New death detected: Parli Nohands killed by quara raider
+[DeathTracker] New death detected: Parli Nohands killed by Mexora
+[DeathTracker] New death detected: Parli Nohands killed by Xayarith Druid
+[DeathTracker] New death detected: Mateusz Uhacz Maly killed by mega dragon
+[DeathTracker] New death detected: Kajo Kaan killed by Lilaya
+[DeathTracker] New death detected: Mamed The Champ killed by flimsy lost soul
+[DeathTracker] New death detected: Kajo Kaan killed by Risorv
+[DeathTracker] New death detected: Mamed The Champ killed by stone devourer
+[DeathTracker] New death detected: Kajo Kaan killed by Ryuk Phantomhive
+[DeathTracker] New death detected: Kajo Kaan killed by Lilaya
+[DeathTracker] New death detected: Kajo Kaan killed by Ryuk Phantomhive
+[DeathTracker] New death detected: Kajo Kaan killed by Qvava
+[DeathTracker] New death detected: Kajo Kaan killed by Lilaya
+[DeathTracker] New death detected: Kajo Kaan killed by Willicus
+[DeathTracker] New death detected: Kajo Kaan killed by Pan Fafik
+[DeathTracker] New death detected: Kajo Kaan killed by Ryu No Chikara
+[DeathTracker] New death detected: Kajo Kaan killed by Kaszankolot
+[DeathTracker] New death detected: Kajo Kaan killed by Willicus
+[DeathTracker] New death detected: Yakshumy Owl killed by Leczy Menda
+[DeathTracker] New death detected: Yakshumy Owl killed by Leczy Menda
+[DeathTracker] New death detected: Voldvia Erah killed by Plix Falcon Greaves
+[DeathTracker] New death detected: Voldvia Erah killed by Desunia
+[DeathTracker] New death detected: Voldvia Erah killed by Willicus
+[DeathTracker] New death detected: Zawijajaca killed by Xayarith Druid
+[DeathTracker] New death detected: Zawijajaca killed by Leczy Menda
+[DeathTracker] New death detected: Zawijajaca killed by Leczy Menda
+[DeathTracker] New death detected: Zawijajaca killed by Leczy Menda
+[DeathTracker] New death detected: Zawijajaca killed by Desunia
+[DeathTracker] New death detected: Its Art killed by Qvava
+[DeathTracker] New death detected: Its Art killed by Qvava
+[DeathTracker] Found 152 new deaths for guild Camel riders
+[DeathTracker] 967 deaths pending notification
+[DeathTracker] Skipped 967 notifications older than 2 hours
+[DeathTracker] Sent 0 notifications
+[OnlineScraper] Fetching online players from TibiaData API for Antica
+[OnlineScraper] Fetched 499 online players from TibiaData
+[OnlineScraper] Snapshot complete: 499 online, 68 logged in, 59 logged off
+[DeathTracker] Priority check: 14 tracked players (online + recently offline) in batches of 5
+[OnlineScraper] Fetching online players from TibiaData API for Antica
+[OnlineScraper] Fetched 503 online players from TibiaData
+[OnlineScraper] Snapshot complete: 503 online, 65 logged in, 61 logged off
+[DeathTracker] Priority check: 13 tracked players (online + recently offline) in batches of 5
