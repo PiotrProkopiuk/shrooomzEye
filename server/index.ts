@@ -70,30 +70,33 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-    log("Initializing routes and middleware...", "init");
-    await registerRoutes(httpServer, app);
+    log("KROK A: Uruchamiam registerRoutes...", "DIAGNOZA");
+    try {
+        await registerRoutes(httpServer, app);
+        log("KROK B: registerRoutes zakonczone sukcesem!", "DIAGNOZA");
+    } catch (err) {
+        log(`KROK B-BLAD: registerRoutes wywalilo sie: ${err}`, "DIAGNOZA");
+    }
 
-    app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
-        const status = err.status || err.statusCode || 500;
-        const message = err.message || "Internal Server Error";
-
-        console.error("Internal Server Error:", err);
-
-        if (res.headersSent) {
-            return next(err);
-        }
-
-        return res.status(status).json({ message });
-    });
+    log("KROK C: Sprawdzam tryb NODE_ENV...", "DIAGNOZA");
+    log(`Aktualny NODE_ENV to: "${process.env.NODE_ENV}"`, "DIAGNOZA");
 
     if (process.env.NODE_ENV === "production") {
-        log("Production mode detected. Serving static files.", "init");
+        log("KROK D: Produkcja - odpalam serveStatic", "DIAGNOZA");
         serveStatic(app);
+        log("KROK E: serveStatic zakonczone", "DIAGNOZA");
     } else {
-        log("Development mode detected. Setting up Vite...", "init");
-        const { setupVite } = await import("./vite");
-        await setupVite(httpServer, app);
+        log("KROK D: Development - PROBA ladowania Vite...", "DIAGNOZA");
+        try {
+            const { setupVite } = await import("./vite");
+            await setupVite(httpServer, app);
+            log("KROK E: Vite zaladowane", "DIAGNOZA");
+        } catch (err) {
+            log(`KROK E-BLAD: Vite sie wywalilo: ${err}`, "DIAGNOZA");
+        }
     }
+
+    log("KROK F: Wszystko gotowe, zaraz odpalam httpServer.listen...", "DIAGNOZA");
 
     const port = parseInt(process.env.PORT || "5000", 10);
     httpServer.listen(
