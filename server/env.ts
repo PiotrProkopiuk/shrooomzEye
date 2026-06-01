@@ -1,5 +1,4 @@
-o danych?
-    m/**
+/**
  * Load environment variables from .env file
  * This must be imported FIRST before any other modules
  */
