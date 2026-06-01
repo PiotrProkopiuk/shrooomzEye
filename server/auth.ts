@@ -30,7 +30,7 @@ function getRedirectUri() {
   if (process.env.REPLIT_DEV_DOMAIN) {
     return `https://${process.env.REPLIT_DEV_DOMAIN}/api/auth/discord/callback`;
   }
-  return "http://localhost:5000/api/auth/discord/callback";
+  return "https://mushroomz.fun/api/auth/discord/callback";
 }
 const DISCORD_REDIRECT_URI = getRedirectUri();
 console.log(`[Auth] Discord redirect URI: ${DISCORD_REDIRECT_URI}`);
