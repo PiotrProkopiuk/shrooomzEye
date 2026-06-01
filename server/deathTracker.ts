@@ -626,59 +626,64 @@ export async function getAllDeathTrackerConfigs() {
 }
 
 export function startDeathTrackerJob(intervalMinutes: number = 5, onlineCheckIntervalMinutes: number = 1) {
-  if (deathTrackerInterval) {
-    clearInterval(deathTrackerInterval);
-  }
-  if (onlineDeathCheckInterval) {
-    clearInterval(onlineDeathCheckInterval);
-  }
+    if (deathTrackerInterval) {
+        clearInterval(deathTrackerInterval);
+    }
+    if (onlineDeathCheckInterval) {
+        clearInterval(onlineDeathCheckInterval);
+    }
 
-  console.log(`[DeathTracker] Starting background job (offline: every ${intervalMinutes}min, online: every ${onlineCheckIntervalMinutes}min)`);
-  
-  // Full guild scan for offline players
-  const runFullCheck = async () => {
-    try {
-      console.log("[DeathTracker] Running full death check (all guild players)...");
-      const allGuilds = await storage.getGuilds();
-      
-      for (const guild of allGuilds) {
-        const newDeaths = await checkDeathsForGuild(guild.id);
-        if (newDeaths > 0) {
-          console.log(`[DeathTracker] Found ${newDeaths} new deaths for guild ${guild.name}`);
+    console.log(`[DEATH_TEST] 1. Funkcja startDeathTrackerJob zostala wywolana.`);
+
+    // Full guild scan for offline players
+    const runFullCheck = async () => {
+        try {
+            console.log("[DEATH_TEST] 2. runFullCheck wlasnie sie uruchomilo na starcie!");
+
+            console.log("[DEATH_TEST] 3. Proba pobrania gildii z bazy danych...");
+            const allGuilds = await storage.getGuilds();
+            console.log(`[DEATH_TEST] 4. Sukces! Pobrano ${allGuilds.length} gildii.`);
+
+            for (const guild of allGuilds) {
+                console.log(`[DEATH_TEST] 5. Sprawdzam zgony dla gildii: ${guild.name} (ID: ${guild.id})`);
+                const newDeaths = await checkDeathsForGuild(guild.id);
+                console.log(`[DEATH_TEST] 6. Zakonczono sprawdzanie gildii ${guild.name}. Nowych zgonow: ${newDeaths}`);
+            }
+
+            console.log("[DEATH_TEST] 7. Proba pobrania nienotyfikowanych zgonow z bazy...");
+            const unnotified = await getUnnotifiedDeaths();
+            console.log(`[DEATH_TEST] 8. Sukces! Znaleziono ${unnotified.length} zgonow do wyslania.`);
+
+            if (unnotified.length > 0) {
+                const notified = await processNotifications();
+                console.log(`[DEATH_TEST] 9. Powiadomienia przetworzone. Wyslano: ${notified}`);
+            }
+
+        } catch (error) {
+            console.error("[DEATH_TEST] X. BLAD W UPALIE runFullCheck:", error);
         }
-      }
-      
-      // Process unnotified deaths and send Discord notifications
-      const unnotified = await getUnnotifiedDeaths();
-      if (unnotified.length > 0) {
-        console.log(`[DeathTracker] ${unnotified.length} deaths pending notification`);
-        const notified = await processNotifications();
-        console.log(`[DeathTracker] Sent ${notified} notifications`);
-      }
-      
-    } catch (error) {
-      console.error("[DeathTracker] Error in full check:", error);
-    }
-  };
+    };
 
-  // Priority check for online players only
-  const runOnlineCheck = async () => {
-    try {
-      await runOnlinePlayerDeathCheck();
-    } catch (error) {
-      console.error("[DeathTracker] Error in online check:", error);
-    }
-  };
+    const runOnlineCheck = async () => {
+        try {
+            console.log("[DEATH_TEST] ONLINE. Odpalam runOnlinePlayerDeathCheck...");
+            await runOnlinePlayerDeathCheck();
+        } catch (error) {
+            console.error("[DEATH_TEST] ONLINE_BLAD:", error);
+        }
+    };
 
-  // Run full check immediately, then on interval
-  runFullCheck();
-  deathTrackerInterval = setInterval(runFullCheck, intervalMinutes * 60 * 1000);
-  
-  // Run online check after 30 seconds delay, then every minute
-  setTimeout(() => {
-    runOnlineCheck();
-    onlineDeathCheckInterval = setInterval(runOnlineCheck, onlineCheckIntervalMinutes * 60 * 1000);
-  }, 30000);
+    // Uruchomienie natychmiastowe
+    runFullCheck();
+
+    console.log("[DEATH_TEST] 10. Rejestruje interwal OFFLINE co " + intervalMinutes + " min.");
+    deathTrackerInterval = setInterval(runFullCheck, intervalMinutes * 60 * 1000);
+
+    setTimeout(() => {
+        console.log("[DEATH_TEST] 11. Rejestruje interwal ONLINE co " + onlineCheckIntervalMinutes + " min.");
+        runOnlineCheck();
+        onlineDeathCheckInterval = setInterval(runOnlineCheck, onlineCheckIntervalMinutes * 60 * 1000);
+    }, 30000);
 }
 
 export function stopDeathTrackerJob() {
