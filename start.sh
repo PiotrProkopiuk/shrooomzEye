@@ -6,16 +6,35 @@ echo ""
 echo "🚀 Startowanie aplikacji ShrooomzEye..."
 echo ""
 
+# Set working directory to script directory
+cd "$(dirname "$0")" || exit 1
+
 # 1. Sprawdzenie .env
 echo "📝 Sprawdzanie konfiguracji..."
 if [ ! -f .env ]; then
-  echo "⚠️  Plik .env nie istnieje, tworzę nowy..."
-  cat > .env << EOF
-DATABASE_URL=postgres://postgres@localhost:5432/shrooomzeye
-PORT=5000
-NODE_ENV=development
-EOF
+  echo "❌ Plik .env nie istnieje!"
+  echo ""
+  echo "Utwórz plik .env w katalogu $(pwd)/.env z zawartością:"
+  echo ""
+  echo "  DATABASE_URL=postgres://user:password@localhost:5432/shrooomzeye"
+  echo "  PORT=5000"
+  echo "  NODE_ENV=production"
+  echo ""
+  echo "📌 WAŻNE:"
+  echo "   - Zmień hasło 'password' na rzeczywiste hasło PostgreSQL"
+  echo "   - Zmień 'localhost' jeśli baza jest na innym serwerze"
+  echo "   - Upewnij się że baza 'shrooomzeye' istnieje"
+  echo ""
+  exit 1
 fi
+
+# Sprawdzenie czy .env ma DATABASE_URL
+if ! grep -q "DATABASE_URL" .env; then
+  echo "❌ DATABASE_URL nie jest ustawiony w pliku .env"
+  echo "   Dodaj linię: DATABASE_URL=postgres://user:password@host:5432/dbname"
+  exit 1
+fi
+
 echo "✅ Konfiguracja OK"
 echo ""
 
@@ -43,7 +62,7 @@ echo "Aby zamknąć aplikację, naciśnij Ctrl+C"
 echo ""
 
 # Uruchomienie backendu
-export NODE_ENV=development
+export NODE_ENV=production
 npm run dev &
 BACKEND_PID=$!
 

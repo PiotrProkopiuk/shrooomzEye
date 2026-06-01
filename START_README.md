@@ -6,19 +6,49 @@
 - **PostgreSQL** v12+ działający lokalnie lub dostępny przez sieć
 - **npm** lub **yarn**
 
-## Konfiguracja
+## ⚠️ Ważne: Konfiguracja zmiennych środowiskowych
 
-### 1. Zmienne środowiskowe (`.env`)
+Aplikacja wymaga zmiennych środowiskowych do działania. Są one wczytywane z pliku `.env` w głównym katalogu projektu.
 
-Plik `.env` powinien zawierać:
+### 1. Utwórz plik `.env`
 
-```
-DATABASE_URL=postgres://postgres@localhost:5432/shrooomzeye
+Stwórz plik `.env` w głównym katalogu projektu. Nie ma go w repozytorium z powodu bezpieczeństwa.
+
+**Zawartość `.env`:**
+
+```env
+DATABASE_URL=postgres://user:password@localhost:5432/shrooomzeye
 PORT=5000
 NODE_ENV=development
 ```
 
-> **Ważne**: Zmień hasło `postgres` na rzeczywiste hasło do PostgreSQL oraz dostosuj host/port jeśli baza nie jest lokalna.
+### 2. Zmienne wymagane
+
+| Zmienna | Wymagana | Domyślna | Opis |
+|---------|----------|----------|------|
+| `DATABASE_URL` | ✅ TAK | brak | Łańcuch połączenia do PostgreSQL |
+| `PORT` | ❌ NIE | `5000` | Port na którym serwer nasłuchuje |
+| `NODE_ENV` | ❌ NIE | `development` | Tryb aplikacji: `development` lub `production` |
+
+### 3. Format `DATABASE_URL`
+
+```
+postgres://[user]:[password]@[host]:[port]/[database]
+```
+
+Gdzie:
+- `user` - użytkownik PostgreSQL (domyślnie: `postgres`)
+- `password` - hasło do PostgreSQL (zmień na rzeczywiste!)
+- `host` - adres serwera PostgreSQL (domyślnie: `localhost`)
+- `port` - port PostgreSQL (domyślnie: `5432`)
+- `database` - nazwa bazy danych (pojawi się w `CREATE DATABASE`)
+
+**Przykład dla Neon serverless:**
+```env
+DATABASE_URL=postgresql://user:password@xxx.neon.tech/dbname
+```
+
+> **⚠️ Bezpieczeństwo**: NIGDY nie commituj `.env` do git! Jest w `.gitignore`.
 
 ### 2. Utworzenie bazy danych
 
@@ -72,7 +102,30 @@ Po uruchomieniu:
 - **Backend API**: http://localhost:5000
 - **Frontend**: http://localhost:3000
 
-## Rozwiązywanie problemów
+### ❌ `Error: DATABASE_URL environment variable must be set`
+
+**Przyczyna**: Plik `.env` nie istnieje lub nie zawiera `DATABASE_URL`
+
+**Rozwiązanie**:
+
+1. Utwórz plik `.env` w głównym katalogu projektu:
+
+```bash
+# Linux/macOS
+touch .env
+
+# Windows
+type nul > .env
+```
+
+2. Dodaj do niego:
+
+```env
+DATABASE_URL=postgres://postgres:password@localhost:5432/shrooomzeye
+PORT=5000
+```
+
+3. Zmień `password` na rzeczywiste hasło do PostgreSQL
 
 ### ❌ `Error: connect ECONNREFUSED 127.0.0.1:5432`
 
