@@ -263,54 +263,69 @@ function parseKillers(description: string): { name: string; isPlayer: boolean }[
 }
 
 export function formatDeathEmbed(death: any, isEnemy: boolean) {
-  const color = isEnemy ? 0x22c55e : 0xef4444;
-  const icon = isEnemy ? "☠️" : "🔥";
-  const vocationIcon = getVocationIcon(death.vocation || "Unknown");
-  
-  const occurredAt = death.occurredAt ? new Date(death.occurredAt) : new Date();
-  const timeAgo = getTimeAgo(occurredAt);
-  
-  const charUrl = getTibiaCharacterUrl(death.characterName);
-  const charLink = `[${death.characterName}](${charUrl})`;
-  
-  const killers = parseKillers(death.description || `by ${death.killerName}`);
-  const killerCount = killers.length;
-  
-  let killersText = "";
-  if (killers.length > 0) {
-    const killerLinks = killers.map(k => 
-      k.isPlayer ? `[${k.name}](${getTibiaCharacterUrl(k.name)})` : k.name
-    );
-    killersText = killerLinks.join(", ");
-  } else {
-    killersText = death.killerName || "Unknown";
-  }
-  
-  const killerGuildLink = death.killerGuild ? getGuildLink(death.killerGuild) : "";
-  const victimGuildLink = death.victimGuild ? getGuildLink(death.victimGuild) : "Unknown Guild";
-  const victimGuildText = isEnemy ? `Enemy from ${victimGuildLink}` : `Member of your guild`;
-  
-  const description = [
-    `${vocationIcon} **${death.level}** - ${charLink} (${death.vocation || "Unknown"})`,
-    victimGuildText,
-    ``,
-    `⏰ Killed **${timeAgo}** at level ${death.level}`,
-    ``,
-    death.isPvp ? `⚔️ **${killerCount} Killer${killerCount !== 1 ? "s" : ""}:**` : `🐉 **PvE Death:**`,
-    killersText,
-    killerGuildLink ? `\n🏰 Killers from ${killerGuildLink}` : "",
-  ].filter(line => line !== undefined).join("\n");
+    const color = isEnemy ? 0x22c55e : 0xef4444;
+    const vocationIcon = getVocationIcon(death.vocation || "Unknown");
+    const occurredAt = death.occurredAt ? new Date(death.occurredAt) : new Date();
 
-  return {
-    embeds: [{
-      color,
-      description,
-      footer: { text: "ShrooomzEye • Guild Intelligence" },
-      timestamp: occurredAt.toISOString(),
-    }],
-  };
+    const discordTimestamp = Math.floor(occurredAt.getTime() / 1000);
+    const discordTimeTag = `<t:${discordTimestamp}:R>`;
+
+    const charUrl = getTibiaCharacterUrl(death.characterName);
+    const charLink = `[${death.characterName}](${charUrl})`;
+
+    const killers = parseKillers(death.description || `by ${death.killerName}`);
+    const killerCount = killers.length;
+
+    // Lista samych nicków graczy (do schowka)
+    const rawPlayerKillers = killers
+        .filter(k => k.isPlayer)
+        .map(k => k.name);
+
+    // Jeśli parseKillers nie wyłapało graczy, ale flaga wskazuje na PvP
+    if (rawPlayerKillers.length === 0 && death.isPvp && death.killerName) {
+        rawPlayerKillers.push(death.killerName);
+    }
+
+    let killersText = "";
+    if (killers.length > 0) {
+        const killerLinks = killers.map(k =>
+            k.isPlayer ? `[${k.name}](${getTibiaCharacterUrl(k.name)})` : k.name
+        );
+        killersText = killerLinks.join(", ");
+    } else {
+        killersText = death.isPvp ? `[${death.killerName}](${getTibiaCharacterUrl(death.killerName)})` : (death.killerName || "Unknown");
+    }
+
+    const killerGuildLink = death.killerGuild ? getGuildLink(death.killerGuild) : "";
+    const finalVictimGuild = death.guildName || death.victimGuild;
+    const victimGuildLink = finalVictimGuild ? getGuildLink(finalVictimGuild) : "Unknown Guild";
+
+    const description = [
+        `${vocationIcon} **${death.level}** - ${charLink} (${death.vocation || "Unknown"})`,
+        `🏰 Guild: ${victimGuildLink}`,
+        ``,
+        `⏰ Killed **${discordTimeTag}** at level ${death.level}`,
+        ``,
+        death.isPvp ? `⚔️ **${killerCount} Killer${killerCount !== 1 ? "s" : ""}:**` : `🐉 **PvE Death:**`,
+        killersText,
+        killerGuildLink ? `\n🏰 Killers from ${killerGuildLink}` : "",
+    ].filter(line => line !== undefined).join("\n");
+
+    return {
+        embeds: [{
+            color,
+            description,
+            footer: { text: "ShrooomzEye" },
+            timestamp: occurredAt.toISOString(),
+        }],
+        // DODATKOWE POLE: Zwracamy czystą listę nicków i tekst po przeciskiem do skopiowania
+        copyData: {
+            killersArray: rawPlayerKillers,
+            textByComma: rawPlayerKillers.join(", "),
+            textByNewLine: rawPlayerKillers.join("\n")
+        }
+    };
 }
-
 export async function sendDiscordNotification(webhookUrl: string, embed: any): Promise<boolean> {
   try {
     const response = await fetch(webhookUrl, {
